@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen }) => {
   const { user } = useContext(AuthContext);
 
   if (!user) return null;
@@ -231,17 +231,21 @@ const Sidebar = () => {
   return (
     <aside
       style={{
-        width: '240px',
+        width: isOpen ? '240px' : '0px',
+        opacity: isOpen ? 1 : 0,
         backgroundColor: 'rgba(15, 22, 42, 0.4)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRight: isOpen ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid transparent',
         backdropFilter: 'blur(8px)',
-        padding: '24px 16px',
+        padding: isOpen ? '24px 16px' : '24px 0px',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
         height: 'calc(100vh - 64px)',
         position: 'sticky',
         top: '64px',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, border-color 0.3s ease',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
       }}
     >
       <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px 12px 8px' }}>

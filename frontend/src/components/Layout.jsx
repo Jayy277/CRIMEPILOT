@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -7,6 +7,7 @@ import PageTransition from './PageTransition';
 
 const Layout = () => {
   const { user } = useContext(AuthContext);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const getPortalClass = () => {
     if (!user) return '';
@@ -17,9 +18,9 @@ const Layout = () => {
 
   return (
     <div className={getPortalClass()} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1420', color: '#f8fafc' }}>
-      <Navbar />
+      <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
-        {user && <Sidebar />}
+        {user && <Sidebar isOpen={sidebarOpen} />}
         <main style={{
           flex: 1,
           padding: '24px',
