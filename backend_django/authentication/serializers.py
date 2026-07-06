@@ -56,3 +56,28 @@ class AnalystSerializer(serializers.ModelSerializer):
     if 'profile_picture' in rep:
       rep['profilePicture'] = rep.pop('profile_picture')
     return rep
+
+from .models import Citizen
+
+class CitizenSerializer(serializers.ModelSerializer):
+  user = UserSerializer(read_only=True)
+
+  class Meta:
+    model = Citizen
+    fields = (
+      'id', 'user', 'mobile', 'dob', 'gender', 'address', 'state', 'city', 'pincode', 
+      'identity_type', 'identity_number', 'identity_document', 'status', 'created_at'
+    )
+
+  def to_representation(self, instance):
+    rep = super().to_representation(instance)
+    rep['_id'] = str(instance.id)
+    if 'dob' in rep and instance.dob:
+      rep['dob'] = instance.dob.strftime('%Y-%m-%d')
+    if 'identity_type' in rep:
+      rep['identityType'] = rep.pop('identity_type')
+    if 'identity_number' in rep:
+      rep['identityNumber'] = rep.pop('identity_number')
+    if 'identity_document' in rep:
+      rep['identityDocument'] = rep.pop('identity_document')
+    return rep

@@ -213,6 +213,47 @@ const Sidebar = ({ isOpen }) => {
             ),
           },
         ];
+      case 'citizen':
+        return [
+          {
+            path: '/citizen/dashboard',
+            label: 'Dashboard',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" />
+                <rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" />
+              </svg>
+            ),
+          },
+          {
+            path: '/citizen/register-fir',
+            label: 'Register FIR',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
+              </svg>
+            ),
+          },
+          {
+            path: '/citizen/track-fir',
+            label: 'Track FIR Cases',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            ),
+          },
+          {
+            path: '/citizen/profile',
+            label: 'Citizen Dossier',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+              </svg>
+            ),
+          },
+        ];
       default:
         return [];
     }
@@ -223,6 +264,7 @@ const Sidebar = ({ isOpen }) => {
   const getSidebarAccent = () => {
     if (user.role === 'admin') return '#E0384D'; // Crimson
     if (user.role === 'analyst') return '#F5A623'; // Amber/Gold
+    if (user.role === 'citizen') return '#4DA3FF'; // Ice Blue
     return '#3B82F6'; // Cobalt Blue
   };
 

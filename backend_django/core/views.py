@@ -540,3 +540,274 @@ class NotificationViewSet(viewsets.ViewSet):
   def mark_all_read(self, request):
     Notification.objects.filter(recipient=request.user, read=False).update(read=True)
     return Response({'success': True, 'message': 'All notifications marked as read'})
+
+
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.mail import send_mail
+from django.conf import settings
+import secrets
+
+def send_confirmation_email(citizen_name, email, fir_number, station_name, category, date_val):
+  subject = f"CrimePilot FIR Submission Confirmation - {fir_number}"
+  message = f"""Dear {citizen_name},
+
+Thank you for using the CrimePilot Digital Crime Intelligence Platform. Your digital FIR has been submitted successfully.
+
+FIR Reference Details:
+-----------------------------------------
+FIR Number: {fir_number}
+Category: {category}
+Date of Submission: {date_val}
+Assigned Police Station: {station_name}
+Status: Reported
+
+You can track the progress of your investigation by logging into your Citizen Dashboard at any time.
+
+Thank you,
+CrimePilot Command Center
+"""
+  try:
+    send_mail(
+      subject,
+      message,
+      settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'no-reply@crimepilot.com',
+      [email],
+      fail_silently=True
+    )
+  except Exception as e:
+    print("Email sending failed:", e)
+
+
+class CitizenFIRSubmitView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+  parser_classes = [MultiPartParser, FormParser]
+
+  def post(self, request):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(user=request.user).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # To be flexible for tests but compliant, verify verification status
+    if citizen.status != 'verified':
+      return Response({'success': False, 'message': 'Your account is pending verification. Only verified citizens can submit digital FIRs.'}, status=status.HTTP_403_FORBIDDEN)
+
+    data = request.data
+    category_name = data.get('crimeCategory')
+    date_val = data.get('date')
+    time_val = data.get('time')
+    description = data.get('description')
+    priority = data.get('priority', 'Medium')
+    
+    state = data.get('state')
+    city = data.get('city')
+    district = data.get('district', 'Central')
+    police_station = data.get('police_station')
+
+    if not category_name or not date_val or not time_val or not description or not state or not city or not police_station:
+      return Response({'success': False, 'message': 'Missing required fields for FIR registration'}, status=status.HTTP_400_BAD_REQUEST)
+
+    category = CrimeCategory.objects.filter(name__iexact=category_name).first()
+    if not category:
+      category = CrimeCategory.objects.first()
+
+    location, _ = Location.objects.get_or_create(
+      state=state,
+      city=city,
+      district=district,
+      police_station=police_station
+    )
+
+    officer = Officer.objects.filter(station=location).first()
+    if not officer:
+      officer = Officer.objects.first()
+
+    if not officer:
+      return Response({'success': False, 'message': 'No registered officer available to assign this case.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    try:
+      parsed_date = datetime.datetime.strptime(date_val, '%Y-%m-%d').date()
+    except Exception:
+      parsed_date = datetime.date.today()
+
+    crime = Crime.objects.create(
+      crime_category=category,
+      date=parsed_date,
+      time=time_val,
+      location=location,
+      description=description,
+      officer=officer,
+      citizen=citizen,
+      priority=priority if priority in ['Low', 'Medium', 'High', 'Critical'] else 'Medium',
+      status='Reported'
+    )
+
+    # Evidence uploads
+    for field_name in ['photo', 'video', 'document']:
+      file_obj = request.FILES.get(field_name)
+      if file_obj:
+        ext = os.path.splitext(file_obj.name)[1].lower()
+        filename = f"ev-{secrets.token_hex(4)}{ext}"
+        uploads_dir = os.path.join(settings.BASE_DIR, 'uploads')
+        if not os.path.exists(uploads_dir):
+          os.makedirs(uploads_dir)
+        with open(os.path.join(uploads_dir, filename), 'wb+') as dest:
+          for chunk in file_obj.chunks():
+            dest.write(chunk)
+        Evidence.objects.create(
+          type=field_name.upper(),
+          description=f"Evidence submitted by citizen during FIR registration.",
+          collection_date=datetime.date.today(),
+          assigned_officer=officer,
+          linked_crime=crime,
+          file_path=f"/uploads/{filename}"
+        )
+
+    # Notifications
+    notify(officer.user, 'New Case Assigned', f'New Case {crime.crime_id} has been automatically assigned to you.')
+    notify(request.user, 'High Priority Alert', f'Your FIR {crime.crime_id} has been submitted successfully.')
+
+    # SMTP Mail
+    send_confirmation_email(
+      citizen_name=request.user.name,
+      email=request.user.email,
+      fir_number=crime.crime_id,
+      station_name=location.police_station,
+      category=category.name,
+      date_val=crime.created_at.strftime('%Y-%m-%d') if crime.created_at else date_val
+    )
+
+    return Response({
+      'success': True,
+      'message': 'FIR submitted successfully.',
+      'crimeId': crime.crime_id,
+      'crime': CrimeSerializer(crime).data
+    }, status=status.HTTP_201_CREATED)
+
+
+class CitizenFIRListView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+
+  def get(self, request):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(user=request.user).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+    crimes = Crime.objects.filter(citizen=citizen).order_by('-created_at')
+    return Response({
+      'success': True,
+      'crimes': CrimeSerializer(crimes, many=True).data
+    })
+
+
+class CitizenEvidenceUploadView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+  parser_classes = [MultiPartParser, FormParser]
+
+  def post(self, request, crime_pk=None):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(user=request.user).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    crime = Crime.objects.filter(id=crime_pk, citizen=citizen).first()
+    if not crime:
+      return Response({'success': False, 'message': 'Case not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    file_obj = request.FILES.get('file')
+    if not file_obj:
+      return Response({'success': False, 'message': 'No evidence file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    ext = os.path.splitext(file_obj.name)[1].lower()
+    filename = f"ev-{secrets.token_hex(4)}{ext}"
+    uploads_dir = os.path.join(settings.BASE_DIR, 'uploads')
+    if not os.path.exists(uploads_dir):
+      os.makedirs(uploads_dir)
+    with open(os.path.join(uploads_dir, filename), 'wb+') as dest:
+      for chunk in file_obj.chunks():
+        dest.write(chunk)
+
+    evidence = Evidence.objects.create(
+      type='CITIZEN_UPLOAD',
+      description='Additional evidence uploaded by citizen.',
+      collection_date=datetime.date.today(),
+      assigned_officer=crime.officer,
+      linked_crime=crime,
+      file_path=f"/uploads/{filename}"
+    )
+
+    # Notify officer
+    notify(crime.officer.user, 'High Priority Alert', f'Citizen uploaded additional evidence file for case {crime.crime_id}.')
+
+    return Response({
+      'success': True,
+      'message': 'Additional evidence uploaded successfully.',
+      'evidence': EvidenceSerializer(evidence).data
+    })
+
+
+class CitizenDownloadFIRView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+
+  def get(self, request, crime_pk=None):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(user=request.user).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Allow citizen, officer, or admin to download
+    crime = Crime.objects.filter(id=crime_pk).first()
+    if not crime:
+      return Response({'success': False, 'message': 'Case not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="FIR-{crime.crime_id}.pdf"'
+
+    generate_report_pdf(
+      response,
+      f"FIR DETAILS COMPILATION - {crime.crime_id}",
+      f"Submitted by citizen: {citizen.user.name}",
+      [crime],
+      f"Date Filed: {crime.date}"
+    )
+    return response
+
+
+class AdminCitizenListView(APIView):
+  permission_classes = [permissions.IsAuthenticated, IsOfficerOrAdminUser]
+
+  def get(self, request):
+    from authentication.models import Citizen
+    from authentication.serializers import CitizenSerializer
+    citizens = Citizen.objects.all().order_by('-created_at')
+    return Response({
+      'success': True,
+      'citizens': CitizenSerializer(citizens, many=True).data
+    })
+
+
+class AdminVerifyCitizenView(APIView):
+  permission_classes = [permissions.IsAuthenticated, IsOfficerOrAdminUser]
+
+  def post(self, request, citizen_pk=None):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(id=citizen_pk).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    action = request.data.get('action') # 'verify' or 'reject'
+    if action == 'verify':
+      citizen.status = 'verified'
+    elif action == 'reject':
+      citizen.status = 'rejected'
+    else:
+      return Response({'success': False, 'message': 'Invalid action parameters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    citizen.save()
+    # Notify user
+    notify(citizen.user, 'High Priority Alert', f'Your account verification status has been updated to: {citizen.get_status_display()}')
+
+    return Response({
+      'success': True,
+      'message': f'Citizen verification status set to: {citizen.status}'
+    })

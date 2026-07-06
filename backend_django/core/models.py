@@ -43,6 +43,7 @@ class Crime(models.Model):
   location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='crimes')
   description = models.TextField()
   officer = models.ForeignKey('authentication.Officer', on_delete=models.PROTECT, related_name='crimes')
+  citizen = models.ForeignKey('authentication.Citizen', on_delete=models.SET_NULL, null=True, blank=True, related_name='crimes')
   priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Medium')
   status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Reported')
   sections = models.JSONField(default=list) # List of selected sections {act, section, description}

@@ -3,7 +3,9 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
   LocationViewSet, CrimeCategoryViewSet, CrimeViewSet, 
-  SuspectViewSet, VictimViewSet, EvidenceViewSet, NotificationViewSet
+  SuspectViewSet, VictimViewSet, EvidenceViewSet, NotificationViewSet,
+  CitizenFIRSubmitView, CitizenFIRListView, CitizenEvidenceUploadView,
+  CitizenDownloadFIRView, AdminCitizenListView, AdminVerifyCitizenView
 )
 from .dashboard_views import (
   OfficerDashboardView, AnalystDashboardView, AdminDashboardView, ReportView
@@ -47,4 +49,14 @@ urlpatterns = [
   path('admin/users/<int:pk>/toggle-active', AdminUserToggleActiveView.as_view(), name='admin_user_toggle_active'),
   path('admin/staff-search', AdminStaffSearchView.as_view(), name='admin_staff_search'),
   path('admin/logs', AdminSystemLogsView.as_view(), name='admin_system_logs'),
+
+  # Citizen routes
+  path('citizen/fir', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
+  path('citizen/my-cases', CitizenFIRListView.as_view(), name='citizen_fir_list'),
+  path('citizen/cases/<int:crime_pk>/evidence', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
+  path('citizen/cases/<int:crime_pk>/download', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
+  
+  # Admin citizen lists & verify
+  path('admin/citizens', AdminCitizenListView.as_view(), name='admin_citizen_list'),
+  path('admin/citizens/<int:citizen_pk>/verify', AdminVerifyCitizenView.as_view(), name='admin_verify_citizen'),
 ]

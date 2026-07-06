@@ -38,6 +38,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!user) {
+    if (window.location.pathname.startsWith('/citizen')) {
+      return <Navigate to="/citizen/login" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 
@@ -49,6 +52,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       return <Navigate to="/analyst/dashboard" replace />;
     } else if (user.role === 'admin') {
       return <Navigate to="/admin/dashboard" replace />;
+    } else if (user.role === 'citizen') {
+      return <Navigate to="/citizen/dashboard" replace />;
     }
     return <Navigate to="/" replace />;
   }

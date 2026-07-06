@@ -13,6 +13,7 @@ const Layout = () => {
     if (!user) return '';
     if (user.role === 'admin') return 'theme-admin';
     if (user.role === 'analyst') return 'theme-analyst';
+    if (user.role === 'citizen') return 'theme-citizen';
     return 'theme-officer';
   };
 

@@ -35,12 +35,22 @@ import Locations from './pages/admin/Locations';
 import SystemLogs from './pages/admin/Logs';
 import AdminReports from './pages/admin/Reports';
 
+// Citizen Portal Pages
+import CitizenLogin from './pages/citizen/Login';
+import CitizenRegister from './pages/citizen/Register';
+import CitizenDashboard from './pages/citizen/Dashboard';
+import RegisterFIR from './pages/citizen/RegisterFIR';
+import TrackFIR from './pages/citizen/TrackFIR';
+import CitizenProfile from './pages/citizen/Profile';
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/citizen/login" element={<CitizenLogin />} />
+          <Route path="/citizen/register" element={<CitizenRegister />} />
 
           {/* Public Routing Layout */}
           <Route element={<Layout />}>
@@ -106,6 +116,23 @@ function App() {
             <Route path="reports" element={<AdminReports />} />
             <Route path="profile" element={<OfficerProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}
+          </Route>
+
+          {/* Citizen Portal Protected Routes */}
+          <Route
+            path="/citizen"
+            element={
+              <ProtectedRoute allowedRoles={['citizen']}>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/citizen/dashboard" replace />} />
+            <Route path="dashboard" element={<CitizenDashboard />} />
+            <Route path="register-fir" element={<RegisterFIR />} />
+            <Route path="track-fir" element={<TrackFIR />} />
+            <Route path="my-cases" element={<TrackFIR />} />
+            <Route path="profile" element={<CitizenProfile />} />
           </Route>
 
           {/* Wildcard Fallback */}

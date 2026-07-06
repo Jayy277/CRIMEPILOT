@@ -58,6 +58,12 @@ class LoginView(APIView):
       analyst = Analyst.objects.filter(user=user).first()
       if analyst:
         details_data = AnalystSerializer(analyst).data
+    elif user.role == 'citizen':
+      from .models import Citizen
+      from .serializers import CitizenSerializer
+      citizen = Citizen.objects.filter(user=user).first()
+      if citizen:
+        details_data = CitizenSerializer(citizen).data
 
     return Response({
       'success': True,
@@ -250,6 +256,12 @@ class ProfilePictureView(APIView):
         analyst.profile_picture = db_path
         analyst.save()
         details_data = AnalystSerializer(analyst).data
+    elif request.user.role == 'citizen':
+      from .models import Citizen
+      from .serializers import CitizenSerializer
+      citizen = Citizen.objects.filter(user=request.user).first()
+      if citizen:
+        details_data = CitizenSerializer(citizen).data
     elif request.user.role == 'admin':
       details_data = {}
 
@@ -282,6 +294,12 @@ class ProfilePictureView(APIView):
         analyst.profile_picture = None
         analyst.save()
         details_data = AnalystSerializer(analyst).data
+    elif request.user.role == 'citizen':
+      from .models import Citizen
+      from .serializers import CitizenSerializer
+      citizen = Citizen.objects.filter(user=request.user).first()
+      if citizen:
+        details_data = CitizenSerializer(citizen).data
     elif request.user.role == 'admin':
       details_data = {}
 
@@ -295,3 +313,99 @@ class ProfilePictureView(APIView):
       'user': UserSerializer(request.user).data,
       'details': details_data
     }, status=status.HTTP_200_OK)
+
+
+class CitizenSignupView(APIView):
+  permission_classes = [AllowAny]
+  parser_classes = [MultiPartParser, FormParser]
+
+  def post(self, request):
+    data = request.data
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+    mobile = data.get('mobile')
+    dob = data.get('dob')
+    gender = data.get('gender')
+    address = data.get('address')
+    state = data.get('state')
+    city = data.get('city')
+    pincode = data.get('pincode')
+    identity_type = data.get('identityType')
+    identity_number = data.get('identityNumber')
+
+    if not email or not name or not password or not mobile or not identity_type or not identity_number:
+      return Response(
+        {'success': False, 'message': 'Required fields: Full Name, Email, Password, Mobile, Identity Type, Identity Number'},
+        status=status.HTTP_400_BAD_REQUEST
+      )
+
+    if User.objects.filter(email__iexact=email).exists():
+      return Response({'success': False, 'message': 'Email already registered'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # File validation
+    id_doc = request.FILES.get('identityDocument')
+    db_path = ''
+    if id_doc:
+      if id_doc.size > 5 * 1024 * 1024:
+        return Response({'success': False, 'message': 'Identity proof file exceeds 5MB limit'}, status=status.HTTP_400_BAD_REQUEST)
+      ext = os.path.splitext(id_doc.name)[1].lower()
+      if ext not in ['.jpg', '.jpeg', '.png', '.pdf']:
+        return Response({'success': False, 'message': 'Accepted formats: JPG, PNG, PDF'}, status=status.HTTP_400_BAD_REQUEST)
+
+      uploads_dir = os.path.join(settings.BASE_DIR, 'uploads')
+      if not os.path.exists(uploads_dir):
+        os.makedirs(uploads_dir)
+      
+      filename = f"id-{secrets.token_hex(4)}{ext}"
+      file_path = os.path.join(uploads_dir, filename)
+      with open(file_path, 'wb+') as destination:
+        for chunk in id_doc.chunks():
+          destination.write(chunk)
+      db_path = f"/uploads/{filename}"
+
+    try:
+      user = User.objects.create_user(
+        email=email,
+        name=name,
+        password=password,
+        role='citizen'
+      )
+      
+      from .models import Citizen
+      from .serializers import CitizenSerializer
+
+      citizen = Citizen.objects.create(
+        user=user,
+        mobile=mobile,
+        dob=dob if dob else None,
+        gender=gender,
+        address=address,
+        state=state,
+        city=city,
+        pincode=pincode,
+        identity_type=identity_type,
+        identity_number=identity_number,
+        identity_document=db_path,
+        status='pending'
+      )
+      
+      details_data = CitizenSerializer(citizen).data
+      
+    except Exception as e:
+      if 'user' in locals():
+        user.delete()
+      return Response({'success': False, 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({
+      'success': True,
+      'message': 'Citizen registered successfully. Account is pending verification.',
+      'user': {
+        '_id': str(user.id),
+        'name': user.name,
+        'email': user.email,
+        'role': user.role,
+        'isActive': user.is_active,
+      },
+      'details': details_data
+    }, status=status.HTTP_201_CREATED)
