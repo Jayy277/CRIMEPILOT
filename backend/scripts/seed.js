@@ -1,42 +1,19 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const User = require('../models/User');
-const Location = require('../models/Location');
-const CrimeCategory = require('../models/CrimeCategory');
-
 dotenv.config();
 
+const { syncDatabase, User, Location, CrimeCategory, CrimeCategorySection } = require('../models/index');
+
 const sampleLocations = [
-  {
-    state: 'Maharashtra',
-    district: 'Mumbai City',
-    city: 'Mumbai',
-    policeStation: 'Colaba Police Station',
-  },
-  {
-    state: 'Maharashtra',
-    district: 'Mumbai Suburban',
-    city: 'Mumbai',
-    policeStation: 'Andheri Police Station',
-  },
-  {
-    state: 'Delhi',
-    district: 'New Delhi',
-    city: 'New Delhi',
-    policeStation: 'Connaught Place Police Station',
-  },
-  {
-    state: 'Karnataka',
-    district: 'Bengaluru Urban',
-    city: 'Bengaluru',
-    policeStation: 'Koramangala Police Station',
-  },
-  {
-    state: 'Karnataka',
-    district: 'Bengaluru Urban',
-    city: 'Bengaluru',
-    policeStation: 'Indiranagar Police Station',
-  },
+  { state: 'Gujarat',       district: 'Ahmedabad',      city: 'Ahmedabad',  policeStation: 'Satellite Police Station' },
+  { state: 'Gujarat',       district: 'Ahmedabad',      city: 'Ahmedabad',  policeStation: 'Navrangpura Police Station' },
+  { state: 'Maharashtra',   district: 'Mumbai City',    city: 'Mumbai',     policeStation: 'Colaba Police Station' },
+  { state: 'Maharashtra',   district: 'Mumbai Suburban', city: 'Mumbai',    policeStation: 'Andheri Police Station' },
+  { state: 'Delhi',         district: 'New Delhi',      city: 'New Delhi',  policeStation: 'Connaught Place Police Station' },
+  { state: 'Karnataka',     district: 'Bengaluru Urban', city: 'Bengaluru', policeStation: 'Koramangala Police Station' },
+  { state: 'Karnataka',     district: 'Bengaluru Urban', city: 'Bengaluru', policeStation: 'Indiranagar Police Station' },
+  { state: 'Rajasthan',     district: 'Jaipur',         city: 'Jaipur',     policeStation: 'Malviya Nagar Police Station' },
+  { state: 'Uttar Pradesh', district: 'Lucknow',        city: 'Lucknow',    policeStation: 'Hazratganj Police Station' },
+  { state: 'West Bengal',   district: 'Kolkata',        city: 'Kolkata',    policeStation: 'Park Street Police Station' },
 ];
 
 const sampleCategories = [
@@ -67,9 +44,9 @@ const sampleCategories = [
   {
     name: 'Cyber Crime',
     sections: [
-      { act: 'BNS', section: '318', description: 'Cheating (Online/Impersonation)' },
-      { act: 'BNS', section: '66D (IT Act)', description: 'Punishment for cheating by personation by using computer resource' },
-      { act: 'BNS', section: '66C (IT Act)', description: 'Identity theft' },
+      { act: 'BNS',    section: '318',       description: 'Cheating (Online/Impersonation)' },
+      { act: 'IT Act', section: '66D',       description: 'Punishment for cheating by personation by using computer resource' },
+      { act: 'IT Act', section: '66C',       description: 'Identity theft' },
     ],
   },
   {
@@ -83,8 +60,8 @@ const sampleCategories = [
   {
     name: 'Missing Person',
     sections: [
-      { act: 'BNSS', section: '84', description: 'Proclamation for person absconding / missing query' },
-      { act: 'BNS', section: '140', description: 'Kidnapping or abducting in order to murder' },
+      { act: 'BNSS', section: '84',  description: 'Proclamation for person absconding / missing query' },
+      { act: 'BNS',  section: '140', description: 'Kidnapping or abducting in order to murder' },
     ],
   },
   {
@@ -98,8 +75,8 @@ const sampleCategories = [
   {
     name: 'Traffic Crime',
     sections: [
-      { act: 'BNS', section: '281', description: 'Rash driving or riding on a public way' },
-      { act: 'BNS', section: '106', description: 'Causing death by negligence (Hit and Run cases)' },
+      { act: 'BNS',                section: '281', description: 'Rash driving or riding on a public way' },
+      { act: 'BNS',                section: '106', description: 'Causing death by negligence (Hit and Run cases)' },
       { act: 'Motor Vehicles Act', section: '185', description: 'Driving by a drunken person or under the influence of drugs' },
     ],
   },
@@ -107,46 +84,59 @@ const sampleCategories = [
 
 const seedDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/crimegpt';
-    console.log('Connecting to database for seeding...');
-    await mongoose.connect(mongoUri);
+    // Connect + sync all Sequelize tables
+    await syncDatabase();
 
-    // 1. Seed Locations
-    console.log('Clearing old locations...');
-    await Location.deleteMany({});
-    console.log('Seeding locations...');
-    await Location.insertMany(sampleLocations);
-    console.log(`Successfully seeded ${sampleLocations.length} locations.`);
-
-    // 2. Seed Crime Categories
-    console.log('Clearing old crime categories...');
-    await CrimeCategory.deleteMany({});
-    console.log('Seeding crime categories...');
-    await CrimeCategory.insertMany(sampleCategories);
-    console.log(`Successfully seeded ${sampleCategories.length} crime categories.`);
-
-    // 3. Seed Default Admin User
-    console.log('Checking for admin user...');
-    const adminEmail = 'admin@crimegpt.com';
-    const adminExists = await User.findOne({ email: adminEmail });
-    if (!adminExists) {
-      console.log('Seeding default Admin user...');
-      await User.create({
-        name: 'System Administrator',
-        email: adminEmail,
-        password: 'Admin@123',
-        role: 'admin',
+    // ── 1. Admin User ────────────────────────────────────────────────
+    console.log('\n[1/3] Seeding admin user...');
+    const adminEmail = 'admin@crimepilot.com';
+    const [admin, created] = await User.findOrCreate({
+      where: { email: adminEmail },
+      defaults: {
+        name:     'System Administrator',
+        email:    adminEmail,
+        password: 'Admin@123',   // hashed by beforeCreate hook in User.js
+        role:     'admin',
         isActive: true,
-      });
-      console.log('Successfully seeded admin user (admin@crimegpt.com / Admin@123).');
+      },
+    });
+    if (created) {
+      console.log('   Admin created  →  admin@crimepilot.com  /  Admin@123');
     } else {
-      console.log('Admin user already exists.');
+      console.log('   Admin already exists — skipping.');
     }
 
-    console.log('Database Seeding Complete!');
+    // ── 2. Locations ─────────────────────────────────────────────────
+    console.log('\n[2/3] Seeding locations...');
+    let locCreated = 0;
+    for (const loc of sampleLocations) {
+      const [, c] = await Location.findOrCreate({ where: loc, defaults: loc });
+      if (c) locCreated++;
+    }
+    console.log(`   ${locCreated} new locations inserted (${sampleLocations.length - locCreated} already existed).`);
+
+    // ── 3. Crime Categories + Sections ───────────────────────────────
+    console.log('\n[3/3] Seeding crime categories...');
+    let catCreated = 0;
+    for (const cat of sampleCategories) {
+      const [category, c] = await CrimeCategory.findOrCreate({
+        where:    { name: cat.name },
+        defaults: { name: cat.name },
+      });
+      if (c) {
+        catCreated++;
+        // Insert sections for this brand-new category
+        for (const sec of cat.sections) {
+          await CrimeCategorySection.create({ ...sec, categoryId: category.id });
+        }
+      }
+    }
+    console.log(`   ${catCreated} new categories inserted (${sampleCategories.length - catCreated} already existed).`);
+
+    console.log('\nDatabase seeding complete!\n');
     process.exit(0);
-  } catch (error) {
-    console.error('Seeding failed:', error.message);
+  } catch (err) {
+    console.error('Seeding failed:', err.message);
     process.exit(1);
   }
 };

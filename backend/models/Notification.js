@@ -1,29 +1,32 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const notificationSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: ['New Case Assigned', 'Investigation Deadline', 'High Priority Alert'],
-      required: true,
-    },
-    recipient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-    },
-    read: {
-      type: Boolean,
-      default: false,
-    },
+const Notification = sequelize.define('Notification', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  type: {
+    type: DataTypes.ENUM('New Case Assigned', 'Investigation Deadline', 'High Priority Alert'),
+    allowNull: false,
+  },
+  recipientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'users', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  tableName: 'notifications',
+});
 
-module.exports = mongoose.model('Notification', notificationSchema);
+module.exports = Notification;

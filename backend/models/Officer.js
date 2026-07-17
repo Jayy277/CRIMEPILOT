@@ -1,37 +1,39 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const officerSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'User reference is required'],
-      unique: true,
-    },
-    badgeNo: {
-      type: String,
-      required: [true, 'Badge number is required'],
-      unique: true,
-      trim: true,
-    },
-    station: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Location',
-      required: [true, 'Assigned station is required'],
-    },
-    contact: {
-      type: String,
-      required: [true, 'Contact number is required'],
-      trim: true,
-    },
-    profilePicture: {
-      type: String,
-      default: '',
-    },
+const Officer = sequelize.define('Officer', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    unique: true,
+    references: { model: 'users', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+  badgeNo: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+  },
+  stationId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'locations', key: 'id' },
+  },
+  contact: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+  },
+  profilePicture: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
+}, {
+  tableName: 'officers',
+});
 
-module.exports = mongoose.model('Officer', officerSchema);
+module.exports = Officer;

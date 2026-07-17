@@ -1,36 +1,52 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const sectionSchema = new mongoose.Schema({
+// Sections table (replaces nested sectionSchema array)
+const CrimeCategorySection = sequelize.define('CrimeCategorySection', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crime_categories', key: 'id' },
+    onDelete: 'CASCADE',
+  },
   act: {
-    type: String,
-    required: [true, 'Act name is required (e.g. BNS, BNSS, BSA)'],
-    trim: true,
+    type: DataTypes.STRING(100),
+    allowNull: false,
   },
   section: {
-    type: String,
-    required: [true, 'Section number/clause is required'],
-    trim: true,
+    type: DataTypes.STRING(100),
+    allowNull: false,
   },
   description: {
-    type: String,
-    required: [true, 'Section description is required'],
-    trim: true,
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
+}, {
+  tableName: 'crime_category_sections',
 });
 
-const crimeCategorySchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Crime Category name is required'],
-      unique: true,
-      trim: true,
-    },
-    sections: [sectionSchema],
+const CrimeCategory = sequelize.define('CrimeCategory', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  name: {
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    unique: true,
+  },
+}, {
+  tableName: 'crime_categories',
+});
 
-module.exports = mongoose.model('CrimeCategory', crimeCategorySchema);
+// Associations
+CrimeCategory.hasMany(CrimeCategorySection, { foreignKey: 'categoryId', as: 'sections' });
+CrimeCategorySection.belongsTo(CrimeCategory, { foreignKey: 'categoryId' });
+
+module.exports = { CrimeCategory, CrimeCategorySection };

@@ -1,104 +1,120 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const noteSchema = new mongoose.Schema({
+// Crime Notes table (replaces embedded noteSchema array)
+const CrimeNote = sequelize.define('CrimeNote', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  crimeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crimes', key: 'id' },
+    onDelete: 'CASCADE',
+  },
   note: {
-    type: String,
-    required: [true, 'Note text is required'],
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
-  addedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+  addedById: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'users', key: 'id' },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+}, {
+  tableName: 'crime_notes',
+});
+
+// Crime Selected Sections (replaces embedded selectedSectionSchema array)
+const CrimeSelectedSection = sequelize.define('CrimeSelectedSection', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  crimeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crimes', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+  act: { type: DataTypes.STRING(100) },
+  section: { type: DataTypes.STRING(100) },
+  description: { type: DataTypes.TEXT },
+}, {
+  tableName: 'crime_selected_sections',
+});
+
+const Crime = sequelize.define('Crime', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  crimeId: {
+    type: DataTypes.STRING(30),
+    unique: true,
+  },
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crime_categories', key: 'id' },
+  },
+  date: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+  },
+  time: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+  },
+  locationId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'locations', key: 'id' },
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  officerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'officers', key: 'id' },
+  },
+  priority: {
+    type: DataTypes.ENUM('Low', 'Medium', 'High', 'Critical'),
+    defaultValue: 'Medium',
+  },
+  status: {
+    type: DataTypes.ENUM('Reported', 'Assigned', 'Under Investigation', 'Evidence Collected', 'Solved', 'Closed'),
+    defaultValue: 'Reported',
+  },
+}, {
+  tableName: 'crimes',
+  hooks: {
+    // Auto-generate crimeId before create (e.g. CR-2026-00001)
+    beforeCreate: async (crime) => {
+      if (!crime.crimeId) {
+        const year = crime.date ? new Date(crime.date).getFullYear() : new Date().getFullYear();
+        const count = await Crime.count({
+          where: sequelize.where(
+            sequelize.fn('YEAR', sequelize.col('date')),
+            year
+          ),
+        });
+        crime.crimeId = `CR-${year}-${String(count + 1).padStart(5, '0')}`;
+      }
+    },
   },
 });
 
-const selectedSectionSchema = new mongoose.Schema({
-  act: String,
-  section: String,
-  description: String,
-});
+// Associations
+Crime.hasMany(CrimeNote,            { foreignKey: 'crimeId', as: 'notes' });
+Crime.hasMany(CrimeSelectedSection, { foreignKey: 'crimeId', as: 'sections' });
+CrimeNote.belongsTo(Crime,            { foreignKey: 'crimeId' });
+CrimeSelectedSection.belongsTo(Crime, { foreignKey: 'crimeId' });
 
-const crimeSchema = new mongoose.Schema(
-  {
-    crimeId: {
-      type: String,
-      unique: true,
-    },
-    crimeCategory: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'CrimeCategory',
-      required: [true, 'Crime Category is required'],
-    },
-    date: {
-      type: Date,
-      required: [true, 'Date of crime is required'],
-    },
-    time: {
-      type: String,
-      required: [true, 'Time of crime is required'],
-    },
-    location: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Location',
-      required: [true, 'Location is required'],
-    },
-    description: {
-      type: String,
-      required: [true, 'Description is required'],
-      trim: true,
-    },
-    officer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Officer',
-      required: [true, 'Assigned Officer is required'],
-    },
-    priority: {
-      type: String,
-      enum: ['Low', 'Medium', 'High', 'Critical'],
-      default: 'Medium',
-    },
-    status: {
-      type: String,
-      enum: ['Reported', 'Assigned', 'Under Investigation', 'Evidence Collected', 'Solved', 'Closed'],
-      default: 'Reported',
-    },
-    sections: [selectedSectionSchema],
-    notes: [noteSchema],
-  },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
-
-// Virtual field isPending
-crimeSchema.virtual('isPending').get(function () {
-  return this.status !== 'Solved' && this.status !== 'Closed';
-});
-
-// Text index on description for similarity search
-crimeSchema.index({ description: 'text' });
-
-// Auto-generate crimeId (e.g., CR-2026-10023)
-crimeSchema.pre('save', async function () {
-  if (!this.crimeId) {
-    const year = this.date ? new Date(this.date).getFullYear() : new Date().getFullYear();
-    // Count existing crimes in the current year to generate sequential number
-    const startOfYear = new Date(`${year}-01-01`);
-    const endOfYear = new Date(`${year}-12-31T23:59:59.999Z`);
-    
-    const count = await this.constructor.countDocuments({
-      date: { $gte: startOfYear, $lte: endOfYear }
-    });
-    
-    const sequenceStr = String(count + 1).padStart(5, '0');
-    this.crimeId = `CR-${year}-${sequenceStr}`;
-  }
-});
-
-module.exports = mongoose.model('Crime', crimeSchema);
+module.exports = { Crime, CrimeNote, CrimeSelectedSection };

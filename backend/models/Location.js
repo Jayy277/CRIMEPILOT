@@ -1,34 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const locationSchema = new mongoose.Schema(
-  {
-    state: {
-      type: String,
-      required: [true, 'State is required'],
-      trim: true,
-    },
-    district: {
-      type: String,
-      required: [true, 'District is required'],
-      trim: true,
-    },
-    city: {
-      type: String,
-      required: [true, 'City is required'],
-      trim: true,
-    },
-    policeStation: {
-      type: String,
-      required: [true, 'Police Station is required'],
-      trim: true,
-    },
+const Location = sequelize.define('Location', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  state: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  district: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  city: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  policeStation: {
+    type: DataTypes.STRING(200),
+    allowNull: false,
+  },
+}, {
+  tableName: 'locations',
+  indexes: [
+    {
+      unique: true,
+      fields: ['state', 'district', 'city', 'policeStation'],
+    },
+  ],
+});
 
-// Prevent duplicate entries for the exact same station details
-locationSchema.index({ state: 1, district: 1, city: 1, policeStation: 1 }, { unique: true });
-
-module.exports = mongoose.model('Location', locationSchema);
+module.exports = Location;

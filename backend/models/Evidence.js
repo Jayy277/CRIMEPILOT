@@ -1,53 +1,56 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const evidenceSchema = new mongoose.Schema(
-  {
-    evidenceId: {
-      type: String,
-      unique: true,
-    },
-    type: {
-      type: String,
-      required: [true, 'Evidence type is required'],
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: [true, 'Evidence description is required'],
-      trim: true,
-    },
-    collectionDate: {
-      type: Date,
-      default: Date.now,
-    },
-    assignedOfficer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Officer',
-      required: [true, 'Assigned Officer reference is required'],
-    },
-    linkedCrime: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Crime',
-      required: [true, 'Linked Crime reference is required'],
-    },
-    filePath: {
-      type: String,
-      default: '',
+const Evidence = sequelize.define('Evidence', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  evidenceId: {
+    type: DataTypes.STRING(30),
+    unique: true,
+  },
+  type: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  collectionDate: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  assignedOfficerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'officers', key: 'id' },
+  },
+  linkedCrimeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crimes', key: 'id' },
+  },
+  filePath: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
+}, {
+  tableName: 'evidence',
+  hooks: {
+    // Auto-generate evidenceId before create (e.g. EV-2026-00001)
+    beforeCreate: async (ev) => {
+      if (!ev.evidenceId) {
+        const year = ev.collectionDate
+          ? new Date(ev.collectionDate).getFullYear()
+          : new Date().getFullYear();
+        const count = await Evidence.count();
+        ev.evidenceId = `EV-${year}-${String(count + 1).padStart(5, '0')}`;
+      }
     },
   },
-  {
-    timestamps: true,
-  }
-);
-
-// Auto-generate evidenceId (e.g., EV-2026-10023)
-evidenceSchema.pre('save', async function () {
-  if (!this.evidenceId) {
-    const year = this.collectionDate ? new Date(this.collectionDate).getFullYear() : new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    const sequenceStr = String(count + 1).padStart(5, '0');
-    this.evidenceId = `EV-${year}-${sequenceStr}`;
-  }
 });
 
-module.exports = mongoose.model('Evidence', evidenceSchema);
+module.exports = Evidence;

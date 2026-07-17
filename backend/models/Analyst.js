@@ -1,22 +1,25 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const analystSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'User reference is required'],
-      unique: true,
-    },
-    department: {
-      type: String,
-      required: [true, 'Department is required'],
-      trim: true,
-    },
+const Analyst = sequelize.define('Analyst', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    unique: true,
+    references: { model: 'users', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+  department: {
+    type: DataTypes.STRING(150),
+    allowNull: false,
+  },
+}, {
+  tableName: 'analysts',
+});
 
-module.exports = mongoose.model('Analyst', analystSchema);
+module.exports = Analyst;

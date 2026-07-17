@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Simple helper for count-up numbers from 0
 const CountUp = ({ end, duration = 1500 }) => {
@@ -23,6 +23,7 @@ const CountUp = ({ end, duration = 1500 }) => {
 };
 
 const Home = () => {
+  const navigate = useNavigate();
   // State for interactive Map details panel
   const [selectedCity, setSelectedCity] = useState({
     name: 'Ahmedabad',
@@ -222,8 +223,25 @@ const Home = () => {
               <Link to="/login" className="btn btn-primary" style={{ padding: '14px 28px', backgroundColor: '#00D9FF', color: '#0B1220', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #00D9FF' }}>
                 Access Secure Terminal
               </Link>
-              <button onClick={() => alert('Launching overview stream...')} style={{ padding: '14px 28px', background: 'transparent', color: '#FFFFFF', border: '1px solid rgba(0, 217, 255, 0.3)', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-                Watch Overview
+              <button
+                onClick={() => navigate('/overview')}
+                style={{
+                  padding: '14px 28px',
+                  background: 'transparent',
+                  color: '#00D9FF',
+                  border: '1px solid rgba(0,217,255,0.4)',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.25s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,217,255,0.1)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0,217,255,0.25)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                ▶ Watch Overview
               </button>
             </div>
 

@@ -2,28 +2,27 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const connectDB = require('./config/db');
+
+// Load environment variables FIRST
+dotenv.config();
+
+// MySQL sync via Sequelize (replaces MongoDB connectDB)
+const { syncDatabase } = require('./models/index');
+
 const auditLogger = require('./middleware/logMiddleware');
 
 // Route imports
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const crimeRoutes = require('./routes/crimeRoutes');
-const suspectRoutes = require('./routes/suspectRoutes');
-const victimRoutes = require('./routes/victimRoutes');
-const evidenceRoutes = require('./routes/evidenceRoutes');
+const authRoutes         = require('./routes/authRoutes');
+const adminRoutes        = require('./routes/adminRoutes');
+const crimeRoutes        = require('./routes/crimeRoutes');
+const suspectRoutes      = require('./routes/suspectRoutes');
+const victimRoutes       = require('./routes/victimRoutes');
+const evidenceRoutes     = require('./routes/evidenceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
+const dashboardRoutes    = require('./routes/dashboardRoutes');
 
-// Extra endpoint controller import for Custom Feature A
 const { getCategorySections } = require('./controllers/adminController');
 const { protect } = require('./middleware/authMiddleware');
-
-// Load environment variables
-dotenv.config();
-
-// Connect to MongoDB
-connectDB();
 
 const app = express();
 
@@ -31,31 +30,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Custom Audit Log middleware (records non-GET requests to DB logs)
+// Custom Audit Log middleware
 app.use(auditLogger);
 
-// Static uploads folder for future evidence/suspect uploads
+// Static uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mount API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes); // Mounts category CRUD under /api/admin/crime-categories
-app.use('/api/crimes', crimeRoutes);
-app.use('/api/suspects', suspectRoutes);
-app.use('/api/victims', victimRoutes);
-app.use('/api/evidence', evidenceRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/admin',         adminRoutes);
+app.use('/api/crimes',        crimeRoutes);
+app.use('/api/suspects',      suspectRoutes);
+app.use('/api/victims',       victimRoutes);
+app.use('/api/evidence',      evidenceRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard',     dashboardRoutes);
 
-// Custom Feature A direct mapping: GET /api/crime-categories/:id/sections
 app.get('/api/crime-categories/:id/sections', protect, getCategorySections);
 
-// Simple Welcome Healthcheck Endpoint
+// Healthcheck
 app.get('/', (req, res) => {
   res.status(200).json({
-    message: 'Welcome to CrimeGPT Backend API',
+    message: 'Welcome to CrimePilot AI Backend (MySQL)',
     status: 'Running',
-    version: '1.0.0',
+    version: '2.0.0',
+    database: 'MySQL (Sequelize)',
   });
 });
 
@@ -69,6 +68,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+
+// Connect MySQL and sync tables BEFORE starting server
+syncDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT} [MySQL mode]`);
+  });
 });

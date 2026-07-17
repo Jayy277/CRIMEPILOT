@@ -1,33 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const victimSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Victim name is required'],
-      trim: true,
-    },
-    contact: {
-      type: String,
-      trim: true,
-    },
-    statement: {
-      type: String,
-      trim: true,
-    },
-    evidenceReference: {
-      type: String,
-      trim: true,
-    },
-    linkedCrime: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Crime',
-      required: [true, 'Linked Crime reference is required'],
-    },
+const Victim = sequelize.define('Victim', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  name: {
+    type: DataTypes.STRING(150),
+    allowNull: false,
+  },
+  contact: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  statement: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  evidenceReference: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  linkedCrimeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crimes', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+}, {
+  tableName: 'victims',
+});
 
-module.exports = mongoose.model('Victim', victimSchema);
+module.exports = Victim;

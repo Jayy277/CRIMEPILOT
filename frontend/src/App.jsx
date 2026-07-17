@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
+import OverviewAnimation from './components/OverviewAnimation';
 
 // Officer Portal Pages
 import OfficerDashboard from './pages/officer/Dashboard';
@@ -49,6 +50,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/overview" element={<OverviewAnimation />} />
           <Route path="/citizen/login" element={<CitizenLogin />} />
           <Route path="/citizen/register" element={<CitizenRegister />} />
 

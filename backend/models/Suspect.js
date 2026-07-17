@@ -1,47 +1,63 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-const suspectSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Suspect name is required'],
-      trim: true,
-    },
-    age: {
-      type: Number,
-    },
-    gender: {
-      type: String,
-      trim: true,
-    },
-    address: {
-      type: String,
-      trim: true,
-    },
-    photoPath: {
-      type: String,
-      default: '',
-    },
-    previousCases: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Crime',
-      },
-    ],
-    status: {
-      type: String,
-      enum: ['Suspect', 'Detained', 'Arrested', 'Released'],
-      default: 'Suspect',
-    },
-    linkedCrime: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Crime',
-      required: [true, 'Linked Crime reference is required'],
-    },
+// Suspect ↔ Crime is many-to-many (previousCases)
+// We create a join table for that relationship
+
+const Suspect = sequelize.define('Suspect', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  name: {
+    type: DataTypes.STRING(150),
+    allowNull: false,
+  },
+  age: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  gender: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  photoPath: {
+    type: DataTypes.STRING(500),
+    defaultValue: '',
+  },
+  status: {
+    type: DataTypes.ENUM('Suspect', 'Detained', 'Arrested', 'Released'),
+    defaultValue: 'Suspect',
+  },
+  linkedCrimeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'crimes', key: 'id' },
+  },
+}, {
+  tableName: 'suspects',
+});
 
-module.exports = mongoose.model('Suspect', suspectSchema);
+// Join table for previousCases (many suspects ↔ many crimes)
+const SuspectPreviousCase = sequelize.define('SuspectPreviousCase', {
+  suspectId: {
+    type: DataTypes.INTEGER,
+    references: { model: 'suspects', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+  crimeId: {
+    type: DataTypes.INTEGER,
+    references: { model: 'crimes', key: 'id' },
+    onDelete: 'CASCADE',
+  },
+}, {
+  tableName: 'suspect_previous_cases',
+  timestamps: false,
+});
+
+module.exports = { Suspect, SuspectPreviousCase };
