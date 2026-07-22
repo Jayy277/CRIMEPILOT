@@ -374,6 +374,7 @@ exports.getUsers = async (req, res) => {
         details: null,
       });
     });
+    console.log(`[getUsers] returning ${users.length} users (${officerResults.length} officers, ${analystResults.length} analysts, ${adminResults.length} admins)`);
 
     res.status(200).json({
       success: true,
