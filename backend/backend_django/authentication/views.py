@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.conf import settings
 import hashlib
 import os
@@ -345,7 +345,7 @@ class ProfilePictureView(APIView):
 
 class CitizenSignupView(APIView):
   permission_classes = [AllowAny]
-  parser_classes = [MultiPartParser, FormParser]
+  parser_classes = [MultiPartParser, FormParser, JSONParser]
 
   def post(self, request):
     data = request.data

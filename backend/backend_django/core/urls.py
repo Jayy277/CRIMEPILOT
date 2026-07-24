@@ -15,6 +15,7 @@ from .admin_views import (
   AdminStaffSearchView, AdminSystemLogsView
 )
 from .ai_views import AIChatView
+from authentication.views import CitizenSignupView
 
 router = DefaultRouter(trailing_slash=False) # Keep URL compatibility matching Express paths
 
@@ -55,6 +56,7 @@ urlpatterns = [
   path('admin/logs', AdminSystemLogsView.as_view(), name='admin_system_logs'),
 
   # Citizen routes
+  path('citizen/register', CitizenSignupView.as_view(), name='citizen_register_core'),
   path('citizen/fir', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
   path('citizen/my-cases', CitizenFIRListView.as_view(), name='citizen_fir_list'),
   path('citizen/cases/<int:crime_pk>/evidence', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
