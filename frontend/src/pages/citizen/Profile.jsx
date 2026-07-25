@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axiosInstance from '../../api/axiosInstance';
+import { maskIdentityNumber } from '../../utils/maskUtils';
 
 const CitizenProfile = () => {
   const { user, details } = useContext(AuthContext);
@@ -107,7 +108,7 @@ const CitizenProfile = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '8px', fontSize: '13px' }}>
                 <span style={{ color: '#64748b' }}>Doc Number:</span>
-                <span style={{ color: '#fff', fontFamily: 'monospace' }}>{details?.identityNumber}</span>
+                <span style={{ color: '#fff', fontFamily: 'monospace' }}>{maskIdentityNumber(details?.identityType, details?.identityNumber)}</span>
               </div>
               
               {details?.identityDocument && (

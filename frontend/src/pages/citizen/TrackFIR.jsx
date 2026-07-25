@@ -25,7 +25,12 @@ const TrackFIR = () => {
   const fetchCases = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get('/api/citizen/my-cases');
+      let res;
+      try {
+        res = await axiosInstance.get('/citizen/my-cases');
+      } catch (e) {
+        res = await axiosInstance.get('/api/citizen/my-cases');
+      }
       if (res.data && res.data.success) {
         setCases(res.data.crimes);
         if (res.data.crimes.length > 0) {
@@ -60,9 +65,16 @@ const TrackFIR = () => {
 
   const handleDownloadPDF = async (crime) => {
     try {
-      const response = await axiosInstance.get(`/api/citizen/cases/${crime.id}/download`, {
-        responseType: 'blob'
-      });
+      let response;
+      try {
+        response = await axiosInstance.get(`/citizen/cases/${crime.id}/download`, {
+          responseType: 'blob'
+        });
+      } catch (e) {
+        response = await axiosInstance.get(`/api/citizen/cases/${crime.id}/download`, {
+          responseType: 'blob'
+        });
+      }
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -93,9 +105,16 @@ const TrackFIR = () => {
     formData.append('file', evidenceFile);
 
     try {
-      const res = await axiosInstance.post(`/api/citizen/cases/${selectedCase.id}/evidence`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      let res;
+      try {
+        res = await axiosInstance.post(`/citizen/cases/${selectedCase.id}/evidence`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } catch (e) {
+        res = await axiosInstance.post(`/api/citizen/cases/${selectedCase.id}/evidence`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
       if (res.data && res.data.success) {
         setSuccess('Additional evidence submitted successfully!');
         setEvidenceFile(null);

@@ -16,6 +16,7 @@ const RegisterFIR = () => {
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('Central');
   const [policeStation, setPoliceStation] = useState('');
+  const [showStationDropdown, setShowStationDropdown] = useState(false);
   const [pincode, setPincode] = useState('');
 
   const [witnessInfo, setWitnessInfo] = useState('');
@@ -34,18 +35,30 @@ const RegisterFIR = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const catRes = await axiosInstance.get('/api/crime-categories');
-        if (catRes.data && catRes.data.success) {
-          setCategories(catRes.data.categories);
-          if (catRes.data.categories.length > 0) {
-            setCategoryName(catRes.data.categories[0].name);
-          }
+        let catData = [];
+        try {
+          const catRes = await axiosInstance.get('/admin/crime-categories');
+          catData = catRes.data?.categories || (Array.isArray(catRes.data) ? catRes.data : []);
+        } catch (e1) {
+          const catRes = await axiosInstance.get('/crime-categories');
+          catData = catRes.data?.categories || (Array.isArray(catRes.data) ? catRes.data : []);
         }
         
-        const locRes = await axiosInstance.get('/api/locations');
-        if (locRes.data && locRes.data.success) {
-          setLocationsList(locRes.data.locations);
+        setCategories(catData);
+        if (catData.length > 0) {
+          setCategoryName(catData[0].name);
         }
+        
+        let locData = [];
+        try {
+          const locRes = await axiosInstance.get('/admin/locations');
+          locData = locRes.data?.locations || (Array.isArray(locRes.data) ? locRes.data : []);
+        } catch (e2) {
+          const locRes = await axiosInstance.get('/locations');
+          locData = locRes.data?.locations || (Array.isArray(locRes.data) ? locRes.data : []);
+        }
+
+        setLocationsList(locData);
       } catch (err) {
         console.error('Error fetching categories/locations:', err);
       }
@@ -53,21 +66,29 @@ const RegisterFIR = () => {
     fetchData();
   }, []);
 
-  // Filter police stations based on city / state input
+  // Filter police stations based on user typed station query, city, or state
   const getFilteredStations = () => {
-    if (!city && !state) return [];
+    const query = policeStation.trim().toLowerCase();
     return locationsList.filter(loc => {
-      const matchState = state ? loc.state.toLowerCase().includes(state.toLowerCase()) : true;
-      const matchCity = city ? loc.city.toLowerCase().includes(city.toLowerCase()) : true;
-      return matchState && matchCity;
+      const stName = (loc.police_station || loc.policeStation || '').toLowerCase();
+      const cName = (loc.city || '').toLowerCase();
+      const sName = (loc.state || '').toLowerCase();
+
+      const matchesQuery = !query || stName.includes(query) || stName.startsWith(query) || cName.includes(query) || sName.includes(query);
+      const matchesState = state ? sName.includes(state.toLowerCase()) : true;
+      const matchesCity = city ? cName.includes(city.toLowerCase()) : true;
+
+      return matchesQuery && matchesState && matchesCity;
     });
   };
 
   const handleStationClick = (station) => {
-    setPoliceStation(station.police_station);
-    setDistrict(station.district);
-    setState(station.state);
-    setCity(station.city);
+    const stName = station.police_station || station.policeStation;
+    setPoliceStation(stName);
+    if (station.district) setDistrict(station.district);
+    if (station.state) setState(station.state);
+    if (station.city) setCity(station.city);
+    setShowStationDropdown(false);
   };
 
   const handleSubmit = async (e) => {
@@ -101,9 +122,16 @@ const RegisterFIR = () => {
     if (docFile) formData.append('document', docFile);
 
     try {
-      const res = await axiosInstance.post('/api/citizen/fir', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      let res;
+      try {
+        res = await axiosInstance.post('/citizen/fir', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } catch (e) {
+        res = await axiosInstance.post('/api/citizen/fir', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
       if (res.data && res.data.success) {
         setSuccess(`Digital FIR filed successfully! Case ID: ${res.data.crimeId}. Redirecting to tracker...`);
         setTimeout(() => {
@@ -196,51 +224,99 @@ const RegisterFIR = () => {
           </div>
         </div>
 
-        {/* Dynamic station auto-suggestion list */}
-        {getFilteredStations().length > 0 && (
-          <div style={{
-            background: '#0B1220',
-            border: '1px solid #223248',
-            borderRadius: '12px',
-            padding: '16px',
-          }}>
-            <span style={{ fontSize: '11px', color: '#4DA3FF', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
-              DETECTED NEARBY COMMAND STATIONS:
-            </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              {getFilteredStations().map((station, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleStationClick(station)}
-                  style={{
-                    backgroundColor: policeStation === station.police_station ? 'rgba(77, 163, 255, 0.15)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${policeStation === station.police_station ? '#4DA3FF' : '#223248'}`,
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: '#fff',
-                    fontSize: '11px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  🏫 {station.police_station}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="form-group">
+        <div className="form-group" style={{ position: 'relative' }}>
           <label>Selected Police Station</label>
           <input
             type="text"
             className="form-control"
-            placeholder="Search city/state above and select suggested station"
+            placeholder="Type police station name (e.g., M, Navrangpura, Satellite, Colaba...)"
             value={policeStation}
-            onChange={e => setPoliceStation(e.target.value)}
+            onChange={e => {
+              setPoliceStation(e.target.value);
+              setShowStationDropdown(true);
+            }}
+            onFocus={() => setShowStationDropdown(true)}
             required
             style={{ fontWeight: '700', color: '#4DA3FF' }}
           />
+
+          {/* Interactive Live Suggestion Dropdown */}
+          {showStationDropdown && getFilteredStations().length > 0 && (
+            <div 
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 999,
+                backgroundColor: '#0B1220',
+                border: '1px solid #4DA3FF',
+                borderRadius: '10px',
+                marginTop: '6px',
+                maxHeight: '230px',
+                overflowY: 'auto',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7)'
+              }}
+            >
+              <div style={{ 
+                padding: '8px 12px', 
+                fontSize: '11px', 
+                color: '#4DA3FF', 
+                fontWeight: 'bold', 
+                borderBottom: '1px solid #223248', 
+                background: '#070D18',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span>SUGGESTED POLICE STATIONS ({getFilteredStations().length})</span>
+                <span 
+                  onClick={() => setShowStationDropdown(false)} 
+                  style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '10px' }}
+                >
+                  ✕ Close
+                </span>
+              </div>
+              {getFilteredStations().map((station, idx) => {
+                const name = station.police_station || station.policeStation;
+                const isSelected = policeStation === name;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleStationClick(station)}
+                    style={{
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      borderBottom: idx === getFilteredStations().length - 1 ? 'none' : '1px solid #162438',
+                      backgroundColor: isSelected ? 'rgba(77, 163, 255, 0.15)' : 'transparent',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'background 0.15s ease'
+                    }}
+                    onMouseEnter={e => {
+                      if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(77, 163, 255, 0.1)';
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: '#fff', fontWeight: '600', fontSize: '13px', display: 'block' }}>
+                        🏫 {name}
+                      </span>
+                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>
+                        {station.city}, {station.state} {station.district ? `(${station.district})` : ''}
+                      </span>
+                    </div>
+                    <span style={{ color: '#4DA3FF', fontSize: '11px', fontWeight: 'bold' }}>
+                      {isSelected ? '✓ Selected' : 'Select →'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Detailed description */}

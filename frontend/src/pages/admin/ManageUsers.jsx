@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { renderDepartmentBadge } from '../../api/departmentHelper';
+import { maskIdentityNumber } from '../../utils/maskUtils';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -613,7 +614,7 @@ const ManageUsers = () => {
                       </td>
                       <td>
                         <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{c.identityType}</div>
-                        <div style={{ fontSize: '11px', color: '#4DA3FF', fontFamily: 'monospace' }}>No: {c.identityNumber}</div>
+                        <div style={{ fontSize: '11px', color: '#4DA3FF', fontFamily: 'monospace' }}>No: {maskIdentityNumber(c.identityType, c.identityNumber)}</div>
                       </td>
                       <td>
                         {c.identityDocument ? (

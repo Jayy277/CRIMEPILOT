@@ -6,7 +6,7 @@ const path = require('path');
 // Load environment variables FIRST
 dotenv.config();
 
-// MySQL sync via Sequelize (replaces MongoDB connectDB)
+// MySQL sync via Sequelize
 const { syncDatabase } = require('./models/index');
 
 const auditLogger = require('./middleware/logMiddleware');
@@ -22,7 +22,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes    = require('./routes/dashboardRoutes');
 const aiRoutes           = require('./routes/aiRoutes');
 
-const { getCategorySections } = require('./controllers/adminController');
+const { getCategorySections, getCategories, getLocations } = require('./controllers/adminController');
 const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
@@ -48,6 +48,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard',     dashboardRoutes);
 app.use('/api/ai',            aiRoutes);
 
+// Direct Category & Location aliases
+app.get('/api/crime-categories', protect, getCategories);
+app.get('/api/locations', protect, getLocations);
 app.get('/api/crime-categories/:id/sections', protect, getCategorySections);
 
 // Healthcheck

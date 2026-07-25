@@ -17,7 +17,12 @@ const CitizenDashboard = () => {
   useEffect(() => {
     const fetchCases = async () => {
       try {
-        const res = await axiosInstance.get('/api/citizen/my-cases');
+        let res;
+        try {
+          res = await axiosInstance.get('/citizen/my-cases');
+        } catch (e) {
+          res = await axiosInstance.get('/api/citizen/my-cases');
+        }
         if (res.data && res.data.success) {
           setCases(res.data.crimes);
         }

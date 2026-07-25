@@ -379,6 +379,45 @@ class CitizenSignupView(APIView):
     if email_lower.endswith('@crimepilot.com'):
       return Response({'success': False, 'message': 'Citizen registration email cannot use @crimepilot.com domain'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Identity Number Format Validation & Normalization
+    clean_id_number = re.sub(r'[\s-]', '', str(identity_number)).upper()
+    if identity_type == 'Aadhaar Card':
+      if not re.match(r'^\d{12}$', clean_id_number):
+        return Response({
+          'success': False,
+          'field': 'identityNumber',
+          'message': 'Aadhaar number must contain exactly 12 digits.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    elif identity_type == 'Driving License':
+      if not re.match(r'^[A-Z]{2}\d{2}[A-Z0-9]{7,11}$', clean_id_number):
+        return Response({
+          'success': False,
+          'field': 'identityNumber',
+          'message': 'Please enter a valid Driving Licence number.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    elif identity_type == 'Passport':
+      if not re.match(r'^[A-Z]\d{7}$', clean_id_number):
+        return Response({
+          'success': False,
+          'field': 'identityNumber',
+          'message': 'Passport number must contain 1 letter followed by 7 digits.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    elif identity_type == 'Voter ID':
+      if not re.match(r'^[A-Z]{3}\d{7}$', clean_id_number):
+        return Response({
+          'success': False,
+          'field': 'identityNumber',
+          'message': 'Please enter a valid Voter ID / EPIC number.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    else:
+      return Response({
+        'success': False,
+        'field': 'identityType',
+        'message': 'Invalid Identity Type specified.'
+      }, status=status.HTTP_400_BAD_REQUEST)
+
+    identity_number = clean_id_number
+
 
     # File validation
     id_doc = request.FILES.get('identityDocument')

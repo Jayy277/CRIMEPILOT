@@ -1,6 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+
+const ID_CONFIGS = {
+  'Aadhaar Card': {
+    label: 'Aadhaar Card',
+    placeholder: '123456789012',
+    helperText: 'Enter your 12-digit Aadhaar number',
+    maxLength: 14, // 12 digits + optional spaces
+    errorMessage: 'Aadhaar number must contain exactly 12 digits.',
+    validate: (val) => {
+      const clean = val.replace(/[\s-]/g, '');
+      return /^\d{12}$/.test(clean);
+    },
+    formatInput: (val) => {
+      const digits = val.replace(/\D/g, '').slice(0, 12);
+      return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+    }
+  },
+  'Driving License': {
+    label: 'Driving License',
+    placeholder: 'GJ01 20230012345',
+    helperText: 'Example: GJ01 20230012345',
+    maxLength: 18,
+    errorMessage: 'Please enter a valid Driving Licence number.',
+    validate: (val) => {
+      const clean = val.toUpperCase().replace(/[\s-]/g, '');
+      return /^[A-Z]{2}\d{2}[A-Z0-9]{7,11}$/.test(clean);
+    },
+    formatInput: (val) => val.toUpperCase()
+  },
+  'Passport': {
+    label: 'Passport',
+    placeholder: 'A1234567',
+    helperText: 'Example: A1234567',
+    maxLength: 8,
+    errorMessage: 'Passport number must contain 1 letter followed by 7 digits.',
+    validate: (val) => {
+      const clean = val.toUpperCase().replace(/\s/g, '');
+      return /^[A-Z]\d{7}$/.test(clean);
+    },
+    formatInput: (val) => val.toUpperCase().replace(/\s/g, '').slice(0, 8)
+  },
+  'Voter ID': {
+    label: 'Voter ID',
+    placeholder: 'ABC1234567',
+    helperText: 'Example: ABC1234567',
+    maxLength: 10,
+    errorMessage: 'Please enter a valid Voter ID / EPIC number.',
+    validate: (val) => {
+      const clean = val.toUpperCase().replace(/\s/g, '');
+      return /^[A-Z]{3}\d{7}$/.test(clean);
+    },
+    formatInput: (val) => val.toUpperCase().replace(/\s/g, '').slice(0, 10)
+  }
+};
 
 const CitizenRegister = () => {
   const [name, setName] = useState('');
@@ -18,10 +72,48 @@ const CitizenRegister = () => {
   const [identityNumber, setIdentityNumber] = useState('');
   const [idFile, setIdFile] = useState(null);
 
+  const [identityTypeError, setIdentityTypeError] = useState('');
+  const [identityTouch, setIdentityTouch] = useState(false);
+  const idInputRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+
+  const handleIdentityTypeChange = (e) => {
+    const newType = e.target.value;
+    setIdentityType(newType);
+    setIdentityNumber('');
+    setIdentityTypeError('');
+    setIdentityTouch(false);
+  };
+
+  const handleIdentityNumberChange = (e) => {
+    const rawVal = e.target.value;
+    const config = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
+    const formattedVal = config.formatInput ? config.formatInput(rawVal) : rawVal;
+    
+    setIdentityNumber(formattedVal);
+
+    if (identityTouch) {
+      if (formattedVal.trim() && !config.validate(formattedVal)) {
+        setIdentityTypeError(config.errorMessage);
+      } else {
+        setIdentityTypeError('');
+      }
+    }
+  };
+
+  const handleIdentityBlur = () => {
+    setIdentityTouch(true);
+    const config = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
+    if (identityNumber.trim() && !config.validate(identityNumber)) {
+      setIdentityTypeError(config.errorMessage);
+    } else {
+      setIdentityTypeError('');
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -37,6 +129,7 @@ const CitizenRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -46,6 +139,19 @@ const CitizenRegister = () => {
       setError('Mobile number must be 10 digits starting with 7, 8, or 9.');
       return;
     }
+
+    // Dynamic Identity Validation on Submit
+    const currentConfig = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
+    if (!identityNumber || !currentConfig.validate(identityNumber)) {
+      setIdentityTouch(true);
+      setIdentityTypeError(currentConfig.errorMessage);
+      if (idInputRef.current) {
+        idInputRef.current.focus();
+        idInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     if (!idFile) {
       setError('Please upload your identity proof.');
       return;
@@ -54,6 +160,9 @@ const CitizenRegister = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+
+    // Normalize identity number before sending to backend (strip spaces)
+    const normalizedIdentityNumber = identityNumber.replace(/[\s-]/g, '').toUpperCase();
 
     const formData = new FormData();
     formData.append('name', name);
@@ -67,7 +176,8 @@ const CitizenRegister = () => {
     formData.append('city', city);
     formData.append('pincode', pincode);
     formData.append('identityType', identityType);
-    formData.append('identityNumber', identityNumber);
+    formData.append('identityNumber', normalizedIdentityNumber);
+    formData.append('identityDocument', idFile);
     formData.append('idProof', idFile);
 
     try {
@@ -86,11 +196,22 @@ const CitizenRegister = () => {
         setError(res.data.message || 'Registration failed.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Server error. Please try again.');
+      const serverMsg = err.response?.data?.message;
+      if (err.response?.data?.field === 'identityNumber' && serverMsg) {
+        setIdentityTypeError(serverMsg);
+        if (idInputRef.current) {
+          idInputRef.current.focus();
+        }
+      } else {
+        setError(serverMsg || 'Server error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const currentConfig = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
+  const isValidFormat = identityNumber.trim() && currentConfig.validate(identityNumber);
 
   return (
     <div style={{
@@ -112,7 +233,7 @@ const CitizenRegister = () => {
       overflow: 'hidden',
       boxSizing: 'border-box'
     }}>
-      {/* Subtle Light Dark Overlay (rgba(11,18,32,0.15)) - Background map stays crisp, sharp and highly visible */}
+      {/* Background Overlay */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -124,25 +245,24 @@ const CitizenRegister = () => {
         pointerEvents: 'none'
       }} />
 
-      {/* FOREGROUND: Center aligned glassmorphism register card */}
+      {/* Glassmorphism Register Card */}
       <div className="glass-card" style={{
-        width: '700px', // Width exactly 700px
+        width: '700px',
         maxWidth: '100%',
-        maxHeight: '90vh', // Keeps the layout clean and fits inside the viewport
+        maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: '24px',
         border: '1px solid rgba(0, 217, 255, 0.15)',
-        background: 'rgba(18, 27, 45, 0.82)', // Dark translucent card background
-        backdropFilter: 'blur(12px)', // Backdrop blur is on the card itself only
-        boxShadow: '0 0 35px rgba(0, 217, 255, 0.25), inset 0 0 15px rgba(0, 217, 255, 0.05)', // Cyan border glow
+        background: 'rgba(18, 27, 45, 0.82)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 0 35px rgba(0, 217, 255, 0.25), inset 0 0 15px rgba(0, 217, 255, 0.05)',
         zIndex: 2,
         position: 'relative',
         transition: 'all 0.3s ease',
         boxSizing: 'border-box'
       }}>
         
-        {/* Scrollable inner content container to prevent whole-page scrolling */}
         <div style={{
           padding: '40px',
           overflowY: 'auto',
@@ -251,7 +371,7 @@ const CitizenRegister = () => {
             {/* Identity Proof */}
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Identity Type</label>
-              <select className="form-control" value={identityType} onChange={e => setIdentityType(e.target.value)}>
+              <select className="form-control" value={identityType} onChange={handleIdentityTypeChange}>
                 <option value="Aadhaar Card">Aadhaar Card</option>
                 <option value="Driving License">Driving License</option>
                 <option value="Passport">Passport</option>
@@ -260,8 +380,42 @@ const CitizenRegister = () => {
             </div>
 
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Identity Card Number</label>
-              <input type="text" className="form-control" value={identityNumber} onChange={e => setIdentityNumber(e.target.value)} required placeholder="Card ID Number" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>
+                  Identity Card Number
+                </label>
+                {isValidFormat && (
+                  <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ✓ Valid format
+                  </span>
+                )}
+              </div>
+              
+              <input
+                ref={idInputRef}
+                type="text"
+                className="form-control"
+                value={identityNumber}
+                onChange={handleIdentityNumberChange}
+                onBlur={handleIdentityBlur}
+                maxLength={currentConfig.maxLength}
+                required
+                placeholder={currentConfig.placeholder}
+                style={{
+                  borderColor: identityTypeError ? '#ef4444' : (isValidFormat ? '#10b981' : undefined),
+                  boxShadow: identityTypeError ? '0 0 10px rgba(239, 68, 68, 0.3)' : undefined
+                }}
+              />
+              
+              {identityTypeError ? (
+                <span style={{ fontSize: '11px', color: '#f87171', display: 'block', marginTop: '4px', fontWeight: 'bold' }}>
+                  ⚠️ {identityTypeError}
+                </span>
+              ) : (
+                <span style={{ fontSize: '11px', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  {currentConfig.helperText}
+                </span>
+              )}
             </div>
 
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
@@ -329,7 +483,6 @@ const CitizenRegister = () => {
           box-shadow: 0 0 50px rgba(0, 217, 255, 0.4) !important;
           border-color: rgba(0, 217, 255, 0.3) !important;
         }
-        /* Custom scrollbar styling for the inner form container */
         ::-webkit-scrollbar {
           width: 6px;
         }
