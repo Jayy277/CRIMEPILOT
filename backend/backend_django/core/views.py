@@ -699,9 +699,13 @@ class CitizenFIRSubmitView(APIView):
     city = data.get('city')
     district = data.get('district', 'Central')
     police_station = data.get('police_station')
+    pincode = data.get('pincode', '').strip()
 
-    if not category_name or not date_val or not time_val or not description or not state or not city or not police_station:
+    if not category_name or not date_val or not time_val or not description or not state or not city or not police_station or not pincode:
       return Response({'success': False, 'message': 'Missing required fields for FIR registration'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if len(pincode) != 6 or not pincode.isdigit():
+      return Response({'success': False, 'message': 'Pincode is compulsory and must be exactly 6 digits.'}, status=status.HTTP_400_BAD_REQUEST)
 
     category = CrimeCategory.objects.filter(name__iexact=category_name).first()
     if not category:
@@ -723,8 +727,10 @@ class CitizenFIRSubmitView(APIView):
 
     try:
       parsed_date = datetime.datetime.strptime(date_val, '%Y-%m-%d').date()
-    except Exception:
-      parsed_date = datetime.date.today()
+      if parsed_date > datetime.date.today():
+        return Response({'success': False, 'message': 'Incident Date cannot be in the future or tomorrow.'}, status=status.HTTP_400_BAD_REQUEST)
+    except ValueError:
+      return Response({'success': False, 'message': 'Invalid date format. Please use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
 
     crime = Crime.objects.create(
       crime_category=category,

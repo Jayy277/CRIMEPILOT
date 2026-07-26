@@ -16,7 +16,8 @@ const RegisterFIR = () => {
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('Central');
   const [policeStation, setPoliceStation] = useState('');
-  const [showStationDropdown, setShowStationDropdown] = useState(false);
+  const [stationSearch, setStationSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [pincode, setPincode] = useState('');
 
   const [witnessInfo, setWitnessInfo] = useState('');
@@ -29,6 +30,7 @@ const RegisterFIR = () => {
   const [captchaChecked, setCaptchaChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
@@ -66,45 +68,135 @@ const RegisterFIR = () => {
     fetchData();
   }, []);
 
-  // Filter police stations based on user typed station query, city, or state
-  const getFilteredStations = () => {
-    const query = policeStation.trim().toLowerCase();
+  const getMatchingStations = () => {
+    const q = stationSearch.trim().toLowerCase();
+    if (!q) return locationsList;
     return locationsList.filter(loc => {
-      const stName = (loc.police_station || loc.policeStation || '').toLowerCase();
-      const cName = (loc.city || '').toLowerCase();
-      const sName = (loc.state || '').toLowerCase();
-
-      const matchesQuery = !query || stName.includes(query) || stName.startsWith(query) || cName.includes(query) || sName.includes(query);
-      const matchesState = state ? sName.includes(state.toLowerCase()) : true;
-      const matchesCity = city ? cName.includes(city.toLowerCase()) : true;
-
-      return matchesQuery && matchesState && matchesCity;
+      const name = (loc.police_station || loc.policeStation || '').toLowerCase();
+      const c = (loc.city || '').toLowerCase();
+      const s = (loc.state || '').toLowerCase();
+      const d = (loc.district || '').toLowerCase();
+      return name.includes(q) || c.includes(q) || s.includes(q) || d.includes(q);
     });
   };
 
-  const handleStationClick = (station) => {
-    const stName = station.police_station || station.policeStation;
-    setPoliceStation(stName);
-    if (station.district) setDistrict(station.district);
+  const handleSelectStation = (station) => {
+    const name = station.police_station || station.policeStation;
+    setPoliceStation(name);
+    setStationSearch(name);
     if (station.state) setState(station.state);
     if (station.city) setCity(station.city);
-    setShowStationDropdown(false);
+    if (station.district) setDistrict(station.district);
+    setShowDropdown(false);
+    setFieldErrors(prev => ({ ...prev, policeStation: null }));
+  };
+
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    const str = timeStr.trim().toUpperCase();
+    
+    // Check 12-hour format with AM/PM (e.g. 05:30 PM, 5:30 PM, 5:30PM)
+    const ampmMatch = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+    if (ampmMatch) {
+      let hours = parseInt(ampmMatch[1], 10);
+      const minutes = parseInt(ampmMatch[2], 10);
+      const period = ampmMatch[3];
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    // Check 24-hour format (e.g. 17:30 or 09:15)
+    const match24 = str.match(/^(\d{1,2}):(\d{2})/);
+    if (match24) {
+      const hours = parseInt(match24[1], 10);
+      const minutes = parseInt(match24[2], 10);
+      return hours * 60 + minutes;
+    }
+
+    return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!captchaChecked) {
-      setError('Please verify the legal declaration checklist before submitting.');
-      return;
+    setFieldErrors({});
+    setError('');
+    setSuccess('');
+
+    const newErrors = {};
+
+    if (!categoryName) {
+      newErrors.category = 'Please select a Crime Category.';
     }
-    if (!policeStation) {
-      setError('Please select a target Police Station.');
+
+    if (!date) {
+      newErrors.date = 'Incident Date is required. Please select a date.';
+    } else {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      if (date > todayStr) {
+        newErrors.date = 'Incident Date cannot be in the future or tomorrow.';
+      }
+    }
+
+    if (!time) {
+      newErrors.time = 'Incident Time is required. Please select a time.';
+    } else if (date) {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      if (date === todayStr) {
+        const userTimeMinutes = parseTimeToMinutes(time);
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        if (userTimeMinutes !== null && userTimeMinutes > currentMinutes) {
+          const liveFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          newErrors.time = `For today's date, Incident Time cannot be in the future (Current live time is ${liveFormatted}).`;
+        }
+      }
+    }
+
+    if (!state.trim()) {
+      newErrors.state = 'State is required.';
+    }
+
+    if (!city.trim()) {
+      newErrors.city = 'City is required.';
+    }
+
+    const pincodeClean = pincode.trim();
+    if (!pincodeClean) {
+      newErrors.pincode = 'Pincode is required.';
+    } else if (!/^\d{6}$/.test(pincodeClean)) {
+      newErrors.pincode = 'Pincode must be compulsory 6 digits (e.g. 380015).';
+    }
+
+    const isValidStation = locationsList.some(
+      loc => (loc.police_station || loc.policeStation) === policeStation
+    );
+    if (!policeStation || !isValidStation) {
+      newErrors.policeStation = 'Please search and select a valid registered Police Station from the list.';
+    }
+
+    if (!description.trim()) {
+      newErrors.description = 'Incident Description is required. Please describe what happened.';
+    } else if (description.trim().length < 10) {
+      newErrors.description = 'Incident Description must be at least 10 characters long.';
+    }
+
+    if (!witnessInfo.trim()) {
+      newErrors.witnessInfo = 'Witness Information is required. Please provide witness names/contacts or enter N/A.';
+    }
+
+    if (!captchaChecked) {
+      newErrors.captcha = 'Please check the legal declaration checklist before submitting.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      setError('Please resolve the highlighted field errors below before submitting your FIR.');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     const formData = new FormData();
     formData.append('crimeCategory', categoryName);
@@ -116,6 +208,7 @@ const RegisterFIR = () => {
     formData.append('city', city);
     formData.append('district', district);
     formData.append('police_station', policeStation);
+    formData.append('pincode', pincodeClean);
 
     if (photoFile) formData.append('photo', photoFile);
     if (videoFile) formData.append('video', videoFile);
@@ -140,7 +233,8 @@ const RegisterFIR = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'FIR filing failed. Please check active clearances and inputs.');
+      const apiMsg = err.response?.data?.message || err.response?.data?.error || 'FIR filing failed. Please check your account status and inputs.';
+      setError(apiMsg);
     } finally {
       setLoading(false);
     }
@@ -196,53 +290,252 @@ const RegisterFIR = () => {
         {/* Date and Time */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           <div className="form-group">
-            <label>Incident Date</label>
-            <input type="date" className="form-control" value={date} onChange={e => setDate(e.target.value)} required />
+            <label style={{ color: fieldErrors.date ? '#fca5a5' : '#64748b' }}>
+              Incident Date * (Click to Open Calendar)
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="date"
+                className="form-control"
+                value={date}
+                max={new Date().toISOString().split('T')[0]}
+                onChange={e => {
+                  setDate(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, date: null }));
+                }}
+                onClick={e => { if (e.target.showPicker) e.target.showPicker(); }}
+                required
+                style={{
+                  colorScheme: 'dark',
+                  cursor: 'pointer',
+                  paddingRight: '40px',
+                  borderColor: fieldErrors.date ? '#ef4444' : '#223248',
+                  boxShadow: fieldErrors.date ? '0 0 0 1px #ef4444' : 'none'
+                }}
+              />
+              <span
+                onClick={(e) => {
+                  const inputEl = e.currentTarget.previousElementSibling;
+                  if (inputEl && inputEl.showPicker) inputEl.showPicker();
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  userSelect: 'none'
+                }}
+                title="Click to Open Calendar Picker"
+              >
+                📅
+              </span>
+            </div>
+            {fieldErrors.date && (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.date}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
-            <label>Incident Time (approx)</label>
-            <input type="text" className="form-control" placeholder="11:45 PM" value={time} onChange={e => setTime(e.target.value)} required />
+            <label style={{ color: fieldErrors.time ? '#fca5a5' : '#64748b' }}>
+              Incident Time (approx) *
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="time"
+                className="form-control"
+                value={time}
+                onChange={e => {
+                  setTime(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, time: null }));
+                }}
+                onClick={e => { if (e.target.showPicker) e.target.showPicker(); }}
+                required
+                style={{
+                  colorScheme: 'dark',
+                  cursor: 'pointer',
+                  paddingRight: '40px',
+                  borderColor: fieldErrors.time ? '#ef4444' : '#223248',
+                  boxShadow: fieldErrors.time ? '0 0 0 1px #ef4444' : 'none'
+                }}
+              />
+              <span
+                onClick={(e) => {
+                  const inputEl = e.currentTarget.previousElementSibling;
+                  if (inputEl && inputEl.showPicker) inputEl.showPicker();
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  userSelect: 'none'
+                }}
+                title="Click to Open Time Picker"
+              >
+                🕒
+              </span>
+            </div>
+            {fieldErrors.time && (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.time}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Location selectors */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
           <div className="form-group">
-            <label>State</label>
-            <input type="text" className="form-control" placeholder="Gujarat" value={state} onChange={e => setState(e.target.value)} required />
+            <label style={{ color: fieldErrors.state ? '#fca5a5' : '#64748b' }}>State *</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Gujarat"
+              value={state}
+              onChange={e => {
+                setState(e.target.value);
+                setFieldErrors(prev => ({ ...prev, state: null }));
+              }}
+              required
+              style={{
+                borderColor: fieldErrors.state ? '#ef4444' : '#223248',
+                boxShadow: fieldErrors.state ? '0 0 0 1px #ef4444' : 'none'
+              }}
+            />
+            {fieldErrors.state && (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.state}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
-            <label>City</label>
-            <input type="text" className="form-control" placeholder="Ahmedabad" value={city} onChange={e => setCity(e.target.value)} required />
+            <label style={{ color: fieldErrors.city ? '#fca5a5' : '#64748b' }}>City *</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Ahmedabad"
+              value={city}
+              onChange={e => {
+                setCity(e.target.value);
+                setFieldErrors(prev => ({ ...prev, city: null }));
+              }}
+              required
+              style={{
+                borderColor: fieldErrors.city ? '#ef4444' : '#223248',
+                boxShadow: fieldErrors.city ? '0 0 0 1px #ef4444' : 'none'
+              }}
+            />
+            {fieldErrors.city && (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.city}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
-            <label>Pincode</label>
-            <input type="text" className="form-control" placeholder="380015" value={pincode} onChange={e => setPincode(e.target.value)} required />
+            <label style={{ color: fieldErrors.pincode ? '#fca5a5' : '#64748b' }}>Pincode * (6 Digits)</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. 380015"
+              value={pincode}
+              onChange={e => {
+                setPincode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                setFieldErrors(prev => ({ ...prev, pincode: null }));
+              }}
+              maxLength={6}
+              required
+              style={{
+                borderColor: fieldErrors.pincode ? '#ef4444' : (pincode && pincode.length !== 6 ? '#f59e0b' : '#223248'),
+                boxShadow: fieldErrors.pincode ? '0 0 0 1px #ef4444' : 'none'
+              }}
+            />
+            {fieldErrors.pincode ? (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.pincode}
+              </span>
+            ) : pincode && pincode.length !== 6 ? (
+              <span style={{ fontSize: '10px', color: '#f59e0b', marginTop: '2px', display: 'block' }}>
+                Pincode must be exactly 6 digits ({pincode.length}/6)
+              </span>
+            ) : null}
           </div>
         </div>
 
         <div className="form-group" style={{ position: 'relative' }}>
-          <label>Selected Police Station</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Type police station name (e.g., M, Navrangpura, Satellite, Colaba...)"
-            value={policeStation}
-            onChange={e => {
-              setPoliceStation(e.target.value);
-              setShowStationDropdown(true);
-            }}
-            onFocus={() => setShowStationDropdown(true)}
-            required
-            style={{ fontWeight: '700', color: '#4DA3FF' }}
-          />
+          <label style={{ color: fieldErrors.policeStation ? '#fca5a5' : '#64748b' }}>
+            Selected Police Station * (Search & Select)
+          </label>
+          <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="🔍 Type to search police station by name, city, or state..."
+              value={stationSearch}
+              onChange={(e) => {
+                const val = e.target.value;
+                setStationSearch(val);
+                setShowDropdown(true);
+                if (policeStation && val !== policeStation) {
+                  setPoliceStation('');
+                }
+                setFieldErrors(prev => ({ ...prev, policeStation: null }));
+              }}
+              onFocus={() => setShowDropdown(true)}
+              style={{
+                fontWeight: '600',
+                color: policeStation ? '#10b981' : '#fff',
+                borderColor: fieldErrors.policeStation ? '#ef4444' : (policeStation ? '#10b981' : '#223248'),
+                boxShadow: fieldErrors.policeStation ? '0 0 0 1px #ef4444' : 'none'
+              }}
+            />
+            {stationSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPoliceStation('');
+                  setStationSearch('');
+                  setShowDropdown(true);
+                  setFieldErrors(prev => ({ ...prev, policeStation: null }));
+                }}
+                style={{
+                  padding: '8px 14px',
+                  backgroundColor: 'rgba(239,68,68,0.15)',
+                  border: '1px solid #ef4444',
+                  color: '#fca5a5',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
 
-          {/* Interactive Live Suggestion Dropdown */}
-          {showStationDropdown && getFilteredStations().length > 0 && (
-            <div 
+          {/* Inline Field Error or Status Indicator */}
+          {fieldErrors.policeStation ? (
+            <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 'bold' }}>
+              ⚠️ {fieldErrors.policeStation}
+            </div>
+          ) : policeStation ? (
+            <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px', fontWeight: 'bold' }}>
+              ✓ Registered Station Selected: {policeStation} ({city}, {state})
+            </div>
+          ) : (
+            <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px' }}>
+              ⚠️ Type above to search, then click a matching station from the list below to select.
+            </div>
+          )}
+
+          {/* Search Dropdown Popup */}
+          {showDropdown && (
+            <div
               style={{
                 position: 'absolute',
                 top: '100%',
@@ -253,100 +546,145 @@ const RegisterFIR = () => {
                 border: '1px solid #4DA3FF',
                 borderRadius: '10px',
                 marginTop: '6px',
-                maxHeight: '230px',
+                maxHeight: '240px',
                 overflowY: 'auto',
-                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7)'
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85)'
               }}
             >
-              <div style={{ 
-                padding: '8px 12px', 
-                fontSize: '11px', 
-                color: '#4DA3FF', 
-                fontWeight: 'bold', 
-                borderBottom: '1px solid #223248', 
+              <div style={{
+                padding: '8px 12px',
+                fontSize: '11px',
+                color: '#4DA3FF',
+                fontWeight: 'bold',
+                borderBottom: '1px solid #223248',
                 background: '#070D18',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span>SUGGESTED POLICE STATIONS ({getFilteredStations().length})</span>
-                <span 
-                  onClick={() => setShowStationDropdown(false)} 
-                  style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '10px' }}
+                <span>REGISTERED POLICE STATIONS MATCHES ({getMatchingStations().length})</span>
+                <span
+                  onClick={() => setShowDropdown(false)}
+                  style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '11px' }}
                 >
-                  ✕ Close
+                  ✕ Close List
                 </span>
               </div>
-              {getFilteredStations().map((station, idx) => {
-                const name = station.police_station || station.policeStation;
-                const isSelected = policeStation === name;
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => handleStationClick(station)}
-                    style={{
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderBottom: idx === getFilteredStations().length - 1 ? 'none' : '1px solid #162438',
-                      backgroundColor: isSelected ? 'rgba(77, 163, 255, 0.15)' : 'transparent',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      transition: 'background 0.15s ease'
-                    }}
-                    onMouseEnter={e => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(77, 163, 255, 0.1)';
-                    }}
-                    onMouseLeave={e => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <div>
-                      <span style={{ color: '#fff', fontWeight: '600', fontSize: '13px', display: 'block' }}>
-                        🏫 {name}
-                      </span>
-                      <span style={{ color: '#94a3b8', fontSize: '11px' }}>
-                        {station.city}, {station.state} {station.district ? `(${station.district})` : ''}
+
+              {getMatchingStations().length === 0 ? (
+                <div style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
+                  No registered police station found matching "{stationSearch}".
+                  <br />
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>Please search by city (e.g., Ahmedabad, Mumbai, Delhi) or state.</span>
+                </div>
+              ) : (
+                getMatchingStations().map((station, idx) => {
+                  const name = station.police_station || station.policeStation;
+                  const isSelected = policeStation === name;
+                  return (
+                    <div
+                      key={station._id || station.id || idx}
+                      onClick={() => handleSelectStation(station)}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderBottom: idx === getMatchingStations().length - 1 ? 'none' : '1px solid #162438',
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={e => {
+                        if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(77, 163, 255, 0.12)';
+                      }}
+                      onMouseLeave={e => {
+                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <div>
+                        <span style={{ color: isSelected ? '#10b981' : '#fff', fontWeight: '600', fontSize: '13px', display: 'block' }}>
+                          🏫 {name}
+                        </span>
+                        <span style={{ color: '#94a3b8', fontSize: '11px' }}>
+                          📍 {station.city}, {station.state} {station.district ? `(${station.district})` : ''}
+                        </span>
+                      </div>
+                      <span style={{
+                        color: isSelected ? '#10b981' : '#4DA3FF',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        background: isSelected ? 'rgba(16,185,129,0.2)' : 'rgba(77,163,255,0.1)'
+                      }}>
+                        {isSelected ? '✓ Selected' : 'Select Station →'}
                       </span>
                     </div>
-                    <span style={{ color: '#4DA3FF', fontSize: '11px', fontWeight: 'bold' }}>
-                      {isSelected ? '✓ Selected' : 'Select →'}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           )}
         </div>
 
         {/* Detailed description */}
         <div className="form-group">
-          <label>Incident Description</label>
+          <label style={{ color: fieldErrors.description ? '#fca5a5' : '#64748b' }}>
+            Incident Description *
+          </label>
           <textarea
             className="form-control"
             value={description}
-            onChange={e => setDescription(e.target.value)}
+            onChange={e => {
+              setDescription(e.target.value);
+              setFieldErrors(prev => ({ ...prev, description: null }));
+            }}
             required
             placeholder="Describe the incident in detail (chronology, suspects profile, stolen properties, vehicle tags, etc.)"
-            style={{ minHeight: '120px' }}
+            style={{
+              minHeight: '120px',
+              borderColor: fieldErrors.description ? '#ef4444' : '#223248',
+              boxShadow: fieldErrors.description ? '0 0 0 1px #ef4444' : 'none'
+            }}
           />
+          {fieldErrors.description && (
+            <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+              ⚠️ {fieldErrors.description}
+            </span>
+          )}
         </div>
 
         {/* Witness and notes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           <div className="form-group">
-            <label>Witness Information</label>
+            <label style={{ color: fieldErrors.witnessInfo ? '#fca5a5' : '#64748b' }}>
+              Witness Information *
+            </label>
             <textarea
               className="form-control"
               value={witnessInfo}
-              onChange={e => setWitnessInfo(e.target.value)}
-              placeholder="Name, Contact detail of witnesses present at location"
-              style={{ minHeight: '80px' }}
+              onChange={e => {
+                setWitnessInfo(e.target.value);
+                setFieldErrors(prev => ({ ...prev, witnessInfo: null }));
+              }}
+              required
+              placeholder="Name, Contact detail of witnesses present at location (or enter N/A if none)"
+              style={{
+                minHeight: '80px',
+                borderColor: fieldErrors.witnessInfo ? '#ef4444' : '#223248',
+                boxShadow: fieldErrors.witnessInfo ? '0 0 0 1px #ef4444' : 'none'
+              }}
             />
+            {fieldErrors.witnessInfo && (
+              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+                ⚠️ {fieldErrors.witnessInfo}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
-            <label>Additional Notes</label>
+            <label>Additional Notes <span style={{ color: '#94a3b8', textTransform: 'none' }}>(Optional)</span></label>
             <textarea
               className="form-control"
               value={additionalNotes}
@@ -360,22 +698,22 @@ const RegisterFIR = () => {
         {/* Evidence files attachment */}
         <div>
           <label style={{ display: 'block', fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>
-            Evidence attachments (Max 5MB each)
+            Evidence Attachments <span style={{ color: '#94a3b8', textTransform: 'none', fontWeight: 'normal' }}>(Optional — Max 5MB each)</span>
           </label>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <div className="form-group">
-              <label style={{ fontSize: '11px' }}>Photo Evidence</label>
+              <label style={{ fontSize: '11px' }}>Photo Evidence <span style={{ color: '#94a3b8', textTransform: 'none' }}>(Optional)</span></label>
               <input type="file" onChange={e => setPhotoFile(e.target.files[0])} accept="image/*" className="form-control" style={{ padding: '8px' }} />
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '11px' }}>Video Evidence</label>
+              <label style={{ fontSize: '11px' }}>Video Evidence <span style={{ color: '#94a3b8', textTransform: 'none' }}>(Optional)</span></label>
               <input type="file" onChange={e => setVideoFile(e.target.files[0])} accept="video/*" className="form-control" style={{ padding: '8px' }} />
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '11px' }}>Supporting Doc (PDF)</label>
+              <label style={{ fontSize: '11px' }}>Supporting Doc (PDF) <span style={{ color: '#94a3b8', textTransform: 'none' }}>(Optional)</span></label>
               <input type="file" onChange={e => setDocFile(e.target.files[0])} accept=".pdf" className="form-control" style={{ padding: '8px' }} />
             </div>
           </div>
@@ -384,23 +722,32 @@ const RegisterFIR = () => {
         {/* CAPTCHA decleration check */}
         <div style={{
           display: 'flex',
-          gap: '12px',
-          alignItems: 'flex-start',
-          background: 'rgba(77,163,255,0.03)',
-          border: '1px solid #223248',
+          flexDirection: 'column',
+          background: fieldErrors.captcha ? 'rgba(239,68,68,0.06)' : 'rgba(77,163,255,0.03)',
+          border: fieldErrors.captcha ? '1px solid #ef4444' : '1px solid #223248',
           borderRadius: '8px',
           padding: '16px',
           marginTop: '10px'
         }}>
-          <input
-            type="checkbox"
-            checked={captchaChecked}
-            onChange={e => setCaptchaChecked(e.target.checked)}
-            style={{ marginTop: '3px', accentColor: '#4DA3FF', cursor: 'pointer' }}
-          />
-          <span style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
-            I verify that all information provided in this digital FIR submission is true, complete, and correct to the best of my knowledge, and I understand that compiling false information is punishable under legal penal codes.
-          </span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              checked={captchaChecked}
+              onChange={e => {
+                setCaptchaChecked(e.target.checked);
+                setFieldErrors(prev => ({ ...prev, captcha: null }));
+              }}
+              style={{ marginTop: '3px', accentColor: '#4DA3FF', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
+              I verify that all information provided in this digital FIR submission is true, complete, and correct to the best of my knowledge, and I understand that compiling false information is punishable under legal penal codes.
+            </span>
+          </div>
+          {fieldErrors.captcha && (
+            <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '8px', fontWeight: '700' }}>
+              ⚠️ {fieldErrors.captcha}
+            </span>
+          )}
         </div>
 
         <button
