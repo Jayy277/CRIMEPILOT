@@ -1,0 +1,137 @@
+/* ─── PLATFORM OVERVIEW PAGE STYLES ──────────────────────────────────────── */
+.platform-overview-page {
+  min-height: 100vh;
+  background-color: #08111F;
+  color: #FFFFFF;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Background Cyber Grid */
+.overview-cyber-grid {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 217, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 255, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient Glow */
+.overview-radial-glow {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0, 217, 255, 0.08), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Minimal Navbar */
+.overview-header {
+  height: 64px;
+  padding: 0 32px;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+  background: rgba(8, 17, 31, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.overview-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.overview-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 217, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
+}
+
+.overview-brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+}
+
+.overview-badge {
+  font-size: 10px;
+  color: #00D9FF;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 217, 255, 0.1);
+  border: 1px solid rgba(0, 217, 255, 0.25);
+  font-family: monospace;
+}
+
+.overview-back-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.overview-back-btn:hover {
+  background: rgba(0, 217, 255, 0.1);
+  border-color: rgba(0, 217, 255, 0.4);
+  color: #00D9FF;
+}
+
+/* Sections & Scroll Reveal */
+.overview-section {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(35px);
+  transition: opacity 700ms ease-out, transform 700ms ease-out;
+  will-change: opacity, transform;
+}
+
+.overview-section.show-section {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Cards & Panels */
+.overview-card {
+  background: rgba(16, 27, 45, 0.55);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.overview-card:hover {
+  border-color: rgba(0, 217, 255, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 0 25px rgba(0, 217, 255, 0.15);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

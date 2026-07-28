@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import AskCrimePilotAI from '../components/AskCrimePilotAI';
+import OverviewAnimation from '../components/OverviewAnimation';
+import NationalIntelMap from '../components/NationalIntelMap';
+import { smoothScrollTo } from '../utils/smoothScroll';
 
 // Simple helper for count-up numbers from 0
 const CountUp = ({ end, duration = 1500 }) => {
@@ -28,6 +31,41 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
+  // Mouse radial glow coordinates
+  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Section Scroll Reveal (IntersectionObserver)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('section-revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    const sections = document.querySelectorAll('section');
+    sections.forEach((sec) => {
+      sec.classList.add('section-hidden');
+      observer.observe(sec);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // State for interactive Map details panel
 
   // State for interactive Map details panel
   const [selectedCity, setSelectedCity] = useState({
@@ -38,14 +76,6 @@ const Home = () => {
     officer: 'Inspector D. Patel',
     status: 'Active Patrol'
   });
-
-  // State for AI chatbot simulation
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'user', text: 'Initiate system check.' },
-    { sender: 'system', text: 'CrimePilot AI Core Engine Online. Awaiting sector query.' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
 
   const cityDatabase = {
     Ahmedabad: { name: 'Ahmedabad', cases: 245, todayCases: 24, priority: 'High', officer: 'Inspector D. Patel', status: 'Active Patrol' },
@@ -64,30 +94,6 @@ const Home = () => {
     }
   };
 
-  const handleAskAI = (queryText) => {
-    if (!queryText.trim()) return;
-    
-    // Add user message
-    const newMessages = [...chatMessages, { sender: 'user', text: queryText }];
-    setChatMessages(newMessages);
-    setChatInput('');
-    setIsTyping(true);
-
-    setTimeout(() => {
-      let reply = 'Query processed. No anomaly detected in current sector.';
-      if (queryText.toLowerCase().includes('ahmedabad')) {
-        reply = 'Vehicle theft has increased by 18% in Ahmedabad.\n\nAI Analysis: High probability between 8PM - 11PM.\n\nRecommendation:\nIncrease patrol in Zone 4.';
-      } else if (queryText.toLowerCase().includes('delhi')) {
-        reply = 'Cyber fraud cases flagged in Sector-6, New Delhi.\n\nAI Analysis: Out-of-state IP cluster detected.\n\nRecommendation:\nDeploy digital forensics team.';
-      } else if (queryText.toLowerCase().includes('mumbai')) {
-        reply = 'Temporal peak detected for commercial crimes near Port region, Mumbai.\n\nAI Analysis: Overlaps with late shift change timings.\n\nRecommendation:\nDouble patrol counts from 0200h to 0500h.';
-      }
-
-      setChatMessages(prev => [...prev, { sender: 'system', text: reply }]);
-      setIsTyping(false);
-    }, 1200);
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -97,9 +103,14 @@ const Home = () => {
       position: 'relative',
       overflowX: 'hidden'
     }}>
-      
+
       {/* Styles Injection */}
       <style>{`
+        body.overview-active header {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transition: opacity 300ms ease !important;
+        }
         .glass-panel {
           background: #121B2D;
           border: 1px solid rgba(0, 217, 255, 0.15);
@@ -178,14 +189,14 @@ const Home = () => {
       <div className="cyber-grid" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 0 }} />
 
       {/* ==============================================
-          SECTION 1: HERO COMMAND CENTER
+          SECTION 1: HERO
           ============================================== */}
-      <section style={{
-        minHeight: '92vh',
+      <section id="hero" style={{
+        minHeight: '88vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '80px 20px',
+        padding: '70px 20px',
         position: 'relative',
         zIndex: 1
       }}>
@@ -197,12 +208,12 @@ const Home = () => {
           gap: '40px',
           alignItems: 'center'
         }}>
-          {/* Left Hero Texts */}
+          {/* Left Hero Content */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span className="pulse-node" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00D9FF', display: 'inline-block' }} />
               <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                Live National Crime Intelligence
+                National Crime Intelligence System
               </span>
             </div>
 
@@ -226,10 +237,10 @@ const Home = () => {
 
             <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
               <Link to="/login" className="btn btn-primary" style={{ padding: '14px 28px', backgroundColor: '#00D9FF', color: '#0B1220', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #00D9FF' }}>
-                Access Secure Terminal
+                Launch Secure Portal
               </Link>
               <button
-                onClick={() => navigate('/overview')}
+                onClick={() => navigate('/platform-overview')}
                 style={{
                   padding: '14px 28px',
                   background: 'transparent',
@@ -246,17 +257,17 @@ const Home = () => {
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,217,255,0.1)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0,217,255,0.25)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
               >
-                ▶ Watch Overview
+                ▶ Watch Platform Overview
               </button>
             </div>
 
-            {/* Quick Live stats summary */}
+            {/* Quick Live state badge */}
             <div style={{
               display: 'flex',
               gap: '24px',
-              marginTop: '40px',
+              marginTop: '30px',
               borderTop: '1px solid rgba(0,217,255,0.08)',
-              paddingTop: '24px'
+              paddingTop: '20px'
             }}>
               <div>
                 <span style={{ fontSize: '11px', color: '#9AA4B2', textTransform: 'uppercase' }}>SYSTEM STATE</span>
@@ -269,178 +280,60 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Right Hero: High Tech India Map Representation */}
-          <div className="glass-panel" style={{
-            padding: '30px',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            background: 'rgba(18, 27, 45, 0.4)'
-          }}>
-            <div className="scanning-bar" />
-            <h3 style={{ fontSize: '12px', color: '#00D9FF', fontFamily: 'monospace', alignSelf: 'flex-start', marginBottom: '20px' }}>
-              SECURE SECTOR RADAR MAPPING
-            </h3>
-            
-            {/* Interactive Vector Map mockup representing India */}
-            <svg viewBox="0 0 400 450" style={{ width: '100%', maxHeight: '420px' }}>
-              {/* Map Outline Lines representing network grid of India shape */}
-              <polygon points="190,40 210,50 220,90 260,110 320,130 330,170 310,210 260,230 250,290 280,310 240,360 210,420 190,420 160,330 140,290 125,270 90,260 85,220 100,195 110,160 130,150 140,110 180,85" 
-                fill="none" stroke="rgba(0, 217, 255, 0.1)" strokeWidth="1.5" />
-              <polygon points="190,40 210,50 220,90 260,110 320,130 330,170 310,210 260,230 250,290 280,310 240,360 210,420 190,420 160,330 140,290 125,270 90,260 85,220 100,195 110,160 130,150 140,110 180,85" 
-                fill="rgba(0, 217, 255, 0.01)" />
-              
-              {/* Connection lines */}
-              <line x1="180" y1="110" x2="140" y2="230" stroke="rgba(0, 217, 255, 0.2)" strokeWidth="1" className="map-line-draw" />
-              <line x1="140" y1="230" x2="150" y2="280" stroke="rgba(0, 217, 255, 0.2)" strokeWidth="1" className="map-line-draw" />
-              <line x1="150" y1="280" x2="220" y2="350" stroke="rgba(0, 217, 255, 0.2)" strokeWidth="1" className="map-line-draw" />
-              <line x1="180" y1="110" x2="220" y2="350" stroke="rgba(0, 217, 255, 0.2)" strokeWidth="1" className="map-line-draw" />
-
-              {/* Delhi Node */}
-              <circle cx="180" cy="110" r="5" fill="#00D9FF" />
-              <circle cx="180" cy="110" r="12" fill="none" stroke="#00D9FF" strokeWidth="1" className="pulse-node" style={{ transformOrigin: '180px 110px' }} />
-              <text x="190" y="113" fill="#FFF" fontSize="10" fontFamily="monospace">DELHI</text>
-
-              {/* Ahmedabad Node */}
-              <circle cx="140" cy="230" r="5" fill="#00D9FF" />
-              <circle cx="140" cy="230" r="12" fill="none" stroke="#00D9FF" strokeWidth="1" className="pulse-node" style={{ transformOrigin: '140px 230px' }} />
-              <text x="75" y="233" fill="#00D9FF" fontSize="10" fontFamily="monospace">AHMEDABAD</text>
-
-              {/* Mumbai Node */}
-              <circle cx="150" cy="280" r="5" fill="#00D9FF" />
-              <circle cx="150" cy="280" r="12" fill="none" stroke="#00D9FF" strokeWidth="1" className="pulse-node" style={{ transformOrigin: '150px 280px' }} />
-              <text x="100" y="284" fill="#FFF" fontSize="10" fontFamily="monospace">MUMBAI</text>
-
-              {/* Bangalore Node */}
-              <circle cx="220" cy="350" r="5" fill="#00D9FF" />
-              <circle cx="220" cy="350" r="12" fill="none" stroke="#00D9FF" strokeWidth="1" className="pulse-node" style={{ transformOrigin: '220px 350px' }} />
-              <text x="230" y="354" fill="#FFF" fontSize="10" fontFamily="monospace">BANGALORE</text>
-            </svg>
+          {/* Right Hero: National Crime Intelligence Map Component */}
+          <div>
+            <NationalIntelMap />
           </div>
         </div>
       </section>
 
       {/* ==============================================
-          SECTION 2: LIVE COMMAND STRIP
+          SECTION 2: WHAT IS CRIMEPILOT? (<20s overview)
           ============================================== */}
-      <section style={{
-        backgroundColor: '#121B2D',
-        borderTop: '1px solid rgba(0, 217, 255, 0.15)',
-        borderBottom: '1px solid rgba(0, 217, 255, 0.15)',
-        padding: '30px 20px',
+      <section id="what-is-crimepilot" style={{
+        padding: '70px 20px',
         position: 'relative',
-        zIndex: 1
+        zIndex: 1,
+        backgroundColor: 'rgba(18, 27, 45, 0.25)',
+        borderTop: '1px solid rgba(0, 217, 255, 0.1)',
+        borderBottom: '1px solid rgba(0, 217, 255, 0.1)'
       }}>
-        <div style={{
-          width: '1240px',
-          maxWidth: '100%',
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: '24px',
-          textAlign: 'center'
-        }}>
-          {[
-            { label: 'ACTIVE CASES', val: 1248 },
-            { label: 'CONNECTED STATIONS', val: 56 },
-            { label: 'REGISTERED OFFICERS', val: 312 },
-            { label: 'REGISTERED CITIZENS', val: 1845 },
-            { label: 'PENDING FIR', val: 18 },
-            { label: 'SOLVED CASES', val: 924 },
-            { label: 'AI CONFIDENCE', val: 97, unit: '%' }
-          ].map((stat, idx) => (
-            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '10px', color: '#9AA4B2', fontWeight: '800', letterSpacing: '0.05em' }}>{stat.label}</span>
-              <span style={{ fontSize: '26px', fontWeight: '900', color: '#00D9FF', fontFamily: 'monospace' }}>
-                <CountUp end={stat.val} />{stat.unit}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ==============================================
-          SECTION 3: PLATFORM WORKFLOW
-          ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
-        <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Operational Blueprint</span>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px', marginBottom: '48px' }}>SYSTEM WORKFLOW PIPELINE</h2>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '20px',
-            background: 'rgba(18, 27, 45, 0.3)',
-            padding: '40px 30px',
-            borderRadius: '16px',
-            border: '1px solid rgba(0, 217, 255, 0.1)'
-          }}>
-            {[
-              { title: 'Citizen', desc: 'Registers Online' },
-              { title: 'Digital FIR', desc: 'Generated & Logged' },
-              { title: 'Police Station', desc: 'Station Assigned' },
-              { title: 'Investigation', desc: 'Officer In-charge' },
-              { title: 'AI Analysis', desc: 'Category Scoring' },
-              { title: 'Analyst Dashboard', desc: 'Deep Aggregation' },
-              { title: 'Admin Monitoring', desc: 'Total Clearance' }
-            ].map((step, idx, arr) => (
-              <React.Fragment key={idx}>
-                <div style={{ flex: '1', minWidth: '130px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(0, 217, 255, 0.08)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto',
-                    color: '#00D9FF',
-                    fontWeight: 'bold',
-                    fontSize: '14px'
-                  }}>
-                    {idx + 1}
-                  </div>
-                  <h4 style={{ fontSize: '14px', color: '#FFF', fontWeight: 'bold', margin: '4px 0 0 0' }}>{step.title}</h4>
-                  <p style={{ fontSize: '11px', color: '#9AA4B2', margin: 0 }}>{step.desc}</p>
-                </div>
-                {idx < arr.length - 1 && (
-                  <span className="workflow-arrow" style={{ fontSize: '18px', fontWeight: 'bold' }}>→</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==============================================
-          SECTION 4: AI FEATURES
-          ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.2)' }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>INTELLIGENCE APPARATUS</span>
-            <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>AI ENGINE CORE UTILITIES</h2>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Platform Foundation</span>
+            <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>WHAT IS CRIMEPILOT?</h2>
+            <p style={{ fontSize: '14px', color: '#9AA4B2', marginTop: '6px', maxWidth: '600px', margin: '6px auto 0' }}>
+              CrimePilot is India's unified AI platform connecting citizens, police units, and intelligence analysts for automated crime clearance and public safety.
+            </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
             {[
-              { icon: '🗺️', title: 'Crime Heatmap', desc: 'Dynamic density hotspot maps computed from incoming digital FIR coordinates.' },
-              { icon: '🔮', title: 'Crime Prediction', desc: 'Predictive analytics algorithms mapping historical crime spikes to locations.' },
-              { icon: '🤖', title: 'AI Assistant', desc: 'Interactive LLM chat console querying offender profiles and section recommendations.' },
-              { icon: '📁', title: 'Evidence Vault', desc: 'Tamper-proof storage index mapping digital evidence parameters to case files.' },
-              { icon: '👁️', title: 'Pattern Scanner', desc: 'Modus Operandi scanner matching category, time, and keywords in descriptions.' },
-              { icon: '⚖️', title: 'Legal Expert', desc: 'Automatic mapping of registered complaints to appropriate IPC/BNS sections.' }
-            ].map((feature, idx) => (
-              <div key={idx} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
-                <span style={{ fontSize: '28px' }}>{feature.icon}</span>
-                <h3 style={{ fontSize: '16px', color: '#FFF', fontWeight: 'bold', fontFamily: 'Outfit, sans-serif' }}>{feature.title}</h3>
-                <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0 }}>{feature.desc}</p>
+              {
+                icon: '📄',
+                title: 'Digital FIR',
+                desc: 'Instant online complaint registration with automated IPC/BNS section suggestions and nearest station routing.'
+              },
+              {
+                icon: '🤖',
+                title: 'CrimePilot AI',
+                desc: 'Natural language legal assistant providing 24x7 guidance on Indian criminal laws, FIR steps, and safety advisories.'
+              },
+              {
+                icon: '📁',
+                title: 'Evidence Vault',
+                desc: 'Tamper-proof storage vault securing digital evidence, files, and chain-of-custody logs with cryptographic hash integrity.'
+              },
+              {
+                icon: '📊',
+                title: 'Crime Analytics',
+                desc: 'Real-time spatial heatmaps, Modus Operandi pattern recognition, and automated clearance trend dossiers.'
+              }
+            ].map((card, idx) => (
+              <div key={idx} className="glass-panel" style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
+                <span style={{ fontSize: '32px' }}>{card.icon}</span>
+                <h3 style={{ fontSize: '18px', color: '#FFF', fontWeight: 'bold', fontFamily: 'Outfit, sans-serif', margin: 0 }}>{card.title}</h3>
+                <p style={{ fontSize: '13px', color: '#9AA4B2', lineHeight: '1.5', margin: 0 }}>{card.desc}</p>
               </div>
             ))}
           </div>
@@ -448,21 +341,64 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          SECTION 5: LIVE INTERACTIVE CRIME MAP
+          SECTION 3: CRIMEPILOT AI (FLAGSHIP FEATURE)
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+      <section id="crimepilot-ai" style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+        <div style={{ width: '1000px', maxWidth: '100%', margin: '0 auto' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Flagship Intelligence</span>
+            <h2 style={{ fontSize: '34px', fontWeight: '800', color: '#fff', marginTop: '6px' }}>CRIMEPILOT AI ASSISTANT</h2>
+            <p style={{ fontSize: '14px', color: '#9AA4B2', marginTop: '8px', maxWidth: '640px', margin: '8px auto 0' }}>
+              Specialized in Indian Criminal Law (BNS, BNSS, BSA), digital FIR procedures, cybercrime reporting, and public safety advisory.
+            </p>
+          </div>
+
+          <AskCrimePilotAI />
+
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <button
+              onClick={(e) => { e.preventDefault(); smoothScrollTo('crimepilot-ai', 900, 70); }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 24px',
+                background: 'rgba(0, 217, 255, 0.08)',
+                border: '1px solid rgba(0, 217, 255, 0.3)',
+                borderRadius: '8px',
+                color: '#00D9FF',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 217, 255, 0.2)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.25)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 217, 255, 0.08)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              🤖 Try CrimePilot AI Interactive Assistant
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ==============================================
+          SECTION 4: INTERACTIVE CRIME INTELLIGENCE MAP
+          ============================================== */}
+      <section id="crime-map" style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.25)' }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '40px', alignItems: 'center' }}>
-          
+
           {/* Map Vector with city clicks */}
           <div className="glass-panel" style={{ padding: '30px', background: 'rgba(18, 27, 45, 0.4)' }}>
-            <h3 style={{ fontSize: '14px', color: '#00D9FF', fontFamily: 'monospace', marginBottom: '20px', textAlign: 'left' }}>
-              CRITICALLITY PATROL SECTORS (CLICK TO INTERACT)
+            <h3 style={{ fontSize: '13px', color: '#00D9FF', fontFamily: 'monospace', marginBottom: '20px', textAlign: 'left' }}>
+              CRITICALITY PATROL SECTORS (CLICK CITY TO INSPECT)
             </h3>
-            
+
             <svg viewBox="0 0 400 450" style={{ width: '100%', maxHeight: '400px' }}>
-              <polygon points="190,40 210,50 220,90 260,110 320,130 330,170 310,210 260,230 250,290 280,310 240,360 210,420 190,420 160,330 140,290 125,270 90,260 85,220 100,195 110,160 130,150 140,110 180,85" 
+              <polygon points="190,40 210,50 220,90 260,110 320,130 330,170 310,210 260,230 250,290 280,310 240,360 210,420 190,420 160,330 140,290 125,270 90,260 85,220 100,195 110,160 130,150 140,110 180,85"
                 fill="rgba(0, 217, 255, 0.02)" stroke="rgba(0, 217, 255, 0.2)" strokeWidth="1" />
-              
+
               {Object.keys(cityDatabase).map((cityKey) => {
                 const positions = {
                   Delhi: { cx: 180, cy: 110 },
@@ -525,20 +461,99 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          SECTION 6: AI ASSISTANT CONSOLE
+          SECTION 5: PLATFORM CAPABILITIES
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.2)' }}>
-        <div style={{ width: '880px', maxWidth: '100%', margin: '0 auto' }}>
-          <AskCrimePilotAI />
+      <section id="capabilities" style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+        <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>System Apparatus</span>
+            <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>PLATFORM CAPABILITIES</h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
+            {[
+              { icon: '🤖', title: 'AI Analysis', desc: 'Modus Operandi pattern scoring & historical similarity matching.' },
+              { icon: '📈', title: 'Crime Analytics', desc: 'Statistical density heatmaps and predictive clearance trends.' },
+              { icon: '📄', title: 'Digital FIR', desc: 'End-to-end digital complaint filing with legal section recommendations.' },
+              { icon: '📁', title: 'Evidence Vault', desc: 'Cryptographic hash indexing for physical & digital evidence files.' },
+              { icon: '⏱️', title: 'Case Tracking', desc: 'Real-time investigation progress timeline & automated SMTP updates.' },
+              { icon: '🔔', title: 'Notifications', desc: 'Instant alerts dispatched to assigned officers & citizens.' },
+              { icon: '👤', title: 'Citizen Portal', desc: 'Self-service portal for complaints, tracking, and evidence submission.' },
+              { icon: '👮', title: 'Officer Dashboard', desc: 'Investigative command console for caseload & suspect management.' }
+            ].map((capability, idx) => (
+              <div key={idx} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                <span style={{ fontSize: '28px' }}>{capability.icon}</span>
+                <h3 style={{ fontSize: '16px', color: '#FFF', fontWeight: 'bold', fontFamily: 'Outfit, sans-serif' }}>{capability.title}</h3>
+                <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0 }}>{capability.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ==============================================
-          SECTION 7: PORTAL CARDS
+          SECTION 6: HOW CRIMEPILOT WORKS
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+      <section id="how-it-works" style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.25)' }}>
+        <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Operational Blueprint</span>
+          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px', marginBottom: '48px' }}>HOW CRIMEPILOT WORKS</h2>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            background: 'rgba(18, 27, 45, 0.4)',
+            padding: '40px 24px',
+            borderRadius: '16px',
+            border: '1px solid rgba(0, 217, 255, 0.15)'
+          }}>
+            {[
+              { title: 'Citizen Reports Incident', desc: 'Online FIR & evidence submission' },
+              { title: 'AI Initial Analysis', desc: 'IPC/BNS & pattern match scoring' },
+              { title: 'Officer Assignment', desc: 'Automated station officer dispatch' },
+              { title: 'Evidence Collection', desc: 'Digital & physical hash logging' },
+              { title: 'Investigation', desc: 'Case status timeline updates' },
+              { title: 'Resolution', desc: 'Final charge & closure report' }
+            ].map((step, idx, arr) => (
+              <React.Fragment key={idx}>
+                <div style={{ flex: '1', minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(0, 217, 255, 0.08)',
+                    border: '1px solid rgba(0, 217, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto',
+                    color: '#00D9FF',
+                    fontWeight: 'bold',
+                    fontSize: '15px'
+                  }}>
+                    {idx + 1}
+                  </div>
+                  <h4 style={{ fontSize: '13px', color: '#FFF', fontWeight: 'bold', margin: '4px 0 0 0' }}>{step.title}</h4>
+                  <p style={{ fontSize: '11px', color: '#9AA4B2', margin: 0 }}>{step.desc}</p>
+                </div>
+                {idx < arr.length - 1 && (
+                  <span className="workflow-arrow" style={{ fontSize: '18px', fontWeight: 'bold' }}>→</span>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==============================================
+          SECTION 7: ROLE PORTALS
+          ============================================== */}
+      <section id="portals" style={{ padding: '80px 20px', scrollMarginTop: '80px', zIndex: 1, position: 'relative' }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
-          
+
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Access Gateways</span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>CRIMEPILOT ROLE PORTALS</h2>
@@ -546,29 +561,35 @@ const Home = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
             {[
-              { role: 'citizen', title: 'Citizen Portal', icon: '👤', desc: 'File digital FIRs, verify identity proofs, upload supporting evidence, and track active cases.' },
-              { role: 'officer', title: 'Officer Portal', icon: '👮', desc: 'Manage assigned caseloads, update investigation timelines, register crimes, and log suspects.' },
-              { role: 'analyst', title: 'Analyst Portal', icon: '📈', desc: 'Access crime trends heatmaps, hotspot forecasts, predictions index, and compile PDF reports.' },
-              { role: 'admin', title: 'Admin Portal', icon: '🛡️', desc: 'Configure police stations, manage user directories, audit system log entries, and verify citizens.' }
+              { role: 'citizen', title: 'Citizen Portal', icon: '👤', access: 'Public Access', desc: 'File digital FIRs, verify identity proofs, upload supporting evidence, and track active cases.' },
+              { role: 'officer', title: 'Officer Portal', icon: '👮', access: 'Investigative Clearance', desc: 'Manage assigned caseloads, update investigation timelines, register crimes, and log suspects.' },
+              { role: 'analyst', title: 'Analyst Portal', icon: '📈', access: 'Intelligence Clearance', desc: 'Access crime trends heatmaps, hotspot forecasts, predictions index, and compile PDF reports.' },
+              { role: 'admin', title: 'Admin Portal', icon: '🛡️', access: 'System Governance', desc: 'Configure police stations, manage user directories, audit system log entries, and verify citizens.' }
             ].map((portal, idx) => (
-              <div key={idx} className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center', background: 'rgba(18, 27, 45, 0.4)' }}>
+              <div key={idx} className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'center', background: 'rgba(18, 27, 45, 0.4)' }}>
                 <span style={{ fontSize: '36px' }}>{portal.icon}</span>
-                <h3 style={{ fontSize: '18px', color: '#FFF', fontWeight: 'bold' }}>{portal.title}</h3>
-                <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0, minHeight: '66px' }}>{portal.desc}</p>
+                <div>
+                  <h3 style={{ fontSize: '18px', color: '#FFF', fontWeight: 'bold', margin: 0 }}>{portal.title}</h3>
+                  <span style={{ fontSize: '10px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold', display: 'block', marginTop: '4px' }}>{portal.access}</span>
+                </div>
+                <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0, minHeight: '60px' }}>{portal.desc}</p>
                 <Link
                   to={portal.role === 'citizen' ? '/citizen/login' : '/login'}
                   style={{
-                    marginTop: '10px',
+                    marginTop: '8px',
                     display: 'block',
                     padding: '10px',
                     backgroundColor: 'rgba(0, 217, 255, 0.08)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
+                    border: '1px solid rgba(0, 217, 255, 0.25)',
                     borderRadius: '8px',
                     color: '#00D9FF',
                     fontWeight: 'bold',
                     textDecoration: 'none',
-                    fontSize: '13px'
+                    fontSize: '13px',
+                    transition: 'all 0.2s'
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,217,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,217,255,0.08)'; }}
                 >
                   Access Terminal
                 </Link>
@@ -580,70 +601,28 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          SECTION 8: CASE LIFECYCLE TIMELINE
+          SECTION 8: WHY CRIMEPILOT?
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.2)' }}>
-        <div style={{ width: '800px', maxWidth: '100%', margin: '0 auto' }}>
-          
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Clearance Timeline</span>
-            <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>CASE LIFECYCLE</h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', borderLeft: '2px solid rgba(0, 217, 255, 0.15)', paddingLeft: '24px', marginLeft: '10px' }}>
-            {[
-              { step: 'Citizen Files FIR', desc: 'Citizen submits complaint details and uploads evidence files digitally.' },
-              { step: 'Station Verification', desc: 'Assigned police station reviews document authenticity and clearance.' },
-              { step: 'Officer Assigned', desc: 'System automatically delegates case to station investigation officer.' },
-              { step: 'Evidence Collection', desc: 'Officer audits digital files and registers physical findings.' },
-              { step: 'AI Analysis', desc: 'Modus Operandi scanner generates category match scores and forecasts.' },
-              { step: 'Legal Review', desc: ' IPC/BNS legal sections are mapped and reviewed for chargesheet compilations.' },
-              { step: 'Case Closed', desc: 'Final investigation reports saved to secure database ledgers.' }
-            ].map((flow, idx) => (
-              <div key={idx} style={{ position: 'relative', textAlign: 'left' }}>
-                <span style={{
-                  position: 'absolute',
-                  left: '-31px',
-                  top: '2px',
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  backgroundColor: '#00D9FF',
-                  border: '3px solid #0B1220',
-                  boxShadow: '0 0 8px #00D9FF'
-                }} />
-                <h4 style={{ fontSize: '15px', color: '#FFF', fontWeight: 'bold', margin: '0 0 4px 0' }}>{flow.step}</h4>
-                <p style={{ fontSize: '12px', color: '#9AA4B2', margin: 0 }}>{flow.desc}</p>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ==============================================
-          SECTION 9: WHY CRIMEPILOT AI
-          ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+      <section id="why-crimepilot" style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.25)' }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
-          
+
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Security Assurances</span>
+            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Security & Platform Assurances</span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>WHY CRIMEPILOT AI?</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
             {[
+              'Secure Cryptographic Logging',
               'AI Powered Neural Classification',
-              'Proactive Threat/Crime Prediction',
+              'Proactive Threat & Crime Prediction',
               'Digital FIR Submissions Gateway',
               'Real-Time Casework Tracking',
-              'Interactive Density Heatmaps',
-              'Secure SMTP Mail Notifications',
-              'Cryptographic Evidence Vaults',
-              'Smart Section Mapping Recommendations'
+              'Interactive Spatial Density Heatmaps',
+              'Secure Automated SMTP Mail Updates',
+              'Smart BNS Section Recommendations'
             ].map((checklistText, idx) => (
-              <div key={idx} className="glass-panel" style={{ padding: '20px', display: 'flex', gap: '12px', alignItems: 'center', textAlign: 'left', background: 'rgba(18, 27, 45, 0.2)' }}>
+              <div key={idx} className="glass-panel" style={{ padding: '20px', display: 'flex', gap: '12px', alignItems: 'center', textAlign: 'left', background: 'rgba(18, 27, 45, 0.3)' }}>
                 <span style={{ color: '#00D9FF', fontSize: '16px', fontWeight: 'bold' }}>✓</span>
                 <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 'bold' }}>{checklistText}</span>
               </div>
@@ -654,48 +633,55 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          SECTION 10: CORE INTELLIGENCE TEAM
+          SECTION 9: PLATFORM STATISTICS (After context)
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.2)' }}>
+      <section id="statistics" style={{
+        backgroundColor: '#121B2D',
+        borderTop: '1px solid rgba(0, 217, 255, 0.15)',
+        borderBottom: '1px solid rgba(0, 217, 255, 0.15)',
+        padding: '50px 20px',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{
+          width: '1240px',
+          maxWidth: '100%',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '24px',
+          textAlign: 'center'
+        }}>
+          {[
+            { label: 'ACTIVE CASES', val: 1248 },
+            { label: 'CONNECTED STATIONS', val: 56 },
+            { label: 'REGISTERED OFFICERS', val: 312 },
+            { label: 'REGISTERED CITIZENS', val: 1845 },
+            { label: 'PENDING FIR', val: 18 },
+            { label: 'SOLVED CASES', val: 924 },
+            { label: 'AI CONFIDENCE', val: 97, unit: '%' }
+          ].map((stat, idx) => (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '10px', color: '#9AA4B2', fontWeight: '800', letterSpacing: '0.05em' }}>{stat.label}</span>
+              <span style={{ fontSize: '26px', fontWeight: '900', color: '#00D9FF', fontFamily: 'monospace' }}>
+                <CountUp end={stat.val} />{stat.unit}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ==============================================
+          SECTION 10: DEVELOPMENT TEAM
+          ============================================== */}
+      <section id="development-team" style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
-          
+
           <div style={{ marginBottom: '48px' }}>
             <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Core Intelligence Team</span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>SYSTEM INTEL ENGINEERS</h2>
             <p style={{ fontSize: '13px', color: '#9AA4B2', marginTop: '8px' }}>The engineers responsible for building the CrimePilot AI National Crime Intelligence Platform.</p>
           </div>
-
-          {/* Cyberpunk keyframes style block */}
-          <style>{`
-            .team-id-card {
-              transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-            .team-id-card:hover {
-              transform: translateY(-6px);
-              border-color: rgba(0, 217, 255, 0.5) !important;
-              box-shadow: 0 0 35px rgba(0, 217, 255, 0.2), inset 0 0 20px rgba(0, 217, 255, 0.05) !important;
-            }
-            .team-social-btn {
-              transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-              cursor: pointer;
-            }
-            .team-social-btn:hover {
-              background: rgba(0, 217, 255, 0.15) !important;
-              border-color: rgba(0, 217, 255, 0.5) !important;
-              box-shadow: 0 0 12px rgba(0, 217, 255, 0.4) !important;
-              color: #fff !important;
-              transform: scale(1.08);
-            }
-            @keyframes radarPulse {
-              0% { transform: rotate(0deg) scale(0.98); opacity: 0.7; }
-              50% { transform: rotate(180deg) scale(1.02); opacity: 1; }
-              100% { transform: rotate(360deg) scale(0.98); opacity: 0.7; }
-            }
-            @keyframes radarSweep {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', flexWrap: 'wrap' }}>
             {[
@@ -714,7 +700,7 @@ const Home = () => {
               },
               {
                 id: 'CP-002',
-                name: 'CHAVDA OM',
+                name: 'OM CHAVDA',
                 role: 'BACKEND DEVELOPER',
                 dept: 'Core System Division',
                 student: 'Computer Engineering (CE)',
@@ -727,7 +713,7 @@ const Home = () => {
               },
               {
                 id: 'CP-003',
-                name: 'SOLANKI CHIRAG',
+                name: 'CHIRAG SOLANKI',
                 role: 'AI & ML DEVELOPER',
                 dept: 'AI & Analytics Division',
                 student: 'Computer Engineering (CE)',
@@ -755,7 +741,7 @@ const Home = () => {
                 }}
               >
                 <div className="card-scanner" />
-                
+
                 <div className="verified-badge" style={{
                   position: 'absolute', top: '16px', right: '16px',
                   background: 'rgba(0, 217, 255, 0.05)', border: '1px solid rgba(0, 217, 255, 0.25)',
@@ -763,66 +749,19 @@ const Home = () => {
                   display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.05em'
                 }}>
                   Verified Intel
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                 </div>
 
-                {/* High-Tech Cyan Radar Scanner Avatar Frame */}
                 <div style={{
                   position: 'relative',
-                  width: '160px',
-                  height: '160px',
+                  width: '150px',
+                  height: '150px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '20px',
-                  marginTop: '16px'
+                  marginBottom: '18px',
+                  marginTop: '12px'
                 }}>
-                  {/* Outer scan border */}
-                  <div style={{
-                    position: 'absolute',
-                    width: '150px',
-                    height: '150px',
-                    borderRadius: '50%',
-                    border: '1px solid rgba(0, 217, 255, 0.25)',
-                    boxShadow: '0 0 15px rgba(0, 217, 255, 0.1)'
-                  }} />
-                  {/* Dashed active scope ring */}
-                  <div style={{
-                    position: 'absolute',
-                    width: '138px',
-                    height: '138px',
-                    borderRadius: '50%',
-                    border: '1px dashed rgba(0, 217, 255, 0.5)',
-                    animation: 'radarPulse 6s infinite linear'
-                  }} />
-                  {/* Rotating sweep shadow */}
-                  <div style={{
-                    position: 'absolute',
-                    width: '150px',
-                    height: '150px',
-                    borderRadius: '50%',
-                    background: 'conic-gradient(from 0deg, rgba(0, 217, 255, 0.08) 0deg, transparent 90deg, transparent 360deg)',
-                    animation: 'radarSweep 4s infinite linear',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }} />
-                  {/* Crosshair Horizontal Alignment Line */}
-                  <div style={{
-                    position: 'absolute',
-                    width: '166px',
-                    height: '1px',
-                    background: 'linear-gradient(to right, transparent, rgba(0, 217, 255, 0.25) 10%, rgba(0, 217, 255, 0.25) 90%, transparent)',
-                    zIndex: 1
-                  }} />
-                  {/* Crosshair Vertical Alignment Line */}
-                  <div style={{
-                    position: 'absolute',
-                    width: '1px',
-                    height: '166px',
-                    background: 'linear-gradient(to bottom, transparent, rgba(0, 217, 255, 0.25) 10%, rgba(0, 217, 255, 0.25) 90%, transparent)',
-                    zIndex: 1
-                  }} />
-                  {/* Picture Core */}
                   <div style={{
                     width: '120px',
                     height: '120px',
@@ -834,8 +773,7 @@ const Home = () => {
                     justifyContent: 'center',
                     overflow: 'hidden',
                     background: '#0a1120',
-                    zIndex: 2,
-                    boxShadow: '0 0 25px rgba(0, 217, 255, 0.25)'
+                    boxShadow: '0 0 20px rgba(0, 217, 255, 0.25)'
                   }}>
                     <img
                       src={member.image}
@@ -844,50 +782,39 @@ const Home = () => {
                         width: '100%',
                         height: '100%',
                         borderRadius: '50%',
-                        objectFit: 'cover',
-                        filter: 'brightness(1.05) contrast(1.05)'
+                        objectFit: 'cover'
                       }}
                     />
                   </div>
                 </div>
 
-                <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', marginBottom: '4px', letterSpacing: '0.05em', fontFamily: 'Space Grotesk, Outfit, sans-serif' }}>{member.name}</h4>
-                <span style={{ fontSize: '11px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '20px', display: 'block', textTransform: 'uppercase' }}>{member.role}</span>
+                <h4 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', marginBottom: '4px', letterSpacing: '0.05em' }}>{member.name}</h4>
+                <span style={{ fontSize: '11px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold', marginBottom: '18px', display: 'block', textTransform: 'uppercase' }}>{member.role}</span>
 
-                {/* Details layout with icons */}
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left', marginBottom: '24px', fontSize: '11px' }}>
-                  
-                  {/* Department */}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '20px', fontSize: '11px' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: '#00D9FF', marginTop: '2px', flexShrink: 0 }}><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
+                    <span style={{ color: '#00D9FF', marginRight: '8px' }}>🏢</span>
                     <div>
                       <span style={{ color: '#64748b', display: 'block', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>Department</span>
                       <span style={{ color: '#e2e8f0' }}>{member.dept}</span>
                     </div>
                   </div>
 
-                  {/* Student status */}
                   <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: '#00D9FF', marginTop: '2px', flexShrink: 0 }}><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" /></svg>
+                    <span style={{ color: '#00D9FF', marginRight: '8px' }}>🎓</span>
                     <div>
                       <span style={{ color: '#64748b', display: 'block', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>Student</span>
                       <span style={{ color: '#e2e8f0' }}>{member.student}</span>
                     </div>
                   </div>
 
-                  {/* Specialization */}
                   <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                    {member.isCodeIcon ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: '#00D9FF', marginTop: '2px', flexShrink: 0 }}><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: '#00D9FF', marginTop: '2px', flexShrink: 0 }}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                    )}
+                    <span style={{ color: '#00D9FF', marginRight: '8px' }}>⚡</span>
                     <div>
                       <span style={{ color: '#64748b', display: 'block', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>Specialization</span>
                       <span style={{ color: '#e2e8f0', lineHeight: '1.4' }}>{member.spec}</span>
                     </div>
                   </div>
-
                 </div>
 
                 <div style={{
@@ -908,95 +835,21 @@ const Home = () => {
                     CLEARANCE: LEVEL 5 (SCI)
                   </span>
                 </div>
-
-                {/* Premium Social Links in Cyber-glowing squares */}
-                <div style={{ display: 'flex', gap: '16px', marginTop: '20px', width: '100%', justifyContent: 'center' }}>
-                  <a
-                    href={member.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="team-social-btn"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: '38px', height: '38px', borderRadius: '8px',
-                      background: 'rgba(0, 217, 255, 0.03)', border: '1px solid rgba(0, 217, 255, 0.2)',
-                      color: '#00D9FF'
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
-                  </a>
-                  <a
-                    href={member.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="team-social-btn"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: '38px', height: '38px', borderRadius: '8px',
-                      background: 'rgba(0, 217, 255, 0.03)', border: '1px solid rgba(0, 217, 255, 0.2)',
-                      color: '#00D9FF'
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></svg>
-                  </a>
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="team-social-btn"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: '38px', height: '38px', borderRadius: '8px',
-                      background: 'rgba(0, 217, 255, 0.03)', border: '1px solid rgba(0, 217, 255, 0.2)',
-                      color: '#00D9FF'
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                  </a>
-                </div>
               </div>
             ))}
-          </div>
-
-          {/* Bottom badge with tagline */}
-          <div style={{
-            marginTop: '40px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              <polyline points="9 11 11 13 15 9"/>
-            </svg>
-            <span style={{ fontSize: '11px', color: '#FFFFFF', fontWeight: 'bold', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              UNITED BY CODE. DRIVEN BY INTELLIGENCE. DEDICATED TO PUBLIC SAFETY.
-            </span>
-            <span style={{
-              background: 'rgba(0, 217, 255, 0.05)',
-              border: '1px solid rgba(0, 217, 255, 0.2)',
-              borderRadius: '4px',
-              padding: '4px 12px',
-              fontSize: '10px',
-              color: '#00D9FF',
-              fontFamily: 'monospace',
-              fontWeight: 'bold',
-              letterSpacing: '0.05em'
-            }}>
-              BUILDING A SAFER INDIA WITH AI POWERED CRIME INTELLIGENCE
-            </span>
           </div>
 
         </div>
       </section>
 
       {/* ==============================================
-          SECTION 11: MISSION STATEMENT
+          SECTION 11: MISSION & VISION
           ============================================== */}
-      <section style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
+      <section id="mission" style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.25)' }}>
         <div style={{ width: '800px', maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
           <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Mission Clearances</span>
           <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px', marginBottom: '24px' }}>STATEMENT OF OBJECTIVES</h2>
-          
+
           <div className="glass-panel" style={{ padding: '36px', background: 'rgba(18, 27, 45, 0.4)' }}>
             <p style={{ fontSize: '15px', color: '#e2e8f0', lineHeight: '1.7', margin: 0 }}>
               "To empower global police units, intelligence analysis branches, and municipal command centers with distributed case management, machine intelligence prediction metrics, and secure communication dossiers. We are committed to preserving public safety through cryptographic logging, advanced digital investigations, and real-time network correlation."
@@ -1006,9 +859,9 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          FOOTER
+          SECTION 12: FOOTER
           ============================================== */}
-      <footer style={{
+      <footer id="footer" style={{
         backgroundColor: '#0B1220',
         borderTop: '1px solid rgba(0, 217, 255, 0.15)',
         padding: '60px 20px 40px 20px',
@@ -1034,10 +887,11 @@ const Home = () => {
           <div>
             <h4 style={{ fontSize: '12px', color: '#00D9FF', fontWeight: 'bold', textTransform: 'uppercase' }}>Quick Links</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', fontSize: '13px' }}>
-              <a href="#" className="footer-hover-link" style={{ display: 'inline-block' }}>Documentation</a>
-              <a href="#" className="footer-hover-link" style={{ display: 'inline-block' }}>API Reference</a>
-              <a href="#" className="footer-hover-link" style={{ display: 'inline-block' }}>Citizen Portal</a>
-              <a href="#" className="footer-hover-link" style={{ display: 'inline-block' }}>Contact Center</a>
+              <a href="#hero" onClick={(e) => { e.preventDefault(); smoothScrollTo('hero', 900, 70); }} className="footer-hover-link">Home</a>
+              <a href="#what-is-crimepilot" onClick={(e) => { e.preventDefault(); smoothScrollTo('what-is-crimepilot', 900, 70); }} className="footer-hover-link">What is CrimePilot?</a>
+              <a href="#crimepilot-ai" onClick={(e) => { e.preventDefault(); smoothScrollTo('crimepilot-ai', 900, 70); }} className="footer-hover-link">CrimePilot AI</a>
+              <a href="#capabilities" onClick={(e) => { e.preventDefault(); smoothScrollTo('capabilities', 900, 70); }} className="footer-hover-link">Capabilities</a>
+              <a href="#portals" onClick={(e) => { e.preventDefault(); smoothScrollTo('portals', 900, 70); }} className="footer-hover-link">Role Portals</a>
             </div>
           </div>
 
@@ -1061,7 +915,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Hover styles for quick links and developers */}
         <style>{`
           .footer-hover-link {
             color: #9AA4B2;
@@ -1072,19 +925,7 @@ const Home = () => {
             color: #00D9FF !important;
             transform: translateX(4px);
           }
-          .developer-hover-link {
-            color: #64748b;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-          }
-          .developer-hover-link:hover {
-            color: #00D9FF !important;
-            text-shadow: 0 0 8px rgba(0, 217, 255, 0.35);
-          }
         `}</style>
-
-
       </footer>
 
     </div>
