@@ -1084,30 +1084,7 @@ const Home = () => {
           }
         `}</style>
 
-        <div style={{
-          width: '1240px',
-          maxWidth: '100%',
-          margin: '40px auto 0 auto',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          paddingTop: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          fontSize: '11px',
-          color: '#64748b',
-          lineHeight: '1.6'
-        }}>
-          <div>
-            <span>© 2026 CrimePilot AI</span>
-          </div>
-          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontWeight: 'bold', color: '#9AA4B2' }}>Developed by:</span>
-            <a href="https://www.linkedin.com/in/jay-kanzariya-5a82a0328" target="_blank" rel="noopener noreferrer" className="developer-hover-link">Jay Kanzariya</a>
-            <a href="https://www.linkedin.com/in/om-chavda-39451a37a" target="_blank" rel="noopener noreferrer" className="developer-hover-link">Chavda Om</a>
-            <a href="https://www.linkedin.com/in/chirag-solanki-618453385" target="_blank" rel="noopener noreferrer" className="developer-hover-link">Solanki Chirag</a>
-            <span style={{ color: '#00D9FF', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>Computer Engineering Department</span>
-          </div>
-        </div>
+
       </footer>
 
     </div>

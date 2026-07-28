@@ -158,7 +158,44 @@ export default function CitizenLogin() {
                 </div>
               </div>
             </div>
-            <p style={{fontSize:'9px',color:'#9AA4B2',margin:'4px 0 0 0',lineHeight:1.5}}>
+            <button
+              onClick={() => navigate('/')}
+              title="Return to Home Page"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                marginTop: '10px',
+                width: '100%',
+                padding: '10px',
+                fontSize: '11px',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                color: '#00d9ff',
+                background: 'rgba(10,18,35,0.78)',
+                border: '1px solid rgba(0, 217, 255, 0.3)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 0 10px rgba(0, 217, 255, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 217, 255, 0.2)';
+                e.currentTarget.style.borderColor = '#00d9ff';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#00d9ff';
+                e.currentTarget.style.backgroundColor = 'rgba(10,18,35,0.78)';
+                e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 217, 255, 0.1)';
+              }}
+            >
+              ← BACK TO HOME
+            </button>
+            <p style={{fontSize:'9px',color:'#9AA4B2',margin:'6px 0 0 0',lineHeight:1.5}}>
               Empowering citizens. Strengthening safety.<br/>Building a secure India.
             </p>
           </div>
