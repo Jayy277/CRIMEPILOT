@@ -132,7 +132,7 @@ const Navbar = ({ toggleSidebar }) => {
       ref={navRef}
       onMouseMove={handleMouseMove}
       style={{
-        height: isScrolled ? '58px' : '68px',
+        height: '72px',
         padding: '0 24px',
         borderBottom: isScrolled ? '1px solid rgba(0, 217, 255, 0.20)' : '1px solid rgba(255, 255, 255, 0.08)',
         background: isScrolled
@@ -166,16 +166,7 @@ const Navbar = ({ toggleSidebar }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            textDecoration: 'none',
-            transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.03) rotate(4deg)';
-            e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(0, 217, 255, 0.7))';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none';
-            e.currentTarget.style.filter = 'none';
+            textDecoration: 'none'
           }}
         >
           <img
@@ -185,9 +176,7 @@ const Navbar = ({ toggleSidebar }) => {
               width: '32px',
               height: '32px',
               borderRadius: '6px',
-              objectFit: 'cover',
-              border: '1px solid rgba(0, 217, 255, 0.3)',
-              boxShadow: '0 0 10px rgba(0, 217, 255, 0.2)'
+              objectFit: 'cover'
             }}
           />
           <span

@@ -161,9 +161,9 @@ const CrimeDetails = () => {
     if (!victimForm.name) return;
 
     if (victimForm.contact) {
-      const phoneRegex = /^[789]\d{9}$/;
+      const phoneRegex = /^[6-9]\d{9}$/;
       if (!phoneRegex.test(victimForm.contact)) {
-        alert('Victim contact phone number must be 10 digits starting with 7, 8, or 9.');
+        alert('Victim contact phone number must be 10 digits starting with 6, 7, 8, or 9.');
         return;
       }
     }

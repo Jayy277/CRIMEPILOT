@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { renderDepartmentBadge } from '../../api/departmentHelper';
 import { maskIdentityNumber } from '../../utils/maskUtils';
+import AdminDataTable from '../../components/AdminDataTable';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -116,9 +117,9 @@ const ManageUsers = () => {
       };
 
       if (role === 'officer') {
-        const phoneRegex = /^[789]\d{9}$/;
+        const phoneRegex = /^[6-9]\d{9}$/;
         if (!phoneRegex.test(contact)) {
-          setError('Contact phone number must be 10 digits starting with 7, 8, or 9.');
+          setError('Contact phone number must be compulsory 10 digits starting with 6, 7, 8, or 9.');
           setSubmitting(false);
           return;
         }
@@ -230,9 +231,9 @@ const ManageUsers = () => {
       };
 
       if (editRole === 'officer') {
-        const phoneRegex = /^[789]\d{9}$/;
+        const phoneRegex = /^[6-9]\d{9}$/;
         if (!phoneRegex.test(editContact)) {
-          setError('Contact phone number must be 10 digits starting with 7, 8, or 9.');
+          setError('Contact phone number must be compulsory 10 digits starting with 6, 7, 8, or 9.');
           setSubmitting(false);
           return;
         }
@@ -391,8 +392,8 @@ const ManageUsers = () => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Contact Phone *</label>
-                    <input type="text" required placeholder="Contact" className="form-control" value={contact} onChange={e => setContact(e.target.value)} />
+                    <label>Contact Phone (10 Digits) *</label>
+                    <input type="tel" required placeholder="10-digit mobile" maxLength={10} minLength={10} inputMode="numeric" pattern="[6-9][0-9]{9}" className="form-control" value={contact} onChange={e => setContact(e.target.value.replace(/\D/g, '').slice(0, 10))} />
                   </div>
                 </>
               )}
@@ -461,8 +462,8 @@ const ManageUsers = () => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Contact Phone *</label>
-                    <input type="text" required className="form-control" value={editContact} onChange={e => setEditContact(e.target.value)} />
+                    <label>Contact Phone (10 Digits) *</label>
+                    <input type="tel" required placeholder="10-digit mobile" maxLength={10} minLength={10} inputMode="numeric" pattern="[6-9][0-9]{9}" className="form-control" value={editContact} onChange={e => setEditContact(e.target.value.replace(/\D/g, '').slice(0, 10))} />
                   </div>
                 </>
               )}
@@ -484,197 +485,208 @@ const ManageUsers = () => {
       )}
 
       {/* ==============================================
-          DIRECTORY LISTS
+          DIRECTORY LISTS USING ADMIN DATATABLE
           ============================================== */}
       {activeTab === 'staff' ? (
         <div className="glass-card">
-          <h3 style={{ fontSize: '18px', color: '#fff', marginBottom: '16px', fontFamily: 'Outfit, sans-serif' }}>System Personnel Registry</h3>
-          {users.length === 0 ? (
-            <div style={{ color: '#64748b', fontStyle: 'italic', padding: '20px 0' }}>No users recorded.</div>
-          ) : (
-            <div className="custom-table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Affiliation / Badge</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((item) => {
-                    const u = item.user;
-                    const details = item.details;
-                    
-                    // Role color mapping
-                    const getRoleColor = (roleVal) => {
-                      if (roleVal === 'admin') return '#f43f5e';
-                      if (roleVal === 'analyst') return '#06b6d4';
-                      return '#f59e0b';
-                    };
-
-                    return (
-                      <tr key={u._id}>
-                        <td style={{ fontWeight: '700', color: '#fff' }}>
-                          {u.name}
-                          <div style={{ marginTop: '4px' }}>{renderDepartmentBadge(u.email)}</div>
-                        </td>
-                        <td>{u.email}</td>
-                        <td>
-                          <span style={{
-                            fontSize: '10px',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            color: getRoleColor(u.role),
-                            backgroundColor: `${getRoleColor(u.role)}11`,
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            border: `1px solid ${getRoleColor(u.role)}22`
-                          }}>{u.role}</span>
-                        </td>
-                        <td>
-                          {u.role === 'officer' && details ? (
-                            <span>Badge: <strong>{details.badgeNo}</strong> ({details.station?.policeStation || 'No Station'})</span>
-                          ) : u.role === 'analyst' && details ? (
-                            <span>Dept: {details.department}</span>
-                          ) : (
-                            <span style={{ color: '#64748b', fontStyle: 'italic' }}>System Admin</span>
-                          )}
-                        </td>
-                        <td>
-                          <span style={{
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            color: u.isActive ? '#10b981' : '#64748b'
-                          }}>
-                            {u.isActive ? 'Active' : 'Deactivated'}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '8px' }}>
-                            <button
-                              onClick={() => handleToggleActive(u._id)}
-                              className="btn btn-secondary"
-                              style={{ fontSize: '11px', padding: '4px 8px', color: u.isActive ? '#fbbf24' : '#10b981' }}
-                            >
-                              {u.isActive ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              onClick={() => startEdit(item)}
-                              className="btn btn-secondary"
-                              style={{ fontSize: '11px', padding: '4px 8px' }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(u._id, u.name)}
-                              className="btn btn-secondary"
-                              style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <AdminDataTable
+            title="System Personnel Registry"
+            columns={[
+              {
+                key: 'user.name',
+                label: 'Name',
+                sortable: true,
+                render: (item) => (
+                  <span style={{ fontWeight: '700', color: '#fff' }}>
+                    {item.user.name}
+                    <div style={{ marginTop: '4px' }}>{renderDepartmentBadge(item.user.email)}</div>
+                  </span>
+                )
+              },
+              { key: 'user.email', label: 'Email', sortable: true },
+              {
+                key: 'user.role',
+                label: 'Role',
+                sortable: true,
+                render: (item) => {
+                  const getRoleColor = (roleVal) => {
+                    if (roleVal === 'admin') return '#f43f5e';
+                    if (roleVal === 'analyst') return '#06b6d4';
+                    return '#f59e0b';
+                  };
+                  return (
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color: getRoleColor(item.user.role),
+                      backgroundColor: `${getRoleColor(item.user.role)}11`,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      border: `1px solid ${getRoleColor(item.user.role)}22`
+                    }}>{item.user.role}</span>
+                  );
+                }
+              },
+              {
+                key: 'details',
+                label: 'Affiliation / Badge',
+                sortable: false,
+                render: (item) => {
+                  const u = item.user;
+                  const details = item.details;
+                  if (u.role === 'officer' && details) {
+                    return <span>Badge: <strong>{details.badgeNo}</strong> ({details.station?.policeStation || 'No Station'})</span>;
+                  } else if (u.role === 'analyst' && details) {
+                    return <span>Dept: {details.department}</span>;
+                  }
+                  return <span style={{ color: '#64748b', fontStyle: 'italic' }}>System Admin</span>;
+                }
+              },
+              {
+                key: 'user.isActive',
+                label: 'Status',
+                sortable: true,
+                render: (item) => (
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: item.user.isActive ? '#10b981' : '#64748b' }}>
+                    {item.user.isActive ? 'Active' : 'Deactivated'}
+                  </span>
+                )
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                sortable: false,
+                align: 'right',
+                render: (item) => (
+                  <div style={{ display: 'inline-flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleToggleActive(item.user._id)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '11px', padding: '4px 8px', color: item.user.isActive ? '#fbbf24' : '#10b981' }}
+                    >
+                      {item.user.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(item.user._id, item.user.name)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={users}
+            loading={loading}
+            emptyMessage="No personnel records found."
+            searchPlaceholder="Search personnel by name, email, or role..."
+          />
         </div>
       ) : (
         <div className="glass-card">
-          <h3 style={{ fontSize: '18px', color: '#fff', marginBottom: '16px', fontFamily: 'Outfit, sans-serif' }}>Citizen Dossier Verification Desk</h3>
-          {citizens.length === 0 ? (
-            <div style={{ color: '#64748b', fontStyle: 'italic', padding: '20px 0' }}>No citizens registered on ledger.</div>
-          ) : (
-            <div className="custom-table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Full Name</th>
-                    <th>Contact Credentials</th>
-                    <th>Identity Proof Info</th>
-                    <th>Document Audit</th>
-                    <th>Verification Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {citizens.map((c) => (
-                    <tr key={c.id || c._id}>
-                      <td style={{ fontWeight: '700', color: '#fff' }}>{c.user?.name}</td>
-                      <td>
-                        <div style={{ fontSize: '12px' }}>{c.user?.email}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Mob: {c.mobile}</div>
-                      </td>
-                      <td>
-                        <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{c.identityType}</div>
-                        <div style={{ fontSize: '11px', color: '#4DA3FF', fontFamily: 'monospace' }}>No: {maskIdentityNumber(c.identityType, c.identityNumber)}</div>
-                      </td>
-                      <td>
-                        {c.identityDocument ? (
-                          <a
-                            href={`http://localhost:5000${c.identityDocument}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{
-                              color: '#4DA3FF',
-                              textDecoration: 'none',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              borderBottom: '1px dashed #4DA3FF'
-                            }}
-                          >
-                            🔗 Audit Document
-                          </a>
-                        ) : (
-                          <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '11px' }}>No Doc Uploaded</span>
-                        )}
-                      </td>
-                      <td>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: '800',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          textTransform: 'uppercase',
-                          color: c.status === 'verified' ? '#10b981' : c.status === 'rejected' ? '#f43f5e' : '#f59e0b',
-                          backgroundColor: c.status === 'verified' ? 'rgba(16,185,129,0.08)' : c.status === 'rejected' ? 'rgba(244,63,94,0.08)' : 'rgba(245,158,11,0.08)'
-                        }}>
-                          {c.status}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px' }}>
-                          <button
-                            onClick={() => handleVerifyCitizen(c.id || c._id, 'verify')}
-                            className="btn btn-secondary"
-                            disabled={c.status === 'verified'}
-                            style={{ fontSize: '11px', padding: '4px 8px', color: '#10b981', borderColor: 'rgba(16,185,129,0.1)' }}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleVerifyCitizen(c.id || c._id, 'reject')}
-                            className="btn btn-secondary"
-                            disabled={c.status === 'rejected'}
-                            style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <AdminDataTable
+            title="Citizen Dossier Verification Desk"
+            columns={[
+              { key: 'user.name', label: 'Full Name', sortable: true, render: (c) => <span style={{ fontWeight: '700', color: '#fff' }}>{c.user?.name}</span> },
+              {
+                key: 'user.email',
+                label: 'Contact Credentials',
+                sortable: true,
+                render: (c) => (
+                  <div>
+                    <div style={{ fontSize: '12px' }}>{c.user?.email}</div>
+                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Mob: {c.mobile}</div>
+                  </div>
+                )
+              },
+              {
+                key: 'identityType',
+                label: 'Identity Proof Info',
+                sortable: true,
+                render: (c) => (
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{c.identityType}</div>
+                    <div style={{ fontSize: '11px', color: '#4DA3FF', fontFamily: 'monospace' }}>No: {maskIdentityNumber(c.identityType, c.identityNumber)}</div>
+                  </div>
+                )
+              },
+              {
+                key: 'identityDocument',
+                label: 'Document Audit',
+                sortable: false,
+                render: (c) => (
+                  c.identityDocument ? (
+                    <a
+                      href={`http://localhost:5000${c.identityDocument}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#4DA3FF', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px dashed #4DA3FF' }}
+                    >
+                      🔗 Audit Document
+                    </a>
+                  ) : (
+                    <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '11px' }}>No Doc Uploaded</span>
+                  )
+                )
+              },
+              {
+                key: 'status',
+                label: 'Verification Status',
+                sortable: true,
+                render: (c) => (
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    color: c.status === 'verified' ? '#10b981' : c.status === 'rejected' ? '#f43f5e' : '#f59e0b',
+                    backgroundColor: c.status === 'verified' ? 'rgba(16,185,129,0.08)' : c.status === 'rejected' ? 'rgba(244,63,94,0.08)' : 'rgba(245,158,11,0.08)'
+                  }}>
+                    {c.status}
+                  </span>
+                )
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                sortable: false,
+                align: 'right',
+                render: (c) => (
+                  <div style={{ display: 'inline-flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleVerifyCitizen(c.id || c._id, 'verify')}
+                      className="btn btn-secondary"
+                      disabled={c.status === 'verified'}
+                      style={{ fontSize: '11px', padding: '4px 8px', color: '#10b981', borderColor: 'rgba(16,185,129,0.1)' }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleVerifyCitizen(c.id || c._id, 'reject')}
+                      className="btn btn-secondary"
+                      disabled={c.status === 'rejected'}
+                      style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={citizens}
+            emptyMessage="No citizens registered on ledger."
+            searchPlaceholder="Search citizens by name, email, status, or identity..."
+          />
         </div>
       )}
 

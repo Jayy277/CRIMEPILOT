@@ -240,7 +240,7 @@ const Home = () => {
                 Launch Secure Portal
               </Link>
               <button
-                onClick={() => navigate('/platform-overview')}
+                onClick={() => navigate('/overview')}
                 style={{
                   padding: '14px 28px',
                   background: 'transparent',

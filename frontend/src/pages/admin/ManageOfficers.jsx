@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { renderDepartmentBadge } from '../../api/departmentHelper';
+import AdminDataTable from '../../components/AdminDataTable';
 
 const ManageOfficers = () => {
   const [officers, setOfficers] = useState([]);
@@ -12,7 +13,6 @@ const ManageOfficers = () => {
     try {
       setLoading(true);
       setError('');
-      // Fetch staff details (officers list) and general crimes to map workloads
       const [staffRes, crimesRes] = await Promise.all([
         axiosInstance.get('/admin/staff-search?role=officer'),
         axiosInstance.get('/crimes')
@@ -36,7 +36,6 @@ const ManageOfficers = () => {
     fetchWorkloads();
   }, []);
 
-  // Compute officer case metrics helper
   const getOfficerStats = (officerId) => {
     const assignedCases = crimes.filter(c => c.officer && String(c.officer._id || c.officer) === String(officerId));
     const active = assignedCases.filter(c => c.isPending).length;
@@ -48,22 +47,6 @@ const ManageOfficers = () => {
       resolved
     };
   };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <div style={{
-          border: '4px solid rgba(255,255,255,0.1)',
-          borderLeftColor: '#e11d48',
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -84,72 +67,105 @@ const ManageOfficers = () => {
         </div>
       )}
 
-      {/* Directory Table */}
+      {/* Directory Table using AdminDataTable */}
       <div className="glass-card">
-        <h3 style={{ fontSize: '18px', color: '#fff', marginBottom: '16px', fontFamily: 'Outfit, sans-serif' }}>Caseload Auditing</h3>
-
-        {officers.length === 0 ? (
-          <div style={{ color: '#64748b', fontStyle: 'italic', padding: '20px 0' }}>No officers registered in systems.</div>
-        ) : (
-          <div className="custom-table-container">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Badge No</th>
-                  <th>Officer Name</th>
-                  <th>Contact</th>
-                  <th>Jurisdiction Station</th>
-                  <th>Active Cases</th>
-                  <th>Solved Cases</th>
-                  <th>Total Cases</th>
-                  <th>Caseload Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {officers.map((officer) => {
-                  const stats = getOfficerStats(officer._id);
-                  const isOverloaded = stats.active >= 5;
-
-                  return (
-                    <tr key={officer._id}>
-                      <td style={{ fontWeight: '700', color: '#fbbf24', fontFamily: 'monospace' }}>
-                        {officer.badgeNo}
-                      </td>
-                      <td style={{ fontWeight: '700', color: '#fff' }}>
-                        {officer.user?.name || 'Staff Officer'}
-                        <div style={{ marginTop: '4px' }}>{officer.user?.email && renderDepartmentBadge(officer.user.email)}</div>
-                      </td>
-                      <td>{officer.contact || 'N/A'}</td>
-                      <td>
-                        {officer.station?.policeStation || 'N/A'}
-                        <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>
-                          {officer.station?.city}
-                        </span>
-                      </td>
-                      <td style={{ fontWeight: '700', color: '#e11d48' }}>{stats.active}</td>
-                      <td style={{ fontWeight: '700', color: '#10b981' }}>{stats.resolved}</td>
-                      <td style={{ fontWeight: '700', color: '#fff' }}>{stats.total}</td>
-                      <td>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          color: isOverloaded ? '#e11d48' : '#10b981',
-                          backgroundColor: isOverloaded ? 'rgba(225,29,72,0.1)' : 'rgba(16,185,129,0.1)',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: `1px solid ${isOverloaded ? 'rgba(225,29,72,0.2)' : 'rgba(16,185,129,0.2)'}`
-                        }}>
-                          {isOverloaded ? 'Overloaded' : 'Optimal'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminDataTable
+          title="Caseload Auditing"
+          columns={[
+            {
+              key: 'badgeNo',
+              label: 'Badge No',
+              sortable: true,
+              render: (o) => (
+                <span style={{ fontWeight: '700', color: '#fbbf24', fontFamily: 'monospace' }}>
+                  {o.badgeNo}
+                </span>
+              )
+            },
+            {
+              key: 'user.name',
+              label: 'Officer Name',
+              sortable: true,
+              render: (o) => (
+                <span style={{ fontWeight: '700', color: '#fff' }}>
+                  {o.user?.name || 'Staff Officer'}
+                  <div style={{ marginTop: '4px' }}>{o.user?.email && renderDepartmentBadge(o.user.email)}</div>
+                </span>
+              )
+            },
+            { key: 'contact', label: 'Contact', sortable: true, render: (o) => o.contact || 'N/A' },
+            {
+              key: 'station.policeStation',
+              label: 'Jurisdiction Station',
+              sortable: true,
+              render: (o) => (
+                <span>
+                  {o.station?.policeStation || 'N/A'}
+                  <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>
+                    {o.station?.city}
+                  </span>
+                </span>
+              )
+            },
+            {
+              key: 'active',
+              label: 'Active Cases',
+              sortable: true,
+              sortValue: (o) => getOfficerStats(o._id).active,
+              render: (o) => {
+                const stats = getOfficerStats(o._id);
+                return <span style={{ fontWeight: '700', color: '#e11d48' }}>{stats.active}</span>;
+              }
+            },
+            {
+              key: 'resolved',
+              label: 'Solved Cases',
+              sortable: true,
+              sortValue: (o) => getOfficerStats(o._id).resolved,
+              render: (o) => {
+                const stats = getOfficerStats(o._id);
+                return <span style={{ fontWeight: '700', color: '#10b981' }}>{stats.resolved}</span>;
+              }
+            },
+            {
+              key: 'total',
+              label: 'Total Cases',
+              sortable: true,
+              sortValue: (o) => getOfficerStats(o._id).total,
+              render: (o) => {
+                const stats = getOfficerStats(o._id);
+                return <span style={{ fontWeight: '700', color: '#fff' }}>{stats.total}</span>;
+              }
+            },
+            {
+              key: 'status',
+              label: 'Caseload Status',
+              sortable: false,
+              render: (o) => {
+                const stats = getOfficerStats(o._id);
+                const isOverloaded = stats.active >= 5;
+                return (
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    color: isOverloaded ? '#e11d48' : '#10b981',
+                    backgroundColor: isOverloaded ? 'rgba(225,29,72,0.1)' : 'rgba(16,185,129,0.1)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    border: `1px solid ${isOverloaded ? 'rgba(225,29,72,0.2)' : 'rgba(16,185,129,0.2)'}`
+                  }}>
+                    {isOverloaded ? 'Overloaded' : 'Optimal'}
+                  </span>
+                );
+              }
+            }
+          ]}
+          data={officers}
+          loading={loading}
+          emptyMessage="No officers registered in systems."
+          searchPlaceholder="Search officers by name, badge, contact, or station..."
+        />
       </div>
 
     </div>

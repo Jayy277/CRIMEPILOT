@@ -76,6 +76,41 @@ const CitizenRegister = () => {
   const [identityTouch, setIdentityTouch] = useState(false);
   const idInputRef = useRef(null);
 
+  const [mobileError, setMobileError] = useState('');
+  const [mobileTouch, setMobileTouch] = useState(false);
+  const mobileInputRef = useRef(null);
+
+  const handleMobileChange = (e) => {
+    const cleanDigits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setMobile(cleanDigits);
+
+    if (mobileTouch) {
+      if (!cleanDigits) {
+        setMobileError('Mobile number is compulsory.');
+      } else if (cleanDigits.length < 10) {
+        setMobileError('Mobile number must be compulsory 10 digits.');
+      } else if (!/^[6-9]\d{9}$/.test(cleanDigits)) {
+        setMobileError('Mobile number must start with 6, 7, 8, or 9.');
+      } else {
+        setMobileError('');
+      }
+    }
+  };
+
+  const handleMobileBlur = () => {
+    setMobileTouch(true);
+    if (!mobile) {
+      setMobileError('Mobile number is compulsory.');
+    } else if (mobile.length < 10) {
+      setMobileError('Mobile number must be compulsory 10 digits.');
+    } else if (!/^[6-9]\d{9}$/.test(mobile)) {
+      setMobileError('Mobile number must start with 6, 7, 8, or 9.');
+    } else {
+      setMobileError('');
+    }
+  };
+
+  const loadingStateRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -134,9 +169,24 @@ const CitizenRegister = () => {
       setError('Passwords do not match.');
       return;
     }
-    const phoneRegex = /^[789]\d{9}$/;
-    if (!phoneRegex.test(mobile)) {
-      setError('Mobile number must be 10 digits starting with 7, 8, or 9.');
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!mobile || !phoneRegex.test(mobile)) {
+      setMobileTouch(true);
+      if (!mobile) {
+        setMobileError('Mobile number is compulsory.');
+        setError('Mobile number is compulsory.');
+      } else if (mobile.length < 10) {
+        setMobileError('Mobile number must be compulsory 10 digits.');
+        setError('Mobile number must be compulsory 10 digits.');
+      } else {
+        setMobileError('Mobile number must start with 6, 7, 8, or 9.');
+        setError('Mobile number must be 10 digits starting with 6, 7, 8, or 9.');
+      }
+      if (mobileInputRef.current) {
+        mobileInputRef.current.focus();
+        mobileInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -318,8 +368,36 @@ const CitizenRegister = () => {
             </div>
 
             <div className="form-group">
-              <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Mobile Number</label>
-              <input type="text" className="form-control" value={mobile} onChange={e => setMobile(e.target.value)} required placeholder="9876543210" />
+              <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Mobile Number <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                ref={mobileInputRef}
+                type="tel"
+                className="form-control"
+                value={mobile}
+                onChange={handleMobileChange}
+                onBlur={handleMobileBlur}
+                required
+                maxLength={10}
+                minLength={10}
+                inputMode="numeric"
+                pattern="[6-9][0-9]{9}"
+                placeholder="9876543210"
+                style={{
+                  borderColor: mobileError ? '#ef4444' : undefined,
+                  boxShadow: mobileError ? '0 0 0 1px #ef4444' : undefined
+                }}
+              />
+              {mobileError ? (
+                <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>
+                  {mobileError}
+                </div>
+              ) : (
+                <div style={{ color: '#64748b', fontSize: '10px', marginTop: '4px' }}>
+                  Compulsory 10-digit mobile number ({mobile.length}/10)
+                </div>
+              )}
             </div>
 
             <div className="form-group">

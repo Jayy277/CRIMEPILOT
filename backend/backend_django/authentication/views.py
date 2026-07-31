@@ -371,8 +371,8 @@ class CitizenSignupView(APIView):
     if User.objects.filter(email__iexact=email).exists():
       return Response({'success': False, 'message': 'Email already registered'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not re.match(r'^[789]\d{9}$', str(mobile)):
-      return Response({'success': False, 'message': 'Mobile number must be 10 digits starting with 7, 8, or 9.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not re.match(r'^[6-9]\d{9}$', str(mobile)):
+      return Response({'success': False, 'message': 'Mobile number must be compulsory 10 digits starting with 6, 7, 8, or 9.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Domain validation checks (Citizens cannot use internal domains)
     email_lower = email.lower()

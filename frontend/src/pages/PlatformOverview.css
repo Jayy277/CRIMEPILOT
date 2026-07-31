@@ -1,137 +1,417 @@
-/* ─── PLATFORM OVERVIEW PAGE STYLES ──────────────────────────────────────── */
-.platform-overview-page {
-  min-height: 100vh;
-  background-color: #08111F;
-  color: #FFFFFF;
-  font-family: 'Outfit', 'Inter', sans-serif;
-  position: relative;
-  overflow-x: hidden;
+/* ─── CRIMEPILOT AI KEYNOTE PRESENTATION OVERVIEW STYLES ──────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap');
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #0B1220;
 }
 
-/* Background Cyber Grid */
-.overview-cyber-grid {
+.overview-presentation-container {
+  height: 100vh;
+  width: 100vw;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  background-color: #0B1220;
+  color: #FFFFFF;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom minimal scrollbar */
+.overview-presentation-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overview-presentation-container::-webkit-scrollbar-track {
+  background: #0B1220;
+}
+
+.overview-presentation-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.25);
+  border-radius: 4px;
+}
+
+/* Background Cyber Grid & Ambient Lighting */
+.overview-fixed-grid {
   position: fixed;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(0, 217, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 217, 255, 0.04) 1px, transparent 1px);
-  background-size: 36px 36px;
+    linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Ambient Glow */
-.overview-radial-glow {
+.overview-fixed-glow {
   position: fixed;
-  top: 20%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 800px;
-  height: 500px;
-  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0, 217, 255, 0.08), transparent 70%);
+  width: 1000px;
+  height: 650px;
+  background: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(0, 217, 255, 0.06), transparent 75%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Minimal Navbar */
-.overview-header {
-  height: 64px;
-  padding: 0 32px;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
-  background: rgba(8, 17, 31, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+/* Scene Base Layout (Strict 100vh Viewport Snap) */
+.overview-scene {
+  height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  padding: 40px 24px;
+  z-index: 1;
 }
 
-.overview-brand {
+.overview-scene-content {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Top Right Floating Controls (No Fixed Header) */
+.overview-floating-controls {
+  position: fixed;
+  top: 24px;
+  right: 32px;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 12px;
-  cursor: pointer;
 }
 
-.overview-brand-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 217, 255, 0.4);
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
-}
-
-.overview-brand-title {
-  font-size: 18px;
+.overview-control-btn {
+  background: rgba(11, 18, 32, 0.85);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: #00D9FF;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-control-btn.active {
+  background: rgba(0, 217, 255, 0.12);
+  border-color: #00D9FF;
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+}
+
+.overview-control-btn.paused {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: #F5A623;
+  color: #F5A623;
+  box-shadow: 0 0 15px rgba(245, 166, 35, 0.2);
+}
+
+.overview-control-btn.skip {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.overview-control-btn.skip:hover {
+  background: #00D9FF;
+  border-color: #00D9FF;
+  color: #0B1220;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+}
+
+/* Floating Right Edge Scene Navigation Dots */
+.overview-scene-dots {
+  position: fixed;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.overview-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 0;
+}
+
+.overview-dot.active {
+  background: #00D9FF;
+  box-shadow: 0 0 12px #00D9FF;
+  transform: scale(1.5);
+}
+
+.overview-dot:hover {
+  background: rgba(0, 217, 255, 0.8);
+}
+
+/* Glass Cards & Presentation Elements */
+.overview-glass-card {
+  background: rgba(16, 27, 45, 0.65);
+  border: 1px solid rgba(0, 217, 255, 0.18);
+  border-radius: 14px;
+  padding: 26px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.overview-glass-card:hover {
+  border-color: rgba(0, 217, 255, 0.45);
+  box-shadow: 0 0 25px rgba(0, 217, 255, 0.12);
+  transform: translateY(-3px);
+}
+
+.overview-scene-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #00D9FF;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.overview-scene-title {
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 900;
   color: #FFFFFF;
   letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 14px 0;
 }
 
-.overview-badge {
-  font-size: 10px;
-  color: #00D9FF;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  padding: 3px 8px;
-  border-radius: 12px;
-  background: rgba(0, 217, 255, 0.1);
-  border: 1px solid rgba(0, 217, 255, 0.25);
-  font-family: monospace;
+.overview-scene-desc {
+  font-size: 15px;
+  color: #9AA4B2;
+  line-height: 1.65;
+  max-width: 700px;
+  margin: 0 auto 32px auto;
 }
 
-.overview-back-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
-  padding: 8px 18px;
+/* Primary Cyan Glowing CTA Buttons */
+.overview-cta-btn {
+  padding: 16px 36px;
+  background: linear-gradient(135deg, #00D9FF, #0088FF);
+  color: #0B1220;
+  border: none;
   border-radius: 8px;
-  font-size: 13px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.45);
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.overview-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 45px rgba(0, 217, 255, 0.7);
+}
+
+.overview-secondary-btn {
+  padding: 16px 36px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.overview-back-btn:hover {
+.overview-secondary-btn:hover {
   background: rgba(0, 217, 255, 0.1);
   border-color: rgba(0, 217, 255, 0.4);
   color: #00D9FF;
 }
 
-/* Sections & Scroll Reveal */
-.overview-section {
-  position: relative;
-  z-index: 1;
-  opacity: 0;
-  transform: translateY(35px);
-  transition: opacity 700ms ease-out, transform 700ms ease-out;
-  will-change: opacity, transform;
+/* Utility Animations */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-.overview-section.show-section {
-  opacity: 1;
-  transform: translateY(0);
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .overview-scene {
+    padding: 60px 16px 30px 16px;
+  }
+  .overview-floating-controls {
+    right: 16px;
+    top: 16px;
+    gap: 8px;
+  }
+  .overview-control-btn {
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+  .overview-scene-dots {
+    display: none;
+  }
 }
 
-/* Cards & Panels */
-.overview-card {
-  background: rgba(16, 27, 45, 0.55);
+/* ─── SCENE 02: REDESIGNED ENTERPRISE / GOVERNMENT CARDS & SOLUTION STRIP ─── */
+.scene2-card {
+  background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(0, 217, 255, 0.2);
   border-radius: 12px;
   padding: 24px;
-  transition: all 0.3s ease;
+  text-align: left;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
 }
 
-.overview-card:hover {
+.scene2-card:hover {
+  transform: translateY(-4px) scale(1.025);
   border-color: rgba(0, 217, 255, 0.5);
-  transform: translateY(-4px);
   box-shadow: 0 0 25px rgba(0, 217, 255, 0.15);
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+.scene2-icon {
+  font-size: 32px;
+  margin-bottom: 14px;
+  display: inline-block;
+  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.4));
+}
+
+.scene2-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.scene2-card-desc {
+  font-size: 13px;
+  color: #9AA4B2;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Glowing Solution Strip */
+.scene2-solution-strip {
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.12), rgba(11, 18, 32, 0.85));
+  border: 1px solid rgba(0, 217, 255, 0.35);
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.12);
+  border-radius: 12px;
+  padding: 18px 24px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.scene2-solution-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.scene2-solution-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #00D9FF;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0, 217, 255, 0.15);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+}
+
+.scene2-solution-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+.scene2-solution-content {
+  font-size: 13.5px;
+  color: #CBD5E1;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Bottom-Right Keyboard Helper Hint */
+.overview-kb-hint {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  z-index: 1000;
+  background: rgba(11, 18, 32, 0.88);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: #9AA4B2;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.overview-kb-hint.hidden {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.overview-kb-key {
+  color: #00D9FF;
+  background: rgba(0, 217, 255, 0.15);
+  border: 1px solid rgba(0, 217, 255, 0.35);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
 }
