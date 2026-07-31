@@ -42,6 +42,7 @@ import CitizenRegister from './pages/citizen/Register';
 import CitizenDashboard from './pages/citizen/Dashboard';
 import RegisterFIR from './pages/citizen/RegisterFIR';
 import TrackFIR from './pages/citizen/TrackFIR';
+import MyFIRs from './pages/citizen/MyFIRs';
 import CitizenProfile from './pages/citizen/Profile';
 
 function App() {
@@ -134,7 +135,8 @@ function App() {
             <Route path="dashboard" element={<CitizenDashboard />} />
             <Route path="register-fir" element={<RegisterFIR />} />
             <Route path="track-fir" element={<TrackFIR />} />
-            <Route path="my-cases" element={<TrackFIR />} />
+            <Route path="my-firs" element={<MyFIRs />} />
+            <Route path="my-cases" element={<MyFIRs />} />
             <Route path="profile" element={<CitizenProfile />} />
           </Route>
 

@@ -792,10 +792,36 @@ class CitizenFIRListView(APIView):
     if not citizen:
       return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
     crimes = Crime.objects.filter(citizen=citizen).order_by('-created_at')
+    
+    crime_list = []
+    for c in crimes:
+      c_data = CrimeSerializer(c).data
+      c_data['evidences'] = EvidenceSerializer(c.evidences.all(), many=True).data
+      crime_list.append(c_data)
+
     return Response({
       'success': True,
-      'crimes': CrimeSerializer(crimes, many=True).data
+      'crimes': crime_list
     })
+
+
+class CitizenFIRDetailView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+
+  def get(self, request, crime_pk=None):
+    from authentication.models import Citizen
+    citizen = Citizen.objects.filter(user=request.user).first()
+    if not citizen:
+      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # STRICT SECURITY: Only allow access if crime belongs to this citizen
+    crime = Crime.objects.filter(id=crime_pk, citizen=citizen).first()
+    if not crime:
+      return Response({'success': False, 'message': 'FIR case not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    c_data = CrimeSerializer(crime).data
+    c_data['evidences'] = EvidenceSerializer(crime.evidences.all(), many=True).data
+    return Response({'success': True, 'crime': c_data})
 
 
 class CitizenEvidenceUploadView(APIView):
@@ -810,7 +836,7 @@ class CitizenEvidenceUploadView(APIView):
 
     crime = Crime.objects.filter(id=crime_pk, citizen=citizen).first()
     if not crime:
-      return Response({'success': False, 'message': 'Case not found'}, status=status.HTTP_404_NOT_FOUND)
+      return Response({'success': False, 'message': 'Case not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
 
     file_obj = request.FILES.get('file')
     if not file_obj:
@@ -841,7 +867,6 @@ class CitizenEvidenceUploadView(APIView):
     if crime.citizen:
       send_case_progression_email(crime, "Evidence Received")
 
-
     return Response({
       'success': True,
       'message': 'Additional evidence uploaded successfully.',
@@ -855,13 +880,15 @@ class CitizenDownloadFIRView(APIView):
   def get(self, request, crime_pk=None):
     from authentication.models import Citizen
     citizen = Citizen.objects.filter(user=request.user).first()
-    if not citizen:
-      return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    # Allow citizen, officer, or admin to download
+    
     crime = Crime.objects.filter(id=crime_pk).first()
     if not crime:
       return Response({'success': False, 'message': 'Case not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # STRICT SECURITY FOR CITIZENS
+    if request.user.role == 'citizen':
+      if not citizen or crime.citizen != citizen:
+        return Response({'success': False, 'message': 'Access denied to this FIR'}, status=status.HTTP_403_FORBIDDEN)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="FIR-{crime.crime_id}.pdf"'
@@ -869,7 +896,7 @@ class CitizenDownloadFIRView(APIView):
     generate_report_pdf(
       response,
       f"FIR DETAILS COMPILATION - {crime.crime_id}",
-      f"Submitted by citizen: {citizen.user.name}",
+      f"Submitted by citizen: {crime.citizen.user.name if crime.citizen else 'Anonymous'}",
       [crime],
       f"Date Filed: {crime.date}"
     )
