@@ -71,6 +71,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const citizenLogin = async (usernameOrEmail, password) => {
+    try {
+      const response = await axiosInstance.post('/auth/citizen/login', {
+        usernameOrEmail,
+        password,
+      });
+
+      const { token: jwtToken, user: userData, details: userDetails } = response.data;
+
+      // Save to state
+      setToken(jwtToken);
+      setUser(userData);
+      setDetails(userDetails);
+
+      // Save to localStorage
+      localStorage.setItem('crimepilot_token', jwtToken);
+      localStorage.setItem('crimepilot_user', JSON.stringify(userData));
+      if (userDetails) {
+        localStorage.setItem('crimepilot_details', JSON.stringify(userDetails));
+      } else {
+        localStorage.removeItem('crimepilot_details');
+      }
+
+      return { success: true, role: userData.role };
+    } catch (error) {
+      // Fallback to standard login if needed
+      return login(usernameOrEmail, password);
+    }
+  };
+
   const logout = () => {
     const isCitizen = user?.role === 'citizen';
     setToken(null);
@@ -114,6 +144,7 @@ export const AuthProvider = ({ children }) => {
         setDetails,
         loading,
         login,
+        citizenLogin,
         logout,
         refreshProfile,
       }}

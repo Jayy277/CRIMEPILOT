@@ -1,0 +1,152 @@
+/* ─── CRIMEPILOT FULL-PAGE REUSABLE DATATABLE STYLES ─── */
+
+.admin-datatable-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+}
+
+/* Controls Bar (Search + Top Actions) */
+.admin-datatable-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.admin-datatable-search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 400px;
+}
+
+.admin-datatable-search input {
+  width: 100%;
+  padding: 10px 36px 10px 14px;
+  background: rgba(11, 18, 32, 0.85);
+  border: 1px solid rgba(0, 217, 255, 0.25);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.admin-datatable-search input:focus {
+  border-color: #00D9FF;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.25);
+}
+
+.admin-datatable-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+
+.admin-datatable-search-clear:hover {
+  color: #00D9FF;
+}
+
+/* Full-Page Unconstrained Table Container */
+.admin-datatable-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  background: rgba(11, 18, 32, 0.75);
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+
+/* Single Scrollbar on Portal Main Container */
+.portal-main-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.portal-main-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.portal-main-container::-webkit-scrollbar-thumb {
+  background: #00D9FF;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(0, 217, 255, 0.4);
+  transition: all 0.25s ease;
+}
+
+.portal-main-container::-webkit-scrollbar-thumb:hover {
+  background: #33E0FF !important;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.8) !important;
+}
+
+/* Sticky Header */
+.admin-datatable-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.admin-datatable-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0B1220 !important;
+  color: #94A3B8;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 16px;
+  border-bottom: 2px solid rgba(0, 217, 255, 0.35);
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.admin-datatable-table th.sortable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.admin-datatable-table th.sortable:hover {
+  color: #00D9FF;
+}
+
+.admin-datatable-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: #E2E8F0;
+  background: rgba(26, 34, 51, 0.2);
+  transition: background-color 0.2s ease;
+}
+
+.admin-datatable-table tr:nth-child(even) td {
+  background: rgba(26, 34, 51, 0.35);
+}
+
+.admin-datatable-table tr:hover td {
+  background: rgba(0, 217, 255, 0.08) !important;
+}
+
+.admin-datatable-empty {
+  text-align: center !important;
+  padding: 40px 16px !important;
+  color: #94A3B8;
+  font-style: italic;
+}

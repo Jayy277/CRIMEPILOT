@@ -246,8 +246,18 @@ const Sidebar = ({ isOpen }) => {
             ),
           },
           {
+            path: '/citizen/my-firs',
+            label: 'My FIRs & Tracking',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            ),
+          },
+          {
             path: '/citizen/track-fir',
-            label: 'Track FIR Cases',
+            label: 'Live Case Tracker',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -256,7 +266,7 @@ const Sidebar = ({ isOpen }) => {
           },
           {
             path: '/citizen/profile',
-            label: 'Citizen Dossier',
+            label: 'Citizen Profile',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
@@ -292,9 +302,9 @@ const Sidebar = ({ isOpen }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        height: 'calc(100vh - 64px)',
+        height: 'calc(100vh - 72px)',
         position: 'sticky',
-        top: '64px',
+        top: '72px',
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, border-color 0.3s ease',
         overflow: 'hidden',
         whiteSpace: 'nowrap',

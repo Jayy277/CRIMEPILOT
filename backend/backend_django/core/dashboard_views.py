@@ -1,7 +1,8 @@
 import datetime
+import io
 from django.db.models import Count
 from django.db.models.functions import ExtractYear, ExtractMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -158,18 +159,23 @@ class ReportView(APIView):
 
     period_str = f"{start_date or 'Beginning'} to {end_date or 'Present'}"
 
-    # Return PDF format download
+    # Return PDF format download using FileResponse
     if report_format == 'pdf':
-      response = HttpResponse(content_type='application/pdf')
-      response['Content-Disposition'] = f'attachment; filename="CrimePilot-Report-{int(datetime.datetime.now().timestamp())}.pdf"'
-      
+      now = datetime.datetime.now()
+      filename = f"CrimePilot_Report_{now.strftime('%Y-%m-%d_%H-%M')}.pdf"
+
+      buffer = io.BytesIO()
       generate_report_pdf(
-        response,
+        buffer,
         'Crime Cases Compilation Report',
         f'Generated from filter criteria. Total cases matched: {crimes.count()}',
         crimes,
         period_str
       )
+      buffer.seek(0)
+
+      response = FileResponse(buffer, as_attachment=True, filename=filename, content_type='application/pdf')
+      response['Access-Control-Expose-Headers'] = 'Content-Disposition'
       return response
 
     # Return JSON (default)

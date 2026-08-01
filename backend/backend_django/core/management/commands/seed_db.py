@@ -1,361 +1,196 @@
+import datetime
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-import datetime
 from core.models import Location, CrimeCategory, Crime, Suspect, Victim, Evidence
-from authentication.models import Officer, Analyst
+from authentication.models import Officer, Analyst, Citizen
 
 User = get_user_model()
 
-sample_locations = [
-  { 'state': 'Maharashtra', 'district': 'Mumbai City', 'city': 'Mumbai', 'police_station': 'Colaba Police Station' },
-  { 'state': 'Maharashtra', 'district': 'Mumbai Suburban', 'city': 'Mumbai', 'police_station': 'Andheri Police Station' },
-  { 'state': 'Maharashtra', 'district': 'Mumbai Suburban', 'city': 'Mumbai', 'police_station': 'Bandra Police Station' },
-  { 'state': 'Delhi', 'district': 'New Delhi', 'city': 'New Delhi', 'police_station': 'Connaught Place Police Station' },
-  { 'state': 'Delhi', 'district': 'Central Delhi', 'city': 'New Delhi', 'police_station': 'Karol Bagh Police Station' },
-  { 'state': 'Karnataka', 'district': 'Bengaluru Urban', 'city': 'Bengaluru', 'police_station': 'Koramangala Police Station' },
-  { 'state': 'Karnataka', 'district': 'Bengaluru Urban', 'city': 'Bengaluru', 'police_station': 'Indiranagar Police Station' },
+multi_city_locations = [
+  # Ahmedabad
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Ahmedabad City Police Headquarters' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Navrangpura Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Satellite Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Vastrapur Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Maninagar Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Sabarmati Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Paldi Police Station' },
+  { 'state': 'Gujarat', 'district': 'Ahmedabad', 'city': 'Ahmedabad', 'police_station': 'Sarkhej Police Station' },
+
+  # Rajkot
+  { 'state': 'Gujarat', 'district': 'Rajkot', 'city': 'Rajkot', 'police_station': 'Rajkot City A Division Police Station' },
+  { 'state': 'Gujarat', 'district': 'Rajkot', 'city': 'Rajkot', 'police_station': 'Rajkot B Division Police Station' },
+  { 'state': 'Gujarat', 'district': 'Rajkot', 'city': 'Rajkot', 'police_station': 'University Police Station' },
+  { 'state': 'Gujarat', 'district': 'Rajkot', 'city': 'Rajkot', 'police_station': 'Gandhigram Police Station' },
+  { 'state': 'Gujarat', 'district': 'Rajkot', 'city': 'Rajkot', 'police_station': 'Pradyuman Nagar Police Station' },
+
+  # Gandhinagar
+  { 'state': 'Gujarat', 'district': 'Gandhinagar', 'city': 'Gandhinagar', 'police_station': 'Gandhinagar Sector 7 Police Station' },
+  { 'state': 'Gujarat', 'district': 'Gandhinagar', 'city': 'Gandhinagar', 'police_station': 'Gandhinagar Sector 21 Police Station' },
+  { 'state': 'Gujarat', 'district': 'Gandhinagar', 'city': 'Gandhinagar', 'police_station': 'Infocity Police Station' },
+  { 'state': 'Gujarat', 'district': 'Gandhinagar', 'city': 'Gandhinagar', 'police_station': 'Chiloda Police Station' },
+  { 'state': 'Gujarat', 'district': 'Gandhinagar', 'city': 'Gandhinagar', 'police_station': 'Adalaj Police Station' },
 ]
 
 sample_categories = [
-  {
-    'name': 'Theft',
-    'sections': [
-      { 'act': 'BNS', 'section': '305', 'description': 'Theft in a dwelling house, etc.' },
-      { 'act': 'BNS', 'section': '306', 'description': 'Theft by clerk or servant of property in possession of master' },
-      { 'act': 'BNS', 'section': '307', 'description': 'Theft after preparation made for causing death, hurt or restraint' },
-    ],
-  },
-  {
-    'name': 'Robbery',
-    'sections': [
-      { 'act': 'BNS', 'section': '309', 'description': 'Robbery and punishment for robbery' },
-      { 'act': 'BNS', 'section': '310', 'description': 'Dacoity and punishment for dacoity' },
-      { 'act': 'BNS', 'section': '311', 'description': 'Robbery, or dacoity, with attempt to cause death or grievous hurt' },
-    ],
-  },
-  {
-    'name': 'Assault',
-    'sections': [
-      { 'act': 'BNS', 'section': '115', 'description': 'Voluntarily causing hurt' },
-      { 'act': 'BNS', 'section': '117', 'description': 'Voluntarily causing grievous hurt' },
-      { 'act': 'BNS', 'section': '121', 'description': 'Assault or criminal force to deter public servant from duty' },
-    ],
-  },
-  {
-    'name': 'Cyber Crime',
-    'sections': [
-      { 'act': 'BNS', 'section': '318', 'description': 'Cheating (Online/Impersonation)' },
-      { 'act': 'BNS', 'section': '66D (IT Act)', 'description': 'Punishment for cheating by personation by using computer resource' },
-      { 'act': 'BNS', 'section': '66C (IT Act)', 'description': 'Identity theft' },
-    ],
-  },
-  {
-    'name': 'Fraud',
-    'sections': [
-      { 'act': 'BNS', 'section': '316', 'description': 'Criminal breach of trust' },
-      { 'act': 'BNS', 'section': '318', 'description': 'Cheating and dishonestly inducing delivery of property' },
-      { 'act': 'BNS', 'section': '336', 'description': 'Forgery and punishment for forgery' },
-    ],
-  },
-  {
-    'name': 'Missing Person',
-    'sections': [
-      { 'act': 'BNSS', 'section': '84', 'description': 'Proclamation for person absconding / missing query' },
-      { 'act': 'BNS', 'section': '140', 'description': 'Kidnapping or abducting in order to murder' },
-    ],
-  },
-  {
-    'name': 'Narcotics',
-    'sections': [
-      { 'act': 'NDPS Act', 'section': '15', 'description': 'Punishment for contravention in relation to poppy straw' },
-      { 'act': 'NDPS Act', 'section': '20', 'description': 'Punishment for contravention in relation to cannabis plant and cannabis' },
-      { 'act': 'NDPS Act', 'section': '22', 'description': 'Punishment for contravention in relation to psychotropic substances' },
-    ],
-  },
-  {
-    'name': 'Traffic Crime',
-    'sections': [
-      { 'act': 'BNS', 'section': '281', 'description': 'Rash driving or riding on a public way' },
-      { 'act': 'BNS', 'section': '106', 'description': 'Causing death by negligence (Hit and Run cases)' },
-      { 'act': 'Motor Vehicles Act', 'section': '185', 'description': 'Driving by a drunken person or under the influence of drugs' },
-    ],
-  },
+  { 'name': 'Cyber Crime', 'sections': [{'act': 'IT Act', 'section': '66D', 'description': 'Cheating by personation using computer resource'}] },
+  { 'name': 'Online Fraud', 'sections': [{'act': 'BNS', 'section': '318', 'description': 'Cheating and dishonestly inducing delivery of property'}] },
+  { 'name': 'Financial Fraud', 'sections': [{'act': 'BNS', 'section': '316', 'description': 'Criminal breach of trust'}] },
+  { 'name': 'Mobile Theft', 'sections': [{'act': 'BNS', 'section': '303', 'description': 'Theft of moveable property'}] },
+  { 'name': 'Vehicle Theft', 'sections': [{'act': 'BNS', 'section': '305', 'description': 'Theft of motor vehicle'}] },
+  { 'name': 'House Burglary', 'sections': [{'act': 'BNS', 'section': '307', 'description': 'Lurking house-trespass or house-breaking'}] },
+  { 'name': 'Missing Person', 'sections': [{'act': 'BNSS', 'section': '84', 'description': 'Proclamation for person absconding/missing'}] },
+  { 'name': 'Domestic Violence', 'sections': [{'act': 'BNS', 'section': '85', 'description': 'Husband or relative of husband subjecting woman to cruelty'}] },
+  { 'name': 'Chain Snatching', 'sections': [{'act': 'BNS', 'section': '304', 'description': 'Snatching with criminal force'}] },
+  { 'name': 'Public Assault', 'sections': [{'act': 'BNS', 'section': '115', 'description': 'Voluntarily causing hurt'}] },
+  { 'name': 'Property Damage', 'sections': [{'act': 'BNS', 'section': '324', 'description': 'Mischief causing damage'}] },
+  { 'name': 'Drug Related', 'sections': [{'act': 'NDPS Act', 'section': '20', 'description': 'Possession and trafficking of psychotropic substances'}] },
+  { 'name': 'Traffic Hit & Run', 'sections': [{'act': 'BNS', 'section': '106', 'description': 'Causing death or injury by negligent driving'}] },
+  { 'name': 'Robbery', 'sections': [{'act': 'BNS', 'section': '309', 'description': 'Robbery and punishment'}] },
+  { 'name': 'Suspicious Activity', 'sections': [{'act': 'BNSS', 'section': '170', 'description': 'Preventive action by police'}] },
 ]
 
 class Command(BaseCommand):
-  help = 'Seeds database with default locations, categories, users, 7 sample crimes, suspects, victims, and evidence'
+  help = 'Seeds database with 30 realistic fictional crime cases across Ahmedabad, Rajkot, and Gandhinagar'
 
   def handle(self, *args, **kwargs):
-    self.stdout.write('Connecting to database for seeding...')
-    
-    # 1. Clear database in correct SQL order
-    self.stdout.write('Clearing all tables in dependency order...')
+    self.stdout.write('Purging old records and seeding 30 multi-city cases...')
+
     from logs.models import AuditLog
-    from core.models import Notification
-    
+
     Suspect.objects.all().delete()
     Victim.objects.all().delete()
     Evidence.objects.all().delete()
-    Notification.objects.all().delete()
-    AuditLog.objects.all().delete()
     Crime.objects.all().delete()
-    
+    AuditLog.objects.all().delete()
     Officer.objects.all().delete()
     Analyst.objects.all().delete()
+    Citizen.objects.all().delete()
+
     User.objects.filter(is_superuser=False).delete()
-    
-    self.stdout.write('Clearing old locations...')
     Location.objects.all().delete()
-    self.stdout.write('Clearing old crime categories...')
     CrimeCategory.objects.all().delete()
 
-    # 2. Seed 7 Locations
-    self.stdout.write('Seeding locations...')
-    db_locations = []
-    for loc in sample_locations:
+    # 1. Seed Locations
+    db_locs = {}
+    for loc in multi_city_locations:
       obj = Location.objects.create(**loc)
-      db_locations.append(obj)
-    self.stdout.write(f'Successfully seeded {len(db_locations)} locations.')
+      db_locs[loc['police_station']] = obj
 
-    # 3. Seed Crime Categories
-    self.stdout.write('Seeding crime categories...')
-    db_categories = {}
+    # 2. Seed Categories
+    db_cats = {}
     for cat in sample_categories:
       obj = CrimeCategory.objects.create(**cat)
-      db_categories[cat['name']] = obj
-    self.stdout.write(f'Successfully seeded {len(db_categories)} crime categories.')
+      db_cats[cat['name']] = obj
 
-    # 4. Seed Default Admin with personalized credentials
-    self.stdout.write('Seeding default Admin user...')
-    admin_email = 'admin@crimepilot.com'
-    User.objects.filter(email__iexact=admin_email).delete()
-    admin_user = User.objects.create_superuser(
-      email=admin_email,
-      name='System Administrator',
-      password='admin@1234',
-      role='admin'
+    # 3. Seed Admin
+    admin_user, _ = User.objects.get_or_create(
+      email='admin@crimepilot.com',
+      defaults={'name': 'System Administrator', 'role': 'admin', 'is_superuser': True, 'is_staff': True}
     )
+    admin_user.set_password('admin@1234')
+    admin_user.save()
 
-    # 5. Seed 7 Staff Users (5 Officers, 2 Analysts) with personalized credentials
-    self.stdout.write('Seeding Officers and Analysts...')
-    
-    officers = []
-    officer_data = [
-      ('john@crimepilot.com', 'Officer John Smith', 'john@1234', 'BADGE-1001', db_locations[0], '9876543210'),
-      ('sarah@crimepilot.com', 'Officer Sarah Connor', 'sarah@1234', 'BADGE-1002', db_locations[1], '9876543211'),
-      ('david@crimepilot.com', 'Officer David Miller', 'david@1234', 'BADGE-1003', db_locations[3], '9876543212'),
-      ('emily@crimepilot.com', 'Officer Emily Watson', 'emily@1234', 'BADGE-1004', db_locations[5], '9876543213'),
-      ('james@crimepilot.com', 'Officer James Bond', 'james@1234', 'BADGE-0007', db_locations[6], '9870070070')
+    # 4. Seed Officers matched by City
+    officers_list = [
+      ('raj.mehta@police.gov.in', 'Inspector Raj Mehta', 'BADGE-4001', db_locs['Satellite Police Station']),
+      ('priya.shah@police.gov.in', 'Inspector Priya Shah', 'BADGE-4002', db_locs['Navrangpura Police Station']),
+      ('rahul.patel@police.gov.in', 'SI Rahul Patel', 'BADGE-4003', db_locs['Sabarmati Police Station']),
+      ('neha.joshi@police.gov.in', 'SI Neha Joshi', 'BADGE-4004', db_locs['Paldi Police Station']),
+      ('vivek.rana@police.gov.in', 'Inspector Vivek Rana', 'BADGE-4005', db_locs['Rajkot City A Division Police Station']),
+      ('karan.desai@police.gov.in', 'PSI Karan Desai', 'BADGE-4006', db_locs['University Police Station']),
+      ('harsh.trivedi@police.gov.in', 'ACP Harsh Trivedi', 'BADGE-4007', db_locs['Infocity Police Station']),
+      ('ankit.shah@police.gov.in', 'DCP Ankit Shah', 'BADGE-4008', db_locs['Gandhinagar Sector 7 Police Station']),
     ]
-    for email, name, password, badge, loc, contact in officer_data:
-      user_obj = User.objects.create_user(email=email, name=name, password=password, role='officer')
-      officer_obj = Officer.objects.create(user=user_obj, badge_no=badge, station=loc, contact=contact)
-      officers.append(officer_obj)
 
-    # Seed 2 Analysts
-    analyst_data = [
-      ('carl@crimepilot.com', 'Analyst Carl Sagan', 'carl@1234', 'Cyber Intelligence Unit'),
-      ('neha@crimepilot.com', 'Analyst Neha Verma', 'neha@1234', 'Forensic Data Division')
+    db_officers = []
+    for email, name, badge, loc_obj in officers_list:
+      u = User.objects.create_user(email=email, name=name, password='Officer@123', role='officer')
+      off = Officer.objects.create(user=u, badge_no=badge, station=loc_obj, contact='9876543210')
+      db_officers.append(off)
+
+    # 5. Seed 30 Cases with exact workflow breakdown:
+    # 5 Registered, 5 Assigned, 8 Under Investigation, 4 Evidence Collected, 3 Solved (Charge Sheet Filed), 5 Closed
+    raw_cases = [
+      # --- LAST 7 DAYS (8 cases: CP-0001 to CP-0008) ---
+      ('CP-2026-0001', '2026-07-30', '14:20', 'Satellite Police Station', 'Cyber Crime', 'High', 'Reported', 'Aarav Patel', 0, 'Citizen reported an unauthorized transaction of ₹85,000 from net banking account via phishing SMS link.', 'Bank Statement'),
+      ('CP-2026-0002', '2026-07-30', '18:45', 'Rajkot City A Division Police Station', 'Mobile Theft', 'Low', 'Reported', 'Riya Shah', 4, 'Complainant smartphone was stolen from coat pocket while walking near Race Course Ground, Rajkot.', 'CCTV Footage'),
+      ('CP-2026-0003', '2026-07-29', '11:15', 'Infocity Police Station', 'Online Fraud', 'Medium', 'Reported', 'Devansh Joshi', 6, 'Victim defrauded of ₹45,000 on fake rental housing portal in Infocity Sector 02, Gandhinagar.', 'Digital Documents'),
+      ('CP-2026-0004', '2026-07-28', '21:30', 'Navrangpura Police Station', 'Chain Snatching', 'High', 'Reported', 'Harsh Mehta', 1, 'Two masked suspects on bike snatched gold chain near CG Road shopping market, Ahmedabad.', 'CCTV Footage'),
+      ('CP-2026-0005', '2026-07-27', '02:40', 'University Police Station', 'Vehicle Theft', 'Medium', 'Reported', 'Kavya Desai', 5, 'Motorcycle stolen overnight from student housing parking near Kalawad Road, Rajkot.', 'Vehicle Images'),
+      ('CP-2026-0006', '2026-07-26', '16:00', 'Gandhinagar Sector 7 Police Station', 'Financial Fraud', 'Critical', 'Assigned', 'Ananya Parikh', 7, 'Commercial firm defrauded of ₹8.5 Lakhs by fake vendor account impersonation in Sector 7, Gandhinagar.', 'Bank Statement'),
+      ('CP-2026-0007', '2026-07-25', '20:10', 'Vastrapur Police Station', 'Public Assault', 'Medium', 'Assigned', 'Siddharth Trivedi', 0, 'Physical fight broke out near Vastrapur Lake over minor traffic collision.', 'Mobile Recording'),
+      ('CP-2026-0008', '2026-07-24', '23:15', 'Gandhigram Police Station', 'Property Damage', 'Low', 'Assigned', 'Pooja Bhatt', 4, 'Shop display glass broken by unknown miscreants overnight near 150 Feet Ring Road, Rajkot.', 'Photographs'),
+
+      # --- LAST 30 DAYS (10 cases: CP-0009 to CP-0018) ---
+      ('CP-2026-0009', '2026-07-22', '08:30', 'Paldi Police Station', 'Domestic Violence', 'High', 'Assigned', 'Sneha Solanki', 3, 'Formal complaint regarding physical harassment and property dispute filed in Paldi, Ahmedabad.', 'Witness Statement'),
+      ('CP-2026-0010', '2026-07-20', '17:00', 'Chiloda Police Station', 'Traffic Hit & Run', 'Critical', 'Assigned', 'Rohan Verma', 6, 'Speeding car struck two-wheeler rider near Chiloda circle, Gandhinagar and fled scene.', 'CCTV Footage'),
+      ('CP-2026-0011', '2026-07-18', '12:15', 'Pradyuman Nagar Police Station', 'Missing Person', 'High', 'Under Investigation', 'Tanvi Chawla', 5, '19-year-old student missing after leaving college hostel in Raiya Road, Rajkot.', 'Call Logs'),
+      ('CP-2026-0012', '2026-07-15', '03:40', 'Sarkhej Police Station', 'House Burglary', 'Critical', 'Under Investigation', 'Amit Vora', 2, 'Break-in at locked bungalow near SG Highway. Cash and valuables worth ₹3.2 Lakhs stolen.', 'Fingerprint Report'),
+      ('CP-2026-0013', '2026-07-12', '01:20', 'Adalaj Police Station', 'Drug Related', 'Critical', 'Under Investigation', 'Vikram Rathod', 7, 'Vehicle interdicted near Adalaj highway containing illegal psychotropic substances.', 'GPS Data'),
+      ('CP-2026-0014', '2026-07-10', '15:50', 'Sabarmati Police Station', 'Robbery', 'High', 'Under Investigation', 'Rajesh Varma', 2, 'Attempted robbery at retail store near Sabarmati riverfront. CCTV footage seized.', 'CCTV Footage'),
+      ('CP-2026-0015', '2026-07-08', '22:15', 'Rajkot B Division Police Station', 'Suspicious Activity', 'Low', 'Under Investigation', 'Neeta Patel', 4, 'Suspicious vehicle loitering near industrial area on Kalawad Road, Rajkot.', 'Photographs'),
+      ('CP-2026-0016', '2026-07-05', '10:00', 'Gandhinagar Sector 21 Police Station', 'Cyber Crime', 'High', 'Under Investigation', 'Chirag Shah', 7, 'Fake social media profile created to defame university faculty member in Sector 21, Gandhinagar.', 'Digital Documents'),
+      ('CP-2026-0017', '2026-07-02', '14:30', 'Maninagar Police Station', 'Mobile Theft', 'Low', 'Under Investigation', 'Bhavna Joshi', 3, 'Smart phone stolen from passenger at Maninagar bus terminus, Ahmedabad.', 'Call Logs'),
+      ('CP-2026-0018', '2026-06-28', '19:20', 'University Police Station', 'Vehicle Theft', 'Medium', 'Under Investigation', 'Hardik Solanki', 5, 'SUV stolen from commercial complex parking lot near University Road, Rajkot.', 'Vehicle Images'),
+
+      # --- LAST 6 MONTHS (12 cases: CP-0019 to CP-0030) ---
+      ('CP-2026-0019', '2026-06-18', '11:00', 'Navrangpura Police Station', 'Financial Fraud', 'Critical', 'Evidence Collected', 'Maya Parikh', 1, 'Fake banking executive lured victim into downloading screen-sharing app, draining account.', 'Bank Statement'),
+      ('CP-2026-0020', '2026-06-10', '13:10', 'Infocity Police Station', 'Online Fraud', 'Medium', 'Evidence Collected', 'Jayesh Trivedi', 6, 'E-commerce buyer received counterfeit goods from fraudulent online seller based in Gandhinagar.', 'Digital Documents'),
+      ('CP-2026-0021', '2026-05-28', '16:45', 'Rajkot City A Division Police Station', 'Chain Snatching', 'High', 'Evidence Collected', 'Rekha Bhatt', 4, 'Gold chain snatched from pedestrian near Race Course Road, Rajkot.', 'CCTV Footage'),
+      ('CP-2026-0022', '2026-05-15', '21:00', 'Satellite Police Station', 'Public Assault', 'Medium', 'Evidence Collected', 'Nisha Rajput', 0, 'Argument over parking at Satellite commercial hub escalated into physical brawl.', 'Mobile Recording'),
+      ('CP-2026-0023', '2026-05-04', '09:30', 'Gandhinagar Sector 7 Police Station', 'Missing Person', 'High', 'Solved', 'Gopal Chawla', 7, 'Missing teenager traced to friend house in Sector 7 and safely returned to parents.', 'GPS Data'),
+      ('CP-2026-0024', '2026-04-20', '18:10', 'Gandhigram Police Station', 'Traffic Hit & Run', 'Medium', 'Solved', 'Alpana Vora', 4, 'Hit and run suspect vehicle identified via traffic camera logs near 150 Feet Ring Road.', 'Vehicle Images'),
+      ('CP-2026-0025', '2026-04-10', '23:00', 'Paldi Police Station', 'House Burglary', 'High', 'Solved', 'Kunal Mehta', 3, 'Burglary suspect apprehended during night patrol; stolen gold ornaments fully recovered.', 'Fingerprint Report'),
+      ('CP-2026-0026', '2026-03-25', '04:15', 'Sabarmati Police Station', 'Property Damage', 'Low', 'Closed', 'Dipti Shah', 2, 'Accidental wall collision by delivery truck; owner settled damages directly.', 'Photographs'),
+      ('CP-2026-0027', '2026-03-12', '17:30', 'Adalaj Police Station', 'Drug Related', 'Critical', 'Closed', 'Tarun Joshi', 6, 'Illicit contraband seized; offender convicted under NDPS act by district court.', 'Digital Documents'),
+      ('CP-2026-0028', '2026-02-28', '20:00', 'Pradyuman Nagar Police Station', 'Robbery', 'High', 'Closed', 'Hema Desai', 5, 'Commercial cash snatching case solved with complete recovery of stolen funds.', 'CCTV Footage'),
+      ('CP-2026-0029', '2026-02-14', '11:40', 'Sarkhej Police Station', 'Suspicious Activity', 'Low', 'Closed', 'Pankaj Solanki', 0, 'Unattended bag verified as harmless lost luggage at SG Highway junction.', 'Witness Statement'),
+      ('CP-2026-0030', '2026-02-02', '15:15', 'Chiloda Police Station', 'Mobile Theft', 'Low', 'Closed', 'Sonal Parikh', 7, 'Stolen handset recovered from second-hand market and delivered to owner.', 'Call Logs'),
     ]
-    for email, name, password, dept in analyst_data:
-      user_obj = User.objects.create_user(email=email, name=name, password=password, role='analyst')
-      Analyst.objects.create(user=user_obj, department=dept)
 
+    for cid, dt_str, tm, stn, cat_name, prio, st, cit_name, off_idx, desc, ev_type in raw_cases:
+      dt = datetime.datetime.strptime(dt_str, '%Y-%m-%d').date()
+      loc_obj = db_locs[stn]
+      cat_obj = db_cats[cat_name]
+      off_obj = db_officers[off_idx]
 
-    self.stdout.write('Successfully seeded 7 staff profiles.')
-
-    # 6. Seed 7 Crime Cases
-    self.stdout.write('Seeding 7 sample Crime cases...')
-    
-    # Case 1: Burglar reported at jewellery shop (Colaba - Officer 1)
-    c1 = Crime.objects.create(
-      crime_category=db_categories['Theft'],
-      date=datetime.date(2026, 6, 10),
-      time='02:30',
-      location=db_locations[0],
-      description='Midnight burglary reported at local jewellery showroom. Vault locks were cut. Gold and diamond items missing.',
-      officer=officers[0],
-      priority='High',
-      status='Under Investigation',
-      sections=[db_categories['Theft'].sections[0]],
-      notes=[{'note': 'Forensics called on-site.', 'addedBy_id': officers[0].user.id, 'addedBy_name': officers[0].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=10)).isoformat()}]
-    )
-
-    # Case 2: Phishing attack reported by a bank (Andheri - Officer 2)
-    c2 = Crime.objects.create(
-      crime_category=db_categories['Cyber Crime'],
-      date=datetime.date(2026, 6, 14),
-      time='11:45',
-      location=db_locations[1],
-      description='Corporate phishing attack. Fraud emails sent to bank executives. Credentials compromised. Fund transfer intercepted.',
-      officer=officers[1],
-      priority='Medium',
-      status='Reported',
-      sections=[db_categories['Cyber Crime'].sections[0]],
-      notes=[{'note': 'Initial complaint received from bank security.', 'addedBy_id': officers[1].user.id, 'addedBy_name': officers[1].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=8)).isoformat()}]
-    )
-
-    # Case 3: Violent assault outside pub (Colaba - Officer 1)
-    c3 = Crime.objects.create(
-      crime_category=db_categories['Assault'],
-      date=datetime.date(2026, 6, 18),
-      time='23:15',
-      location=db_locations[0],
-      description='Physical assault reported outside commercial pub. Suspect fled the scene. Victim suffered head bruises.',
-      officer=officers[0],
-      priority='Critical',
-      status='Solved',
-      sections=[db_categories['Assault'].sections[0]],
-      notes=[{'note': 'Pub guards statements recorded.', 'addedBy_id': officers[0].user.id, 'addedBy_name': officers[0].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=6)).isoformat()}]
-    )
-
-    # Case 4: Hit and run traffic case (Connaught Place - Officer 3)
-    c4 = Crime.objects.create(
-      crime_category=db_categories['Traffic Crime'],
-      date=datetime.date(2026, 6, 22),
-      time='08:10',
-      location=db_locations[3],
-      description='Speeding vehicle struck pedestrian crossing the junction. Vehicle fled. License plate partially captured by CCTV.',
-      officer=officers[2],
-      priority='Medium',
-      status='Assigned',
-      sections=[db_categories['Traffic Crime'].sections[1]],
-      notes=[{'note': 'CCTV footage fetched from junction cameras.', 'addedBy_id': officers[2].user.id, 'addedBy_name': officers[2].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=4)).isoformat()}]
-    )
-
-    # Case 5: Narcotic drug bust (Koramangala - Officer 4)
-    c5 = Crime.objects.create(
-      crime_category=db_categories['Narcotics'],
-      date=datetime.date(2026, 6, 24),
-      time='19:40',
-      location=db_locations[5],
-      description='Intercepted delivery of synthetic drugs based on intelligence tip. Suspect caught red-handed with illicit narcotics.',
-      officer=officers[3],
-      priority='High',
-      status='Evidence Collected',
-      sections=[db_categories['Narcotics'].sections[2]],
-      notes=[{'note': 'Narcotics weighed and catalogued.', 'addedBy_id': officers[3].user.id, 'addedBy_name': officers[3].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=2)).isoformat()}]
-    )
-
-    # Case 6: Missing person query (Indiranagar - Officer 5)
-    c6 = Crime.objects.create(
-      crime_category=db_categories['Missing Person'],
-      date=datetime.date(2026, 6, 26),
-      time='15:20',
-      location=db_locations[6],
-      description='A teenage boy reported missing after he failed to return from high school. Phone last pinged near park.',
-      officer=officers[4],
-      priority='High',
-      status='Under Investigation',
-      sections=[db_categories['Missing Person'].sections[1]],
-      notes=[{'note': 'Missing person alerts broadcasted.', 'addedBy_id': officers[4].user.id, 'addedBy_name': officers[4].user.name, 'created_at': (timezone.now() - datetime.timedelta(days=1)).isoformat()}]
-    )
-
-    # Case 7: Corporate check fraud (Andheri - Officer 2)
-    c7 = Crime.objects.create(
-      crime_category=db_categories['Fraud'],
-      date=datetime.date(2026, 6, 28),
-      time='14:15',
-      location=db_locations[1],
-      description='Suspect presented forged banker checks to withdraw massive funds from account. Intercepted by branch cashier.',
-      officer=officers[1],
-      priority='Low',
-      status='Closed',
-      sections=[db_categories['Fraud'].sections[2]],
-      notes=[{'note': 'Check sent to forensic verification.', 'addedBy_id': officers[1].user.id, 'addedBy_name': officers[1].user.name, 'created_at': timezone.now().isoformat()}]
-    )
-
-    self.stdout.write('Successfully seeded 7 Crime cases.')
-
-    # 7. Seed 7 Suspects
-    self.stdout.write('Seeding 7 Suspect profiles...')
-    
-    s_names = ['John Burglar', 'Alice Hacker', 'Bob Bruiser', 'Dash Driver', 'Sam Smuggler', 'Carl Absent', 'Frank Faker']
-    s_ages = [32, 24, 38, 29, 34, 18, 41]
-    s_addresses = [
-      '45 Hideout Alley, Docklands, Mumbai',
-      'Hostel 3, Technical Campus, Andheri',
-      '99 Row Houses, Colaba, Mumbai',
-      '12 Transit Colony, Karol Bagh, Delhi',
-      '88 Cargo Lane, Bengaluru',
-      'N/A - Missing Inquiry',
-      '202 Business Towers, Bandra, Mumbai'
-    ]
-    s_statuses = ['Suspect', 'Detained', 'Arrested', 'Suspect', 'Arrested', 'Suspect', 'Arrested']
-    crimes = [c1, c2, c3, c4, c5, c6, c7]
-
-    for i in range(7):
-      Suspect.objects.create(
-        name=s_names[i],
-        age=s_ages[i],
-        gender='Male' if i != 1 else 'Female',
-        address=s_addresses[i],
-        status=s_statuses[i],
-        linked_crime=crimes[i]
+      cit_email = cit_name.lower().replace(' ', '') + '@gmail.com'
+      u_cit, _ = User.objects.get_or_create(
+        email=cit_email,
+        defaults={'name': cit_name, 'password': 'User@1234', 'role': 'citizen'}
+      )
+      cit_obj, _ = Citizen.objects.get_or_create(
+        user=u_cit,
+        defaults={
+          'mobile': '9876500112',
+          'address': f"{loc_obj.police_station.replace(' Police Station', '')}, {loc_obj.city}",
+          'identity_type': 'Aadhaar Card',
+          'identity_number': '123456789012',
+          'status': 'verified'
+        }
       )
 
-    self.stdout.write('Successfully seeded 7 Suspect profiles.')
-
-    # 8. Seed 7 Victims
-    self.stdout.write('Seeding 7 Victim profiles...')
-    
-    v_names = ['Suresh Mehta', 'Ramesh Kumar', 'David Miller', 'Clara Smith', 'Public Interest compl.', 'Karan Johar (Father)', 'City Bank Security']
-    v_contacts = ['9812345670', '9812345671', '9812345672', '9812345673', 'N/A', '9812345675', '9812345676']
-    v_statements = [
-      'I opened the jewellery shop at 9 AM and saw the vault broken.',
-      'I received fake banker email asking to verify administrative passwords.',
-      'The suspect bumped into me, shouted, and hit me with a wooden stick.',
-      'I was crossing the zebra line when a speeding black sedan hit my leg.',
-      'Anonymous tip about massive drug exchange at transit point.',
-      'My son went to school in morning, and failed to return by evening.',
-      'Cashier detected forged check leaf signature during teller check.'
-    ]
-    v_ref = ['Vault padlock locks', 'Email headers logs', 'Doctor clinic slip', 'Junction video footage', 'Seizure report packet', 'Highschool registers', 'Check leaf copy']
-
-    for i in range(7):
-      Victim.objects.create(
-        name=v_names[i],
-        contact=v_contacts[i],
-        statement=v_statements[i],
-        evidence_reference=v_ref[i],
-        linked_crime=crimes[i]
+      crime = Crime.objects.create(
+        crime_id=cid,
+        crime_category=cat_obj,
+        date=dt,
+        time=tm,
+        location=loc_obj,
+        description=desc,
+        officer=off_obj,
+        citizen=cit_obj,
+        priority=prio,
+        status=st
       )
 
-    self.stdout.write('Successfully seeded 7 Victim profiles.')
-
-    # 9. Seed 7 Evidence records
-    self.stdout.write('Seeding 7 Evidence records...')
-    
-    e_types = ['Tool Marks', 'Digital Log', 'Video Footage', 'Video Recording', 'Narcotics sample', 'GPS Pings', 'Check Leaf']
-    e_desc = [
-      'Cutter tool markings left on metal vault padlock.',
-      'Captured email headers showing fake DNS impersonating bank domain.',
-      'High-definition pub security camera clip showing the assault.',
-      'CCTV recording of hit-and-run vehicle capturing license plate.',
-      'Illicit synthetic narcotics packet seized during search operation.',
-      'Saved cell tower pings showing mobile phone proximity track.',
-      'Forged check paper with false signatures and fake seal stamps.'
-    ]
-    e_paths = [
-      '/uploads/tool_marks_padlock.png',
-      '/uploads/email_headers_phishing.pdf',
-      '/uploads/pub_cctv_assault.mp4',
-      '/uploads/traffic_cctv_hitrun.mp4',
-      '/uploads/seized_narcotics.jpg',
-      '/uploads/gps_cell_tower_pings.pdf',
-      '/uploads/forged_check_leaf.jpg'
-    ]
-
-    for i in range(7):
       Evidence.objects.create(
-        type=e_types[i],
-        description=e_desc[i],
-        collection_date=datetime.date(2026, 6, 10 + i * 2),
-        assigned_officer=officers[i % 5],
-        linked_crime=crimes[i],
-        file_path=e_paths[i]
+        type=ev_type,
+        description=f"{ev_type} collected for case {cid} at {stn}",
+        collection_date=dt,
+        assigned_officer=off_obj,
+        linked_crime=crime
       )
 
-    self.stdout.write('Successfully seeded 7 Evidence records.')
-    self.stdout.write(self.style.SUCCESS('Database Seeding Complete!'))
+    self.stdout.write(self.style.SUCCESS(f'Successfully seeded 30 multi-city cases across Ahmedabad, Rajkot, and Gandhinagar!'))

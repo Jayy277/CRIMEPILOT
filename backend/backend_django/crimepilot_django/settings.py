@@ -109,6 +109,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS Configurations
 CORS_ALLOW_ALL_ORIGINS = True # Allow easy local frontend connections
 CORS_ALLOW_CREDENTIALS = True
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
 
 # REST Framework Configuration
 REST_FRAMEWORK = {

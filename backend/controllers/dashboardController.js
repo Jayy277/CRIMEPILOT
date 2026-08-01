@@ -226,8 +226,17 @@ exports.getReport = async (req, res) => {
     const periodStr = (startDate || 'Beginning') + ' to ' + (endDate || 'Present');
 
     if (format === 'pdf') {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const filename = `CrimePilot_Report_${year}-${month}-${day}_${hours}-${minutes}.pdf`;
+
+      res.attachment(filename);
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=CrimeGPT-Report-${Date.now()}.pdf`);
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
       return generateReportPDF(
         res,

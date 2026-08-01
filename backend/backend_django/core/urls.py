@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
   LocationViewSet, CrimeCategoryViewSet, CrimeViewSet, 
   SuspectViewSet, VictimViewSet, EvidenceViewSet, NotificationViewSet,
-  CitizenFIRSubmitView, CitizenFIRListView, CitizenEvidenceUploadView,
+  CitizenFIRSubmitView, CitizenFIRListView, CitizenFIRDetailView, CitizenEvidenceUploadView,
   CitizenDownloadFIRView, AdminCitizenListView, AdminVerifyCitizenView
 )
 from .dashboard_views import (
@@ -59,6 +59,7 @@ urlpatterns = [
   path('citizen/register', CitizenSignupView.as_view(), name='citizen_register_core'),
   path('citizen/fir', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
   path('citizen/my-cases', CitizenFIRListView.as_view(), name='citizen_fir_list'),
+  path('citizen/cases/<int:crime_pk>', CitizenFIRDetailView.as_view(), name='citizen_fir_detail'),
   path('citizen/cases/<int:crime_pk>/evidence', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
   path('citizen/cases/<int:crime_pk>/download', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
   

@@ -27,7 +27,9 @@ const { protect } = require('./middleware/authMiddleware');
 const app = express();
 
 // Standard middleware
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition']
+}));
 app.use(express.json());
 
 // Custom Audit Log middleware
@@ -71,11 +73,17 @@ app.use((err, req, res, next) => {
   });
 });
 
+// MongoDB connection via Mongoose
+const connectMongoDB = require('./config/mongodb');
+
+// Connect MongoDB in background
+connectMongoDB();
+
 const PORT = process.env.PORT || 5000;
 
 // Connect MySQL and sync tables BEFORE starting server
 syncDatabase().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT} [MySQL mode]`);
+    console.log(`🚀 Server running on port ${PORT} [Express + MongoDB + MySQL]`);
   });
 });

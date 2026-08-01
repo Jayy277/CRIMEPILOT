@@ -36,7 +36,7 @@ This is the Python + Django + Django REST Framework backend for **CrimePilot**, 
    ```
    **Default Admin Credentials:**
    - **Email:** `admin@crimepilot.com`
-   - **Password:** `Admin@123`
+   - **Password:** `admin@1234`
 
 6. **Start the Development Server**
    To connect with the React frontend seamlessly, start the server on port **5000**:

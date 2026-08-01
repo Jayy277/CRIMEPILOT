@@ -114,7 +114,7 @@ const CitizenProfile = () => {
               {details?.identityDocument && (
                 <div style={{ marginTop: '8px' }}>
                   <a
-                    href={`http://localhost:5000${details.identityDocument}`}
+                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${details.identityDocument}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{

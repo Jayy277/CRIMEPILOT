@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 /* ── Animated counter ── */
 const Counter = ({ target }) => {
@@ -89,11 +90,13 @@ const inputStyle = {
 };
 
 export default function CitizenLogin() {
-  const { user, login } = useContext(AuthContext);
-  const [email, setEmail]       = useState('');
+  const { user, citizenLogin } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isEyeHovered, setIsEyeHovered] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -104,15 +107,21 @@ export default function CitizenLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError('Please enter both email and password.'); return; }
-    setLoading(true); setError('');
-    const result = await login(email, password);
+    if (!email || !password) {
+      setError('Please enter both email/mobile and password.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    const result = await citizenLogin(email, password);
     setLoading(false);
+
     if (result.success) {
-      if (result.role === 'citizen') navigate('/citizen/dashboard');
-      else setError('Unauthorized role. Please use the citizen portal.');
+      navigate('/citizen/dashboard');
     } else {
-      setError(result.message || 'Invalid credentials');
+      setError(result.message || 'Invalid login credentials.');
     }
   };
 
@@ -158,7 +167,44 @@ export default function CitizenLogin() {
                 </div>
               </div>
             </div>
-            <p style={{fontSize:'9px',color:'#9AA4B2',margin:'4px 0 0 0',lineHeight:1.5}}>
+            <button
+              onClick={() => navigate('/')}
+              title="Return to Home Page"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                marginTop: '10px',
+                width: '100%',
+                padding: '10px',
+                fontSize: '11px',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                color: '#00d9ff',
+                background: 'rgba(10,18,35,0.78)',
+                border: '1px solid rgba(0, 217, 255, 0.3)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 0 10px rgba(0, 217, 255, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 217, 255, 0.2)';
+                e.currentTarget.style.borderColor = '#00d9ff';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#00d9ff';
+                e.currentTarget.style.backgroundColor = 'rgba(10,18,35,0.78)';
+                e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 217, 255, 0.1)';
+              }}
+            >
+              ← BACK TO HOME
+            </button>
+            <p style={{fontSize:'9px',color:'#9AA4B2',margin:'6px 0 0 0',lineHeight:1.5}}>
               Empowering citizens. Strengthening safety.<br/>Building a secure India.
             </p>
           </div>
@@ -245,27 +291,79 @@ export default function CitizenLogin() {
 
             <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               <div>
-                <label style={label}>EMAIL ADDRESS</label>
-                <input type="email" className="cp-input" value={email}
-                  onChange={e=>setEmail(e.target.value)} placeholder="Enter your email"
-                  required style={inputStyle}/>
-              </div>
-              <div>
-                <label style={label}>PASSWORD</label>
-                <input type="password" className="cp-input" value={password}
-                  onChange={e=>setPassword(e.target.value)} placeholder="Enter your password"
-                  required style={inputStyle}/>
+                <label style={label}>EMAIL OR MOBILE NUMBER</label>
+                <input
+                  type="text"
+                  className="cp-input"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Enter registered email or mobile"
+                  required
+                  style={inputStyle}
+                />
               </div>
 
-              <button type="submit" disabled={loading} style={{
-                marginTop:'6px', padding:'12px',
-                background:'linear-gradient(90deg,#00B8D9,#00D9FF)',
-                color:'#060D1A', border:'none', borderRadius:'8px',
-                fontWeight:'900', fontSize:'13px', letterSpacing:'0.03em',
-                cursor:'pointer', transition:'opacity .2s',
-                opacity: loading ? 0.7 : 1,
-              }}>
-                {loading ? 'Authorizing...' : 'Secure Identity Authorization'}
+              <div>
+                <label style={label}>PASSWORD</label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="cp-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    required
+                    style={{ ...inputStyle, paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    onMouseEnter={() => setIsEyeHovered(true)}
+                    onMouseLeave={() => setIsEyeHovered(false)}
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      padding: '0',
+                      margin: '0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: isEyeHovered ? '#00D9FF' : '#8AA3B5',
+                      filter: isEyeHovered ? 'drop-shadow(0 0 6px rgba(0, 217, 255, 0.5))' : 'none',
+                      transition: 'all 200ms ease',
+                      outline: 'none'
+                    }}
+                  >
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  marginTop: '6px',
+                  padding: '12px',
+                  background: 'linear-gradient(90deg,#00B8D9,#00D9FF)',
+                  color: '#060D1A',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '900',
+                  fontSize: '13px',
+                  letterSpacing: '0.03em',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? 'Authorizing...' : 'Secure Citizen Authorization'}
               </button>
             </form>
 
@@ -278,7 +376,7 @@ export default function CitizenLogin() {
 
             <div style={{marginTop:'20px',borderTop:'1px solid rgba(255,255,255,0.06)',
               paddingTop:'12px',textAlign:'center',fontSize:'8.5px',color:'#9AA4B2',lineHeight:1.6}}>
-              Secure Identity Verification • SMTP Notifications • Real-Time Case Tracking
+              Nodemailer Email OTP Verification • Secure Identity Authorization • Real-Time Case Tracking
             </div>
           </div>
         </div>
@@ -294,7 +392,7 @@ export default function CitizenLogin() {
           ].map((c,i) => (
             <div key={i} className="stat-card" style={{
               ...glass, padding:'12px 14px',
-              display:'flex', alignItems:'center', justifyContent:'space-between',
+              display:'flex', itemsCenter:'center', justifyContent:'space-between',
               gap:'8px', cursor:'pointer', transition:'all .25s',
             }}>
               <div>

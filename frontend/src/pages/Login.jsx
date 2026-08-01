@@ -1,11 +1,14 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
   const { user, login } = useContext(AuthContext);
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isEyeHovered, setIsEyeHovered] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
@@ -308,11 +311,53 @@ const Login = () => {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '24px',
+            gap: '20px',
             width: '280px',
             flexShrink: 0
           }}
         >
+          {/* Rectangular Back Button below top header line */}
+          <button
+            onClick={() => navigate('/')}
+            title="Return to Home Page"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              width: '100%',
+              cursor: 'pointer',
+              background: 'rgba(8, 12, 24, 0.85)',
+              border: '1px solid rgba(0, 240, 255, 0.35)',
+              color: '#00f0ff',
+              fontSize: '12px',
+              fontWeight: '800',
+              letterSpacing: '1.5px',
+              fontFamily: 'JetBrains Mono, monospace',
+              boxShadow: 'inset 0 0 12px rgba(0, 240, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.5)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 240, 255, 0.15)';
+              e.currentTarget.style.borderColor = '#00f0ff';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.boxShadow = 'inset 0 0 16px rgba(0, 240, 255, 0.2), 0 0 20px rgba(0, 240, 255, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(8, 12, 24, 0.85)';
+              e.currentTarget.style.borderColor = 'rgba(0, 240, 255, 0.35)';
+              e.currentTarget.style.color = '#00f0ff';
+              e.currentTarget.style.boxShadow = 'inset 0 0 12px rgba(0, 240, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.5)';
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            <span>BACK TO HOME</span>
+          </button>
           {/* Live Radar sweep */}
           <div className="cyber-panel" style={{ padding: '16px', borderRadius: '8px' }}>
             <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '700', letterSpacing: '0.08em' }}>SYSTEM RADAR // LIVE SWEEP</span>
@@ -463,21 +508,52 @@ const Login = () => {
 
               <div className="form-group" style={{ marginBottom: '4px' }}>
                 <label style={{ fontSize: '11px', color: '#94a3b8' }}>Secure Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  className="form-control"
-                  style={{
-                    backgroundColor: 'rgba(8, 12, 24, 0.8)',
-                    borderColor: 'rgba(0, 240, 255, 0.25)',
-                    color: '#fff',
-                    fontSize: '13px'
-                  }}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="form-control"
+                    style={{
+                      backgroundColor: 'rgba(8, 12, 24, 0.8)',
+                      borderColor: 'rgba(0, 240, 255, 0.25)',
+                      color: '#fff',
+                      fontSize: '13px',
+                      paddingRight: '40px'
+                    }}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    onMouseEnter={() => setIsEyeHovered(true)}
+                    onMouseLeave={() => setIsEyeHovered(false)}
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      padding: '0',
+                      margin: '0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: isEyeHovered ? '#00D9FF' : '#8AA3B5',
+                      filter: isEyeHovered ? 'drop-shadow(0 0 6px rgba(0, 217, 255, 0.5))' : 'none',
+                      transition: 'all 200ms ease',
+                      outline: 'none'
+                    }}
+                  >
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button

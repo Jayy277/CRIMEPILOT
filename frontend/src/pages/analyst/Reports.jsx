@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axiosInstance from '../../api/axiosInstance';
+import { downloadPDFResponse } from '../../utils/downloadPDF';
 
 const Reports = () => {
   const [startDate, setStartDate] = useState('');
@@ -44,23 +45,12 @@ const Reports = () => {
       if (priority) params.append('priority', priority);
       if (status) params.append('status', status);
 
-      // Perform a Blob request to download PDF
       const response = await axiosInstance.get(`/dashboard/report?${params.toString()}`, {
         responseType: 'blob'
       });
 
-      // Create local object URL for download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `CrimePilot-FIR-Report-${Date.now()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-
-      setSuccessMsg('PDF Report compiled and downloaded successfully.');
+      const downloadedName = downloadPDFResponse(response, 'CrimePilot_Report');
+      setSuccessMsg(`PDF Report compiled and saved as ${downloadedName}`);
     } catch (err) {
       console.error('Error generating PDF report:', err);
       setError('Failed to generate compilation PDF. Check parameters and connection.');

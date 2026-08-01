@@ -93,3 +93,19 @@ class Citizen(models.Model):
 
   def __str__(self):
     return f"Citizen {self.user.name} - Status: {self.status}"
+
+class EmailOTP(models.Model):
+  email = models.EmailField(max_length=255)
+  otp = models.CharField(max_length=6)
+  created_at = models.DateTimeField(auto_now_add=True)
+  expires_at = models.DateTimeField()
+  verified = models.BooleanField(default=False)
+  attempts = models.IntegerField(default=0)
+
+  class Meta:
+    indexes = [
+      models.Index(fields=['email']),
+    ]
+
+  def __str__(self):
+    return f"{self.email} - {'Verified' if self.verified else 'Unverified'}"

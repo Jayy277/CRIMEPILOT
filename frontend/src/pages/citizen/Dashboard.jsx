@@ -149,15 +149,15 @@ const CitizenDashboard = () => {
               <div className="action-card">
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>📡</div>
                 <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold' }}>Track Case File</h4>
-                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Monitor progression timeline in real-time</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Monitor progression timeline & 10-stage tracker</p>
               </div>
             </Link>
 
-            <Link to="/citizen/my-cases" style={{ textDecoration: 'none' }}>
+            <Link to="/citizen/my-firs" style={{ textDecoration: 'none' }}>
               <div className="action-card">
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>📥</div>
                 <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold' }}>My Submitted FIRs</h4>
-                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Review active case logs and assignments</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Review all your personal FIR logs & PDFs</p>
               </div>
             </Link>
 

@@ -11,6 +11,7 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import OverviewAnimation from './components/OverviewAnimation';
 import AILegalPrediction from './pages/AILegalPrediction';
+import PlatformOverview from './pages/PlatformOverview';
 
 // Officer Portal Pages
 import OfficerDashboard from './pages/officer/Dashboard';
@@ -43,6 +44,7 @@ import CitizenRegister from './pages/citizen/Register';
 import CitizenDashboard from './pages/citizen/Dashboard';
 import RegisterFIR from './pages/citizen/RegisterFIR';
 import TrackFIR from './pages/citizen/TrackFIR';
+import MyFIRs from './pages/citizen/MyFIRs';
 import CitizenProfile from './pages/citizen/Profile';
 
 function App() {
@@ -51,7 +53,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/overview" element={<OverviewAnimation />} />
+          <Route path="/overview" element={<PlatformOverview />} />
+          <Route path="/platform-overview" element={<PlatformOverview />} />
           <Route path="/citizen/login" element={<CitizenLogin />} />
           <Route path="/citizen/register" element={<CitizenRegister />} />
 
@@ -137,7 +140,8 @@ function App() {
             <Route path="dashboard" element={<CitizenDashboard />} />
             <Route path="register-fir" element={<RegisterFIR />} />
             <Route path="track-fir" element={<TrackFIR />} />
-            <Route path="my-cases" element={<TrackFIR />} />
+            <Route path="my-firs" element={<MyFIRs />} />
+            <Route path="my-cases" element={<MyFIRs />} />
             <Route path="profile" element={<CitizenProfile />} />
           </Route>
 
