@@ -3,16 +3,20 @@ import './AdminDataTable.css';
 
 /**
  * Reusable CrimePilot Admin DataTable Component
- * Includes sticky header, 70vh scrollable body, custom cyan scrollbar,
- * instant search, column sorting, pagination, and performance optimization for 1000+ records.
+ * Features:
+ * - Smooth vertical scrollable body (no page-level pagination)
+ * - Sticky table header (column titles stay pinned on scroll)
+ * - 65-75vh responsive height container
+ * - Custom 6px cyan scrollbar with hover glow inside container
+ * - Real-time instant multi-column search & clear button
+ * - Instant column sorting (asc / desc)
+ * - High-performance rendering for large dataset registries
  */
 const AdminDataTable = ({
   columns = [],
   data = [],
   searchable = true,
   searchPlaceholder = 'Search records...',
-  pagination = true,
-  pageSize = 10,
   title = null,
   actions = null,
   emptyMessage = 'No records found.',
@@ -22,7 +26,6 @@ const AdminDataTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
-  const [currentPage, setCurrentPage] = useState(1);
 
   // 1. Filtered Data (Search)
   const filteredData = useMemo(() => {
@@ -70,14 +73,6 @@ const AdminDataTable = ({
     });
   }, [filteredData, sortColumn, sortDirection, columns]);
 
-  // 3. Paginated Data
-  const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
-  const paginatedData = useMemo(() => {
-    if (!pagination) return sortedData;
-    const start = (currentPage - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, pagination, currentPage, pageSize]);
-
   // Handle Sort Click
   const handleSort = (colKey, sortableFlag) => {
     if (!sortableFlag && sortableFlag !== undefined) return;
@@ -93,11 +88,6 @@ const AdminDataTable = ({
       setSortDirection('asc');
     }
   };
-
-  // Reset page when search or data changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, data]);
 
   return (
     <div className={`admin-datatable-wrapper ${className}`}>
@@ -130,11 +120,16 @@ const AdminDataTable = ({
             )}
           </div>
 
-          {actions && <div>{actions}</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '12px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold' }}>
+              Showing {sortedData.length} Records
+            </span>
+            {actions && <div>{actions}</div>}
+          </div>
         </div>
       )}
 
-      {/* 70vh Scrollable Table Body */}
+      {/* Smooth 70vh Scrollable Table Body */}
       <div className="admin-datatable-container">
         <table className="admin-datatable-table">
           <thead>
@@ -169,14 +164,14 @@ const AdminDataTable = ({
                   Loading records...
                 </td>
               </tr>
-            ) : paginatedData.length === 0 ? (
+            ) : sortedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="admin-datatable-empty">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              paginatedData.map((row, rowIdx) => (
+              sortedData.map((row, rowIdx) => (
                 <tr key={row._id || row.id || rowIdx}>
                   {columns.map((col, colIdx) => {
                     const cellContent = col.render
@@ -196,53 +191,6 @@ const AdminDataTable = ({
           </tbody>
         </table>
       </div>
-
-      {/* Pagination Controls */}
-      {pagination && sortedData.length > 0 && (
-        <div className="admin-datatable-pagination">
-          <div>
-            Showing {Math.min((currentPage - 1) * pageSize + 1, sortedData.length)} to{' '}
-            {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
-          </div>
-
-          <div className="admin-datatable-pages">
-            <button
-              className="admin-datatable-page-btn"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              ◄ Prev
-            </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
-              .map((page, idx, arr) => {
-                const prevPage = arr[idx - 1];
-                const showDots = prevPage && page - prevPage > 1;
-
-                return (
-                  <React.Fragment key={page}>
-                    {showDots && <span style={{ padding: '0 4px', color: '#64748B' }}>...</span>}
-                    <button
-                      className={`admin-datatable-page-btn ${currentPage === page ? 'active' : ''}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  </React.Fragment>
-                );
-              })}
-
-            <button
-              className="admin-datatable-page-btn"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next ►
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

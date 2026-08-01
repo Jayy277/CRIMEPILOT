@@ -53,16 +53,21 @@ const seedDB = async () => {
 
     // 1. Admin
     const adminEmail = 'admin@crimepilot.com';
-    await User.findOrCreate({
+    const [adminUser, created] = await User.findOrCreate({
       where: { email: adminEmail },
       defaults: {
         name: 'System Administrator',
         email: adminEmail,
-        password: 'Admin@123',
+        password: 'admin@1234',
         role: 'admin',
         isActive: true,
       },
     });
+
+    if (!created) {
+      adminUser.password = 'admin@1234';
+      await adminUser.save();
+    }
 
     // 2. Locations
     for (const loc of multiCityLocations) {

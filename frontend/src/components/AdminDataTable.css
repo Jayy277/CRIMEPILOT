@@ -1,12 +1,11 @@
-/* ─── CRIMEPILOT REUSABLE DATATABLE STYLES ─── */
+/* ─── CRIMEPILOT FULL-PAGE REUSABLE DATATABLE STYLES ─── */
 
 .admin-datatable-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
   flex: 1;
-  min-height: 0;
 }
 
 /* Controls Bar (Search + Top Actions) */
@@ -16,6 +15,7 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 4px;
 }
 
 .admin-datatable-search {
@@ -60,68 +60,38 @@
   color: #00D9FF;
 }
 
-/* 70vh Responsive Scrollable Container */
+/* Full-Page Unconstrained Table Container */
 .admin-datatable-container {
-  max-height: calc(100vh - 280px);
-  min-height: 350px;
-  overflow-y: auto;
+  width: 100%;
   overflow-x: auto;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
+  overflow-y: visible;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(11, 18, 32, 0.6);
-  padding-bottom: 32px;
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  background: rgba(11, 18, 32, 0.75);
+  backdrop-filter: blur(12px);
+  position: relative;
 }
 
-/* Custom Subtle Scrollbar */
-.admin-datatable-container::-webkit-scrollbar,
-.portal-main-container::-webkit-scrollbar,
-.manage-users-table-container::-webkit-scrollbar {
+/* Single Scrollbar on Portal Main Container */
+.portal-main-container::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.admin-datatable-container::-webkit-scrollbar-button,
-.portal-main-container::-webkit-scrollbar-button,
-.manage-users-table-container::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
+.portal-main-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.admin-datatable-container::-webkit-scrollbar-track,
-.portal-main-container::-webkit-scrollbar-track,
-.manage-users-table-container::-webkit-scrollbar-track {
-  background: #121B2D;
-  border-radius: 8px;
-  margin: 3px;
+.portal-main-container::-webkit-scrollbar-thumb {
+  background: #00D9FF;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(0, 217, 255, 0.4);
+  transition: all 0.25s ease;
 }
 
-.admin-datatable-container::-webkit-scrollbar-thumb,
-.portal-main-container::-webkit-scrollbar-thumb,
-.manage-users-table-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 217, 255, 0.25);
-  border-radius: 8px;
-  box-shadow: none !important;
-  filter: none !important;
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  transition: background-color 0.25s ease;
-}
-
-.admin-datatable-container:hover::-webkit-scrollbar-thumb,
-.portal-main-container:hover::-webkit-scrollbar-thumb,
-.manage-users-table-container:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 217, 255, 0.45);
-}
-
-.admin-datatable-container::-webkit-scrollbar-thumb:hover,
-.portal-main-container::-webkit-scrollbar-thumb:hover,
-.manage-users-table-container::-webkit-scrollbar-thumb:hover {
-  background: #00D9FF !important;
-  box-shadow: none !important;
-  filter: none !important;
+.portal-main-container::-webkit-scrollbar-thumb:hover {
+  background: #33E0FF !important;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.8) !important;
 }
 
 /* Sticky Header */
@@ -143,9 +113,10 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.3);
+  border-bottom: 2px solid rgba(0, 217, 255, 0.35);
   user-select: none;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .admin-datatable-table th.sortable {
@@ -158,7 +129,7 @@
 }
 
 .admin-datatable-table td {
-  padding: 13px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   color: #E2E8F0;
   background: rgba(26, 34, 51, 0.2);
@@ -170,63 +141,12 @@
 }
 
 .admin-datatable-table tr:hover td {
-  background: rgba(0, 217, 255, 0.07) !important;
+  background: rgba(0, 217, 255, 0.08) !important;
 }
 
-/* Pagination Bar */
-.admin-datatable-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 12px;
-  padding-bottom: 16px;
-  font-size: 12px;
-  color: #94A3B8;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.admin-datatable-pages {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.admin-datatable-page-btn {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(0, 217, 255, 0.2);
-  color: #94A3B8;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-datatable-page-btn:hover:not(:disabled) {
-  border-color: #00D9FF;
-  color: #00D9FF;
-}
-
-.admin-datatable-page-btn.active {
-  background: #00D9FF;
-  border-color: #00D9FF;
-  color: #0B1220;
-  font-weight: 800;
-  box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
-}
-
-.admin-datatable-page-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Empty State */
 .admin-datatable-empty {
-  padding: 40px 16px;
-  text-align: center;
-  color: #64748B;
+  text-align: center !important;
+  padding: 40px 16px !important;
+  color: #94A3B8;
   font-style: italic;
-  font-size: 14px;
 }

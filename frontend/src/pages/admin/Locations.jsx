@@ -232,64 +232,62 @@ const Locations = () => {
       {/* ==============================================
           LOCATIONS LIST TABLE USING ADMIN DATATABLE
           ============================================== */}
-      <div className="glass-card">
-        <AdminDataTable
-          title="Registered Jurisdictions Directory"
-          columns={[
-            { key: 'policeStation', label: 'Police Station', sortable: true, render: (loc) => <span style={{ fontWeight: '700', color: '#fff' }}>{loc.policeStation}</span> },
-            { key: 'city', label: 'City', sortable: true },
-            { key: 'district', label: 'District', sortable: true },
-            { key: 'state', label: 'State', sortable: true },
-            {
-              key: 'isActive',
-              label: 'Status',
-              sortable: true,
-              render: (loc) => (
-                loc.isActive === false ? (
-                  <span style={{ color: '#ef4444', backgroundColor: '#ef444415', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>Inactive</span>
-                ) : (
-                  <span style={{ color: '#10b981', backgroundColor: '#10b98115', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>Active</span>
-                )
+      <AdminDataTable
+        title="Registered Jurisdictions Directory"
+        columns={[
+          { key: 'policeStation', label: 'Police Station', sortable: true, render: (loc) => <span style={{ fontWeight: '700', color: '#fff' }}>{loc.policeStation}</span> },
+          { key: 'city', label: 'City', sortable: true },
+          { key: 'district', label: 'District', sortable: true },
+          { key: 'state', label: 'State', sortable: true },
+          {
+            key: 'isActive',
+            label: 'Status',
+            sortable: true,
+            render: (loc) => (
+              loc.isActive === false ? (
+                <span style={{ color: '#ef4444', backgroundColor: '#ef444415', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>Inactive</span>
+              ) : (
+                <span style={{ color: '#10b981', backgroundColor: '#10b98115', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>Active</span>
               )
-            },
-            {
-              key: 'actions',
-              label: 'Actions',
-              sortable: false,
-              align: 'right',
-              render: (loc) => (
-                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                  <button
-                    onClick={() => startEdit(loc)}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '11px', padding: '4px 8px' }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteLocation(loc._id || loc.id, loc.policeStation)}
-                    className="btn btn-secondary"
-                    disabled={loc.isActive === false}
-                    style={{
-                      fontSize: '11px',
-                      padding: '4px 8px',
-                      color: loc.isActive === false ? '#64748b' : '#f43f5e',
-                      borderColor: loc.isActive === false ? 'rgba(100,116,139,0.1)' : 'rgba(244,63,94,0.1)',
-                      cursor: loc.isActive === false ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    {loc.isActive === false ? 'Deactivated' : 'Deactivate'}
-                  </button>
-                </div>
-              )
-            }
-          ]}
-          data={locations}
-          loading={loading}
-          emptyMessage="No police station locations recorded."
-          searchPlaceholder="Search locations by station, city, district, or state..."
-        />
-      </div>
+            )
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            sortable: false,
+            align: 'right',
+            render: (loc) => (
+              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                <button
+                  onClick={() => startEdit(loc)}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '11px', padding: '4px 8px' }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteLocation(loc._id || loc.id, loc.policeStation)}
+                  className="btn btn-secondary"
+                  disabled={loc.isActive === false}
+                  style={{
+                    fontSize: '11px',
+                    padding: '4px 8px',
+                    color: loc.isActive === false ? '#64748b' : '#f43f5e',
+                    borderColor: loc.isActive === false ? 'rgba(100,116,139,0.1)' : 'rgba(244,63,94,0.1)',
+                    cursor: loc.isActive === false ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {loc.isActive === false ? 'Deactivated' : 'Deactivate'}
+                </button>
+              </div>
+            )
+          }
+        ]}
+        data={locations}
+        loading={loading}
+        emptyMessage="No police station locations recorded."
+        searchPlaceholder="Search locations by station, city, district, or state..."
+      />
 
     </div>
   );

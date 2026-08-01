@@ -89,7 +89,7 @@ class Command(BaseCommand):
       email='admin@crimepilot.com',
       defaults={'name': 'System Administrator', 'role': 'admin', 'is_superuser': True, 'is_staff': True}
     )
-    admin_user.set_password('Admin@123')
+    admin_user.set_password('admin@1234')
     admin_user.save()
 
     # 4. Seed Officers matched by City

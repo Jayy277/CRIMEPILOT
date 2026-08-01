@@ -292,60 +292,58 @@ const CrimeCategories = () => {
       {/* ==============================================
           CATEGORIES LIST TABLE USING ADMIN DATATABLE
           ============================================== */}
-      <div className="glass-card">
-        <AdminDataTable
-          title="Registered Categories Registry"
-          columns={[
-            { key: 'name', label: 'Category Name', sortable: true, render: (cat) => <span style={{ fontWeight: '700', color: '#fff' }}>{cat.name}</span> },
-            {
-              key: 'sections',
-              label: 'Legal Sections Covered',
-              sortable: false,
-              render: (cat) => (
-                cat.sections && cat.sections.length > 0 ? (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {cat.sections.map((sec, idx) => (
-                      <span key={idx} style={{ backgroundColor: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', color: '#22d3ee' }}>
-                        {sec.act} Sec {sec.section}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>No sections schedules configured</span>
-                )
-              )
-            },
-            {
-              key: 'actions',
-              label: 'Actions',
-              sortable: false,
-              align: 'right',
-              render: (cat) => (
-                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                  <button
-                    onClick={() => startEdit(cat)}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '11px', padding: '4px 8px' }}
-                  >
-                    Edit Sections
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCategory(cat._id, cat.name)}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
-                  >
-                    Delete
-                  </button>
+      <AdminDataTable
+        title="Registered Categories Registry"
+        columns={[
+          { key: 'name', label: 'Category Name', sortable: true, render: (cat) => <span style={{ fontWeight: '700', color: '#fff' }}>{cat.name}</span> },
+          {
+            key: 'sections',
+            label: 'Legal Sections Covered',
+            sortable: false,
+            render: (cat) => (
+              cat.sections && cat.sections.length > 0 ? (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {cat.sections.map((sec, idx) => (
+                    <span key={idx} style={{ backgroundColor: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: '4px', padding: '2px 6px', fontSize: '11px', color: '#22d3ee' }}>
+                      {sec.act} Sec {sec.section}
+                    </span>
+                  ))}
                 </div>
+              ) : (
+                <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>No sections schedules configured</span>
               )
-            }
-          ]}
-          data={categories}
-          loading={loading}
-          emptyMessage="No crime categories registered."
-          searchPlaceholder="Search categories or legal sections..."
-        />
-      </div>
+            )
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            sortable: false,
+            align: 'right',
+            render: (cat) => (
+              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                <button
+                  onClick={() => startEdit(cat)}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '11px', padding: '4px 8px' }}
+                >
+                  Edit Sections
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(cat._id, cat.name)}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
+                >
+                  Delete
+                </button>
+              </div>
+            )
+          }
+        ]}
+        data={categories}
+        loading={loading}
+        emptyMessage="No crime categories registered."
+        searchPlaceholder="Search categories or legal sections..."
+      />
 
     </div>
   );

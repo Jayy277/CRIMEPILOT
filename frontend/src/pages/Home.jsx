@@ -288,10 +288,10 @@ const Home = () => {
       </section>
 
       {/* ==============================================
-          SECTION 2: WHAT IS CRIMEPILOT? (<20s overview)
+          SECTION 2: WHAT IS CRIMEPILOT?
           ============================================== */}
       <section id="what-is-crimepilot" style={{
-        padding: '70px 20px',
+        padding: '80px 20px',
         position: 'relative',
         zIndex: 1,
         backgroundColor: 'rgba(18, 27, 45, 0.25)',
@@ -299,41 +299,51 @@ const Home = () => {
         borderBottom: '1px solid rgba(0, 217, 255, 0.1)'
       }}>
         <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Platform Foundation</span>
+          <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Platform Overview</span>
             <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>WHAT IS CRIMEPILOT?</h2>
-            <p style={{ fontSize: '14px', color: '#9AA4B2', marginTop: '6px', maxWidth: '600px', margin: '6px auto 0' }}>
-              CrimePilot is India's unified AI platform connecting citizens, police units, and intelligence analysts for automated crime clearance and public safety.
+            <p style={{ fontSize: '14px', color: '#9AA4B2', marginTop: '8px', maxWidth: '740px', margin: '8px auto 0', lineHeight: '1.6' }}>
+              CrimePilot is India's unified AI-powered crime intelligence platform connecting citizens, police departments, and intelligence analysts through one secure ecosystem.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
             {[
+              {
+                icon: '🤖',
+                title: 'AI Analysis',
+                desc: 'Modus Operandi pattern scoring & historical similarity matching.'
+              },
               {
                 icon: '📄',
                 title: 'Digital FIR',
-                desc: 'Instant online complaint registration with automated IPC/BNS section suggestions and nearest station routing.'
-              },
-              {
-                icon: '🤖',
-                title: 'CrimePilot AI',
-                desc: 'Natural language legal assistant providing 24x7 guidance on Indian criminal laws, FIR steps, and safety advisories.'
-              },
-              {
-                icon: '📁',
-                title: 'Evidence Vault',
-                desc: 'Tamper-proof storage vault securing digital evidence, files, and chain-of-custody logs with cryptographic hash integrity.'
+                desc: 'End-to-end digital complaint filing with legal section recommendations.'
               },
               {
                 icon: '📊',
                 title: 'Crime Analytics',
-                desc: 'Real-time spatial heatmaps, Modus Operandi pattern recognition, and automated clearance trend dossiers.'
+                desc: 'Statistical density heatmaps and predictive clearance trends.'
+              },
+              {
+                icon: '📁',
+                title: 'Evidence Vault',
+                desc: 'Cryptographic hash indexing for physical & digital evidence files.'
+              },
+              {
+                icon: '👤',
+                title: 'Citizen Portal',
+                desc: 'Self-service portal for complaints, tracking, and evidence submission.'
+              },
+              {
+                icon: '👮',
+                title: 'Officer Dashboard',
+                desc: 'Investigative command console for caseload & suspect management.'
               }
             ].map((card, idx) => (
               <div key={idx} className="glass-panel" style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
                 <span style={{ fontSize: '32px' }}>{card.icon}</span>
                 <h3 style={{ fontSize: '18px', color: '#FFF', fontWeight: 'bold', fontFamily: 'Outfit, sans-serif', margin: 0 }}>{card.title}</h3>
-                <p style={{ fontSize: '13px', color: '#9AA4B2', lineHeight: '1.5', margin: 0 }}>{card.desc}</p>
+                <p style={{ fontSize: '13px', color: '#9AA4B2', lineHeight: '1.6', margin: 0 }}>{card.desc}</p>
               </div>
             ))}
           </div>
@@ -457,94 +467,6 @@ const Home = () => {
             </div>
           </div>
 
-        </div>
-      </section>
-
-      {/* ==============================================
-          SECTION 5: PLATFORM CAPABILITIES
-          ============================================== */}
-      <section id="capabilities" style={{ padding: '80px 20px', zIndex: 1, position: 'relative' }}>
-        <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>System Apparatus</span>
-            <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px' }}>PLATFORM CAPABILITIES</h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
-            {[
-              { icon: '🤖', title: 'AI Analysis', desc: 'Modus Operandi pattern scoring & historical similarity matching.' },
-              { icon: '📈', title: 'Crime Analytics', desc: 'Statistical density heatmaps and predictive clearance trends.' },
-              { icon: '📄', title: 'Digital FIR', desc: 'End-to-end digital complaint filing with legal section recommendations.' },
-              { icon: '📁', title: 'Evidence Vault', desc: 'Cryptographic hash indexing for physical & digital evidence files.' },
-              { icon: '⏱️', title: 'Case Tracking', desc: 'Real-time investigation progress timeline & automated SMTP updates.' },
-              { icon: '🔔', title: 'Notifications', desc: 'Instant alerts dispatched to assigned officers & citizens.' },
-              { icon: '👤', title: 'Citizen Portal', desc: 'Self-service portal for complaints, tracking, and evidence submission.' },
-              { icon: '👮', title: 'Officer Dashboard', desc: 'Investigative command console for caseload & suspect management.' }
-            ].map((capability, idx) => (
-              <div key={idx} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
-                <span style={{ fontSize: '28px' }}>{capability.icon}</span>
-                <h3 style={{ fontSize: '16px', color: '#FFF', fontWeight: 'bold', fontFamily: 'Outfit, sans-serif' }}>{capability.title}</h3>
-                <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0 }}>{capability.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==============================================
-          SECTION 6: HOW CRIMEPILOT WORKS
-          ============================================== */}
-      <section id="how-it-works" style={{ padding: '80px 20px', zIndex: 1, position: 'relative', backgroundColor: 'rgba(18, 27, 45, 0.25)' }}>
-        <div style={{ width: '1240px', maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#00D9FF', fontWeight: '800', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Operational Blueprint</span>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#fff', marginTop: '8px', marginBottom: '48px' }}>HOW CRIMEPILOT WORKS</h2>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '16px',
-            background: 'rgba(18, 27, 45, 0.4)',
-            padding: '40px 24px',
-            borderRadius: '16px',
-            border: '1px solid rgba(0, 217, 255, 0.15)'
-          }}>
-            {[
-              { title: 'Citizen Reports Incident', desc: 'Online FIR & evidence submission' },
-              { title: 'AI Initial Analysis', desc: 'IPC/BNS & pattern match scoring' },
-              { title: 'Officer Assignment', desc: 'Automated station officer dispatch' },
-              { title: 'Evidence Collection', desc: 'Digital & physical hash logging' },
-              { title: 'Investigation', desc: 'Case status timeline updates' },
-              { title: 'Resolution', desc: 'Final charge & closure report' }
-            ].map((step, idx, arr) => (
-              <React.Fragment key={idx}>
-                <div style={{ flex: '1', minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(0, 217, 255, 0.08)',
-                    border: '1px solid rgba(0, 217, 255, 0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto',
-                    color: '#00D9FF',
-                    fontWeight: 'bold',
-                    fontSize: '15px'
-                  }}>
-                    {idx + 1}
-                  </div>
-                  <h4 style={{ fontSize: '13px', color: '#FFF', fontWeight: 'bold', margin: '4px 0 0 0' }}>{step.title}</h4>
-                  <p style={{ fontSize: '11px', color: '#9AA4B2', margin: 0 }}>{step.desc}</p>
-                </div>
-                {idx < arr.length - 1 && (
-                  <span className="workflow-arrow" style={{ fontSize: '18px', fontWeight: 'bold' }}>→</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
         </div>
       </section>
 

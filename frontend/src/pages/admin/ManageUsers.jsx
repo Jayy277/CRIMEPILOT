@@ -488,9 +488,8 @@ const ManageUsers = () => {
           DIRECTORY LISTS USING ADMIN DATATABLE
           ============================================== */}
       {activeTab === 'staff' ? (
-        <div className="glass-card">
-          <AdminDataTable
-            title="System Personnel Registry"
+        <AdminDataTable
+          title="System Personnel Registry"
             columns={[
               {
                 key: 'user.name',
@@ -590,11 +589,9 @@ const ManageUsers = () => {
             emptyMessage="No personnel records found."
             searchPlaceholder="Search personnel by name, email, or role..."
           />
-        </div>
       ) : (
-        <div className="glass-card">
-          <AdminDataTable
-            title="Citizen Dossier Verification Desk"
+        <AdminDataTable
+          title="Citizen Dossier Verification Desk"
             columns={[
               { key: 'user.name', label: 'Full Name', sortable: true, render: (c) => <span style={{ fontWeight: '700', color: '#fff' }}>{c.user?.name}</span> },
               {
@@ -687,7 +684,6 @@ const ManageUsers = () => {
             emptyMessage="No citizens registered on ledger."
             searchPlaceholder="Search citizens by name, email, status, or identity..."
           />
-        </div>
       )}
 
     </div>

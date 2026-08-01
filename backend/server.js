@@ -28,7 +28,9 @@ const { protect } = require('./middleware/authMiddleware');
 const app = express();
 
 // Standard middleware
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition']
+}));
 app.use(express.json());
 
 // Custom Audit Log middleware

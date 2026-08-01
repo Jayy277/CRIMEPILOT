@@ -66,8 +66,8 @@ async function runTests() {
     const loginRes = await request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
-        usernameOrEmail: 'admin@crimegpt.com',
-        password: 'Admin@123',
+        usernameOrEmail: 'admin@crimepilot.com',
+        password: 'admin@1234',
       }),
     });
     

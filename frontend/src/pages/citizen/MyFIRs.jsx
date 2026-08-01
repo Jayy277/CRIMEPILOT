@@ -3,6 +3,7 @@ import { AuthContext } from '../../context/AuthContext';
 import axiosInstance from '../../api/axiosInstance';
 import CaseTrackerModal, { getStageIndex, INVESTIGATION_STAGES } from '../../components/citizen/CaseTrackerModal';
 import FIRDetailsModal from '../../components/citizen/FIRDetailsModal';
+import { downloadPDFResponse } from '../../utils/downloadPDF';
 
 // Status color helper per prompt instructions
 export const getStatusColor = (statusStr) => {
@@ -94,15 +95,7 @@ const MyFIRs = () => {
       } catch (e) {
         response = await axiosInstance.get(`/api/citizen/cases/${crime.id}/download`, { responseType: 'blob' });
       }
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `FIR-Report-${crime.crime_id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      downloadPDFResponse(response, `CrimePilot_FIR_${crime.crime_id || crime.crimeId || crime.id}`);
     } catch (err) {
       console.error(err);
       alert('Failed to download FIR PDF compilation file.');

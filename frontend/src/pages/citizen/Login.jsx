@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 /* ── Animated counter ── */
 const Counter = ({ target }) => {
@@ -92,6 +93,8 @@ export default function CitizenLogin() {
   const { user, login } = useContext(AuthContext);
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isEyeHovered, setIsEyeHovered] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const navigate = useNavigate();
@@ -289,9 +292,45 @@ export default function CitizenLogin() {
               </div>
               <div>
                 <label style={label}>PASSWORD</label>
-                <input type="password" className="cp-input" value={password}
-                  onChange={e=>setPassword(e.target.value)} placeholder="Enter your password"
-                  required style={inputStyle}/>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="cp-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    style={{ ...inputStyle, paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    onMouseEnter={() => setIsEyeHovered(true)}
+                    onMouseLeave={() => setIsEyeHovered(false)}
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      padding: '0',
+                      margin: '0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: isEyeHovered ? '#00D9FF' : '#8AA3B5',
+                      filter: isEyeHovered ? 'drop-shadow(0 0 6px rgba(0, 217, 255, 0.5))' : 'none',
+                      transition: 'all 200ms ease',
+                      outline: 'none'
+                    }}
+                  >
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" disabled={loading} style={{

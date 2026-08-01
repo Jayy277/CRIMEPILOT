@@ -37,13 +37,13 @@ export default function PlatformOverview() {
   const sceneTitles = [
     '01. WELCOME',
     '02. MODERN LAW ENFORCEMENT',
-    '03. ARCHITECTURE',
-    '04. CITIZEN PORTAL',
-    '05. OFFICER PORTAL',
-    '06. CRIMEPILOT AI',
-    '07. NATIONAL INTEL MAP',
-    '08. EVIDENCE MANAGEMENT',
-    '09. SMART NOTIFICATIONS',
+    '03. HOW CRIMEPILOT WORKS',
+    '04. ARCHITECTURE',
+    '05. CITIZEN PORTAL',
+    '06. OFFICER PORTAL',
+    '07. CRIMEPILOT AI',
+    '08. NATIONAL INTEL MAP',
+    '09. EVIDENCE MANAGEMENT',
     '10. CYBERSECURITY',
     '11. PREDICTIVE AI',
     '12. TECH STACK',
@@ -387,12 +387,77 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 3 – PLATFORM ARCHITECTURE
+          SCENE 3 – HOW CRIMEPILOT WORKS
+          =================================================================== */}
+      <section className="overview-scene">
+        <div className="overview-scene-content">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.25 }} variants={sectionVariant}>
+            <span className="overview-scene-tag">SCENE 03 // OPERATIONAL WORKFLOW</span>
+            <h2 className="overview-scene-title">How CrimePilot Works</h2>
+            <p className="overview-scene-desc" style={{ maxWidth: '840px', lineHeight: '1.7' }}>
+              An end-to-end automated pipeline connecting incident reporting, AI law analysis, officer dispatch, digital evidence hash logging, and case resolution.
+            </p>
+
+            <div style={{
+              display: 'flex',
+              justify: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px',
+              background: 'rgba(18, 27, 45, 0.65)',
+              padding: '36px 24px',
+              borderRadius: '16px',
+              border: '1px solid rgba(0, 217, 255, 0.25)',
+              backdropFilter: 'blur(10px)',
+              width: '100%'
+            }}>
+              {[
+                { title: 'Citizen Reports Incident', desc: 'Online FIR & evidence submission' },
+                { title: 'AI Initial Analysis', desc: 'IPC/BNS & pattern match scoring' },
+                { title: 'Officer Assignment', desc: 'Automated station officer dispatch' },
+                { title: 'Evidence Collection', desc: 'Digital & physical hash logging' },
+                { title: 'Investigation', desc: 'Case status timeline updates' },
+                { title: 'Resolution', desc: 'Final charge & closure report' }
+              ].map((step, idx, arr) => (
+                <React.Fragment key={idx}>
+                  <div style={{ flex: '1', minWidth: '130px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(0, 217, 255, 0.12)',
+                      border: '1px solid rgba(0, 217, 255, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto',
+                      color: '#00D9FF',
+                      fontWeight: 'bold',
+                      fontSize: '15px',
+                      boxShadow: '0 0 12px rgba(0, 217, 255, 0.2)'
+                    }}>
+                      {idx + 1}
+                    </div>
+                    <h4 style={{ fontSize: '13px', color: '#FFF', fontWeight: 'bold', margin: '4px 0 0 0' }}>{step.title}</h4>
+                    <p style={{ fontSize: '11px', color: '#9AA4B2', margin: 0 }}>{step.desc}</p>
+                  </div>
+                  {idx < arr.length - 1 && (
+                    <span className="workflow-arrow" style={{ fontSize: '18px', fontWeight: 'bold', color: '#00D9FF' }}>→</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===================================================================
+          SCENE 4 – PLATFORM ARCHITECTURE
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 03 // Command Ecosystem</span>
+            <span className="overview-scene-tag">SCENE 04 // Command Ecosystem</span>
             <h2 className="overview-scene-title">Unified Platform Architecture</h2>
             <p className="overview-scene-desc">
               Four specialized roles synchronized across one high-security AI intelligence grid.
@@ -417,25 +482,41 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 4 – CITIZEN PORTAL
+          SCENE 5 – CITIZEN PORTAL
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 04 // Citizen Empowerment</span>
+            <span className="overview-scene-tag">Scene 05 // Citizen Empowerment</span>
             <h2 className="overview-scene-title">Citizen Digital Services</h2>
             <p className="overview-scene-desc">
               Fast, transparent, and secure public access to police reporting and case tracking.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
               {[
-                { title: '10-Digit Mobile Auth', desc: 'Compulsory numeric verification ensuring authentic complaint origins.', icon: '📱' },
-                { title: 'Identity Proof Verification', desc: 'Supports Aadhaar, Driving License, Passport & Voter ID formatting.', icon: '🆔' },
-                { title: 'Digital FIR Submission', desc: 'File FIRs instantly with automatic legal section mapping.', icon: '📄' },
-                { title: 'Evidence File Vault', desc: 'Attach photos, audio, videos or PDFs with SHA-256 integrity hash.', icon: '📁' }
+                {
+                  title: 'Digital FIR Registration',
+                  desc: 'Submit FIRs online with AI-assisted crime classification, automatic BNS section mapping, and nearest police station routing.',
+                  icon: '📄'
+                },
+                {
+                  title: 'Live Case Tracking',
+                  desc: 'Track every investigation milestone in real time, including FIR registration, officer assignment, evidence verification, investigation progress, and final case closure.',
+                  icon: '📍'
+                },
+                {
+                  title: 'Secure Evidence Vault',
+                  desc: 'Upload photos, videos, audio recordings, and documents securely with tamper-proof evidence protection and digital integrity verification.',
+                  icon: '📁'
+                },
+                {
+                  title: 'CrimePilot AI Assistant',
+                  desc: 'Get AI-powered guidance on FIR filing, BNS legal sections, complaint procedures, citizen rights, and emergency reporting assistance.',
+                  icon: '🤖'
+                }
               ].map((item, idx) => (
-                <div key={idx} className="overview-glass-card">
+                <div key={idx} className="overview-glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '30px' }}>{item.icon}</span>
                   <h3 style={{ fontSize: '16px', color: '#FFF', fontWeight: 'bold', margin: '12px 0 6px 0' }}>{item.title}</h3>
                   <p style={{ fontSize: '13px', color: '#9AA4B2', margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
@@ -447,25 +528,41 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 5 – OFFICER PORTAL
+          SCENE 6 – OFFICER PORTAL
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 05 // Police Response</span>
+            <span className="overview-scene-tag">Scene 06 // Police Response</span>
             <h2 className="overview-scene-title">Officer Investigation Console</h2>
             <p className="overview-scene-desc">
               Equipping investigating officers with real-time case queues and digital evidence logs.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
               {[
-                { title: 'Instant Dispatch', desc: 'Direct station queue routing upon FIR registration.', icon: '⚡' },
-                { title: 'Evidence Deposition', desc: 'Chain of custody file hashing and digital evidence review.', icon: '🛡️' },
-                { title: 'Investigation Timeline', desc: 'Timestamped case progress updates visible to citizens.', icon: '⏱️' },
-                { title: 'Charge Dossier', desc: 'Generate complete solved case files for court submission.', icon: '⚖️' }
+                {
+                  title: 'AI Case Assignment',
+                  desc: 'Automatically assigns cases to the appropriate police station and investigating officer based on jurisdiction, workload, crime category, and case priority.',
+                  icon: '🛡️'
+                },
+                {
+                  title: 'Evidence Management',
+                  desc: 'Securely review, organize, verify, and manage digital evidence while maintaining complete chain-of-custody records.',
+                  icon: '📂'
+                },
+                {
+                  title: 'Investigation Timeline',
+                  desc: 'Monitor every investigation stage with real-time status updates, officer remarks, case activities, and investigation history.',
+                  icon: '🕒'
+                },
+                {
+                  title: 'Charge Sheet Generation',
+                  desc: 'Generate court-ready charge sheets, investigation summaries, and official case reports directly from verified investigation records.',
+                  icon: '📑'
+                }
               ].map((item, idx) => (
-                <div key={idx} className="overview-glass-card" style={{ borderColor: 'rgba(59, 130, 246, 0.4)' }}>
+                <div key={idx} className="overview-glass-card" style={{ borderColor: 'rgba(59, 130, 246, 0.4)', display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '30px' }}>{item.icon}</span>
                   <h3 style={{ fontSize: '16px', color: '#3B82F6', fontWeight: 'bold', margin: '12px 0 6px 0' }}>{item.title}</h3>
                   <p style={{ fontSize: '13px', color: '#9AA4B2', margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
@@ -477,12 +574,12 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 6 – CRIMEPILOT AI
+          SCENE 7 – CRIMEPILOT AI
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 06 // AI Legal Console</span>
+            <span className="overview-scene-tag">Scene 07 // AI Legal Console</span>
             <h2 className="overview-scene-title">CrimePilot AI Legal Assistant</h2>
             <p className="overview-scene-desc">
               24x7 intelligent guidance trained on Bharatiya Nyaya Sanhita (BNS) and Bharatiya Nagarik Suraksha Sanhita (BNSS).
@@ -514,12 +611,12 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 7 – NATIONAL CRIME INTELLIGENCE DASHBOARD
+          SCENE 8 – NATIONAL CRIME INTELLIGENCE DASHBOARD
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 07 // Spatial Intelligence</span>
+            <span className="overview-scene-tag">Scene 08 // Spatial Intelligence</span>
             <h2 className="overview-scene-title">National Crime Intelligence Map</h2>
             <p className="overview-scene-desc">
               Real-time monitoring across Indian states with active core highlights and live incident node pings.
@@ -533,12 +630,12 @@ export default function PlatformOverview() {
       </section>
 
       {/* ===================================================================
-          SCENE 8 – DIGITAL EVIDENCE MANAGEMENT
+          SCENE 9 – DIGITAL EVIDENCE MANAGEMENT
           =================================================================== */}
       <section className="overview-scene">
         <div className="overview-scene-content">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 08 // Evidence Vault</span>
+            <span className="overview-scene-tag">Scene 09 // Evidence Vault</span>
             <h2 className="overview-scene-title">Digital Evidence Pipeline</h2>
             <p className="overview-scene-desc">
               Cryptographic integrity ensuring court-admissible evidence retention without tamper risks.
@@ -559,38 +656,6 @@ export default function PlatformOverview() {
                   </div>
                   {idx < arr.length - 1 && <span style={{ color: '#00D9FF', fontSize: '24px', fontWeight: 'bold' }}>➔</span>}
                 </React.Fragment>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ===================================================================
-          SCENE 9 – SMART NOTIFICATIONS
-          =================================================================== */}
-      <section className="overview-scene">
-        <div className="overview-scene-content">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={sectionVariant}>
-            <span className="overview-scene-tag">Scene 09 // Alert System</span>
-            <h2 className="overview-scene-title">Smart Incident Timeline</h2>
-            <p className="overview-scene-desc">
-              Automated notifications keeping citizens informed at every step of investigation.
-            </p>
-
-            <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
-              {[
-                { time: '00:00 MIN', status: 'FIR Filed', text: 'Digital FIR #FIR-8842 logged with 10-digit mobile verification.', color: '#00D9FF' },
-                { time: '00:02 MIN', status: 'AI Triage', text: 'BNS Section 318 mapped; initial priority set to HIGH.', color: '#10B981' },
-                { time: '00:05 MIN', status: 'Officer Dispatched', text: 'Inspector D. Patel assigned at Gujarat Core Unit.', color: '#F59E0B' },
-                { time: '00:15 MIN', status: 'Evidence Hashed', text: 'SHA-256 fingerprint verified for 2 attached CCTV files.', color: '#8B5CF6' }
-              ].map((item, idx) => (
-                <div key={idx} className="overview-glass-card" style={{ padding: '16px 20px', borderLeft: `4px solid ${item.color}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: item.color, fontFamily: 'monospace', fontWeight: 'bold' }}>{item.time}</span>
-                    <span style={{ fontSize: '11px', color: '#FFF', fontWeight: 'bold', background: `${item.color}33`, padding: '2px 8px', borderRadius: '4px' }}>{item.status}</span>
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#CBD5E1', margin: 0 }}>{item.text}</p>
-                </div>
               ))}
             </div>
           </motion.div>

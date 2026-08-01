@@ -106,7 +106,7 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
     doc.fillColor(card.valColor).font('Helvetica-Bold').fontSize(9).text(card.val, cx + 10, cy + 17);
   });
 
-  // 3. Independent Statistic Cards with Left Colored Border
+  // 3. Independent Statistic Cards with Left Colored Border (Spacious & Premium 68pt height)
   y = 208;
   const totalCases = data.length;
   const solvedCases = data.filter(c => ['Solved', 'Closed'].includes(c.status)).length;
@@ -124,19 +124,19 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
 
   const statW = 96.6;
   const statGap = 10;
-  const statH = 54;
+  const statH = 68; // Increased height by ~26% for spacious, premium look
 
   statCards.forEach((card, idx) => {
     const cx = 36 + idx * (statW + statGap);
     doc.roundedRect(cx, y, statW, statH, 6).fillAndStroke(lightBg, borderLine);
     doc.rect(cx, y + 2, 4, statH - 4).fill(card.color);
 
-    doc.fillColor(textMuted).font('Helvetica-Bold').fontSize(6.5).text(`${card.icon} ${card.label}`, cx + 10, y + 8, { width: statW - 14 });
-    doc.fillColor(card.color).font('Helvetica-Bold').fontSize(16).text(card.val.toString(), cx + 10, y + 24);
+    doc.fillColor(textMuted).font('Helvetica-Bold').fontSize(6.5).text(`${card.icon} ${card.label}`, cx + 10, y + 10, { width: statW - 14 });
+    doc.fillColor(card.color).font('Helvetica-Bold').fontSize(18).text(card.val.toString(), cx + 10, y + 32);
   });
 
   // 4. Two Independent Square Summary Cards
-  y = 286;
+  y = 296;
 
   const categoryCounts = {};
   const stationCounts = {};
@@ -186,19 +186,19 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
     });
   }
 
-  // 5. Incident Case Logs Table
-  y = 398;
+  // 5. Incident Case Logs Table with Police Station Widest Column & Dynamic Line Wrapping
+  y = 406;
 
   const renderTableHeader = (currentY) => {
     doc.rect(36, currentY, 523.28, 22).fill(navyDark);
     doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(7.5);
-    doc.text('CASE ID', 44, currentY + 7, { width: 55 });
-    doc.text('CITIZEN NAME', 102, currentY + 7, { width: 75 });
-    doc.text('CATEGORY', 180, currentY + 7, { width: 75 });
-    doc.text('POLICE STATION', 258, currentY + 7, { width: 85 });
-    doc.text('OFFICER', 346, currentY + 7, { width: 70 });
-    doc.text('PRIORITY', 420, currentY + 7, { width: 50 });
-    doc.text('STATUS', 476, currentY + 7, { width: 75 });
+    doc.text('CASE ID', 44, currentY + 7, { width: 50 });
+    doc.text('CITIZEN NAME', 98, currentY + 7, { width: 72 });
+    doc.text('CATEGORY', 174, currentY + 7, { width: 74 });
+    doc.text('POLICE STATION', 252, currentY + 7, { width: 110 }); // Widest column
+    doc.text('OFFICER', 366, currentY + 7, { width: 68 });
+    doc.text('PRIORITY', 438, currentY + 7, { width: 48 });
+    doc.text('STATUS', 490, currentY + 7, { width: 64 });
   };
 
   doc.fillColor(navyDark).font('Helvetica-Bold').fontSize(10).text('INCIDENT CASE LOGS & INVESTIGATION REGISTRY', 36, y);
@@ -215,7 +215,24 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
     y += 120;
   } else {
     data.forEach((item, index) => {
-      if (y > 745) {
+      const caseId = item.crimeId || item.id || `CP-${1000 + index}`;
+      const citizenName = item.reportedBy?.name || item.citizenName || item.victimName || 'Anonymous';
+      const categoryName = item.crimeCategory?.name || item.category || 'Unassigned';
+      const stationName = item.location?.policeStation || item.policeStation || 'HQ Unit';
+      const officerName = item.assignedOfficer?.name || item.officer || 'Unassigned';
+      const priorityVal = item.priority || 'Medium';
+      const statusVal = item.status || 'Open';
+
+      doc.font('Helvetica').fontSize(7.5);
+      const stnH = doc.heightOfString(stationName, { width: 108 });
+      const citH = doc.heightOfString(citizenName, { width: 70 });
+      const catH = doc.heightOfString(categoryName, { width: 74 });
+      const offH = doc.heightOfString(officerName, { width: 68 });
+
+      const contentH = Math.max(stnH, citH, catH, offH, 12);
+      const rowHeight = Math.max(28, Math.ceil(contentH) + 12);
+
+      if (y + rowHeight > 745) {
         doc.addPage();
         y = 40;
         renderTableHeader(y);
@@ -223,22 +240,15 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
       }
 
       const rowBg = index % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
-      doc.rect(36, y, 523.28, 26).fillAndStroke(rowBg, '#F1F5F9');
+      doc.rect(36, y, 523.28, rowHeight).fillAndStroke(rowBg, '#F1F5F9');
 
-      const caseId = item.crimeId || item.id || `CP-${1000 + index}`;
-      const citizenName = (item.reportedBy?.name || item.citizenName || item.victimName || 'Anonymous').slice(0, 15);
-      const categoryName = (item.crimeCategory?.name || item.category || 'Unassigned').slice(0, 15);
-      const stationName = (item.location?.policeStation || item.policeStation || 'HQ Unit').slice(0, 18);
-      const officerName = (item.assignedOfficer?.name || item.officer || 'Unassigned').slice(0, 14);
-      const priorityVal = item.priority || 'Medium';
-      const statusVal = item.status || 'Open';
-
+      const textY = y + 7;
       doc.font('Helvetica').fontSize(7.5).fillColor(textDark);
-      doc.text(caseId, 44, y + 8, { width: 55, lineBreak: false });
-      doc.text(citizenName, 102, y + 8, { width: 75, lineBreak: false });
-      doc.text(categoryName, 180, y + 8, { width: 75, lineBreak: false });
-      doc.text(stationName, 258, y + 8, { width: 85, lineBreak: false });
-      doc.text(officerName, 346, y + 8, { width: 70, lineBreak: false });
+      doc.text(caseId, 44, textY, { width: 50, lineBreak: false });
+      doc.text(citizenName, 98, textY, { width: 70, lineBreak: true });
+      doc.text(categoryName, 174, textY, { width: 74, lineBreak: true });
+      doc.text(stationName, 252, textY, { width: 108, lineBreak: true }); // Wraps cleanly onto line 2 if long
+      doc.text(officerName, 366, textY, { width: 68, lineBreak: true });
 
       // Priority Badge
       let pBg = '#FFEDD5', pTxt = '#9A3412';
@@ -246,18 +256,19 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
       else if (priorityVal === 'Critical') { pBg = '#FCE7F3'; pTxt = '#9D174D'; }
       else if (priorityVal === 'Low') { pBg = '#DCFCE7'; pTxt = '#166534'; }
 
-      doc.roundedRect(418, y + 6, 48, 14, 3).fill(pBg);
-      doc.fillColor(pTxt).font('Helvetica-Bold').fontSize(7).text(priorityVal, 418, y + 9, { width: 48, align: 'center' });
+      const badgeY = y + Math.floor((rowHeight - 14) / 2);
+      doc.roundedRect(438, badgeY, 48, 14, 3).fill(pBg);
+      doc.fillColor(pTxt).font('Helvetica-Bold').fontSize(7).text(priorityVal, 438, badgeY + 3, { width: 48, align: 'center' });
 
       // Status Badge
       let sBg = '#E0F2FE', sTxt = '#0369A1';
       if (['Closed', 'Solved'].includes(statusVal)) { sBg = '#DCFCE7'; sTxt = '#15803D'; }
       else if (['Under Investigation', 'Assigned'].includes(statusVal)) { sBg = '#FEF3C7'; sTxt = '#B45309'; }
 
-      doc.roundedRect(474, y + 6, 78, 14, 3).fill(sBg);
-      doc.fillColor(sTxt).font('Helvetica-Bold').fontSize(7).text(statusVal, 474, y + 9, { width: 78, align: 'center' });
+      doc.roundedRect(490, badgeY, 64, 14, 3).fill(sBg);
+      doc.fillColor(sTxt).font('Helvetica-Bold').fontSize(7).text(statusVal, 490, badgeY + 3, { width: 64, align: 'center' });
 
-      y += 26;
+      y += rowHeight;
     });
   }
 
@@ -266,25 +277,6 @@ const generateReportPDF = (res, title, subtitle, data = [], dateRange) => {
 
   for (let i = 0; i < totalPages; i++) {
     doc.switchToPage(i);
-
-    // Render Background Logo Watermark (3-4% opacity) in Page Center
-    if (logoPath) {
-      try {
-        doc.save();
-        doc.opacity(0.04);
-        doc.image(logoPath, 208, 330, { width: 180, height: 180 });
-        doc.restore();
-      } catch (e) {
-        console.warn('Watermark logo render warning:', e.message);
-      }
-    }
-
-    // Render Text Watermark "CRIMEPILOT CONFIDENTIAL" (5% opacity, light gray #D3DCE6)
-    doc.save();
-    doc.fillColor('#D3DCE6').opacity(0.05).font('Helvetica-Bold').fontSize(26);
-    doc.rotate(-45, { origin: [297.64, 420.94] });
-    doc.text('CRIMEPILOT CONFIDENTIAL', 120, 410, { align: 'center' });
-    doc.restore();
 
     // Footer with Small Logo on Left
     doc.rect(36, 804, 523.28, 1).fill('#CBD5E1');

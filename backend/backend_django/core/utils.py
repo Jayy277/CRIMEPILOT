@@ -73,23 +73,7 @@ class NumberedCanvas(canvas.Canvas):
     self.setFont('Helvetica', 7.5)
     self.drawString(text_start_x, 757, 'CONFIDENTIAL & RESTRICTED DOCUMENT — GOVERNMENT ACCESS ONLY')
 
-    # 2. Centered Logo Watermark (3-4% opacity) & Text Watermark (5% opacity #D3DCE6)
-    self.saveState()
-    if logo_path:
-      try:
-        self.setFillColor(colors.HexColor('#E2E8F0'))
-        # Faint logo at center
-        self.drawImage(logo_path, 208, 330, width=180, height=180, preserveAspectRatio=True, mask='auto')
-      except Exception:
-        pass
-
-    self.setFillColor(colors.HexColor('#D3DCE6'))
-    self.setFont('Helvetica-Bold', 26)
-    self.rotate(45)
-    self.drawString(240, 220, 'CRIMEPILOT CONFIDENTIAL')
-    self.restoreState()
-
-    # 3. Footer with Small Logo on Left
+    # 2. Footer with Small Logo on Left
     self.setStrokeColor(colors.HexColor('#CBD5E1'))
     self.setLineWidth(0.75)
     self.line(36, 36, 559.28, 36)
@@ -185,11 +169,11 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
 
   stat_data = [
     [
-      Paragraph("<font color='#64748B'>📁 <b>TOTAL CASES</b></font><br/><font size=14 color='#0369A1'><b>" + str(total_cases) + "</b></font>", cell_style),
-      Paragraph("<font color='#64748B'>✅ <b>SOLVED CASES</b></font><br/><font size=14 color='#15803D'><b>" + str(solved_cases) + "</b></font>", cell_style),
-      Paragraph("<font color='#64748B'>⏳ <b>PENDING CASES</b></font><br/><font size=14 color='#B45309'><b>" + str(pending_cases) + "</b></font>", cell_style),
-      Paragraph("<font color='#64748B'>⚠️ <b>HIGH PRIORITY</b></font><br/><font size=14 color='#C2410C'><b>" + str(high_priority) + "</b></font>", cell_style),
-      Paragraph("<font color='#64748B'>🚨 <b>CRITICAL CASES</b></font><br/><font size=14 color='#B91C1C'><b>" + str(critical_cases) + "</b></font>", cell_style),
+      Paragraph("<font color='#64748B'>📁 <b>TOTAL CASES</b></font><br/><br/><font size=16 color='#0369A1'><b>" + str(total_cases) + "</b></font>", cell_style),
+      Paragraph("<font color='#64748B'>✅ <b>SOLVED CASES</b></font><br/><br/><font size=16 color='#15803D'><b>" + str(solved_cases) + "</b></font>", cell_style),
+      Paragraph("<font color='#64748B'>⏳ <b>PENDING CASES</b></font><br/><br/><font size=16 color='#B45309'><b>" + str(pending_cases) + "</b></font>", cell_style),
+      Paragraph("<font color='#64748B'>⚠️ <b>HIGH PRIORITY</b></font><br/><br/><font size=16 color='#C2410C'><b>" + str(high_priority) + "</b></font>", cell_style),
+      Paragraph("<font color='#64748B'>🚨 <b>CRITICAL CASES</b></font><br/><br/><font size=16 color='#B91C1C'><b>" + str(critical_cases) + "</b></font>", cell_style),
     ]
   ]
 
@@ -198,7 +182,7 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
     ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
     ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#E2E8F0')),
     ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E2E8F0')),
-    ('PADDING', (0,0), (-1,-1), 8),
+    ('PADDING', (0,0), (-1,-1), 12),
   ]))
 
   story.append(stat_table)
@@ -213,8 +197,8 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
     category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
     station_counts[stn_name] = station_counts.get(stn_name, 0) + 1
 
-  cat_items = [f"• <b>{k[:16]}</b>: {v} case(s)" for k, v in list(category_counts.items())[:3]]
-  stn_items = [f"• <b>{k[:16]}</b>: {v} case(s)" for k, v in list(station_counts.items())[:3]]
+  cat_items = [f"• <b>{k}</b>: {v} case(s)" for k, v in list(category_counts.items())[:3]]
+  stn_items = [f"• <b>{k}</b>: {v} case(s)" for k, v in list(station_counts.items())[:3]]
 
   cat_summary_text = "<br/>".join(cat_items) if cat_items else "No category records available."
   stn_summary_text = "<br/>".join(stn_items) if stn_items else "No station records available."
@@ -271,10 +255,10 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
 
     cases_table_data.append([
       Paragraph(f"<b>{c.crime_id or 'N/A'}</b>", cell_style),
-      Paragraph(citizen_name[:14], cell_style),
-      Paragraph(cat_name[:14], cell_style),
-      Paragraph(stn_name[:16], cell_style),
-      Paragraph(officer_name[:12], cell_style),
+      Paragraph(citizen_name, cell_style),
+      Paragraph(cat_name, cell_style),
+      Paragraph(stn_name, cell_style), # Wraps automatically in 110pt column
+      Paragraph(officer_name, cell_style),
       Paragraph(f"<font color='{p_color}'><b>{prio_val}</b></font>", cell_style),
       Paragraph(f"<font color='{s_color}'><b>{status_val}</b></font>", cell_style),
       Paragraph(date_val, cell_style)
@@ -297,7 +281,7 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
     ]))
     story.append(no_data_table)
   else:
-    cases_table = Table(cases_table_data, colWidths=[65, 70, 70, 85, 65, 55, 60, 53])
+    cases_table = Table(cases_table_data, colWidths=[52, 70, 74, 110, 68, 48, 55, 46])
     cases_table.setStyle(TableStyle([
       ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
       ('TEXTCOLOR', (0,0), (-1,0), colors.white),

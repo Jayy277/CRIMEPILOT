@@ -68,9 +68,8 @@ const ManageOfficers = () => {
       )}
 
       {/* Directory Table using AdminDataTable */}
-      <div className="glass-card">
-        <AdminDataTable
-          title="Caseload Auditing"
+      <AdminDataTable
+        title="Caseload Auditing"
           columns={[
             {
               key: 'badgeNo',
@@ -166,7 +165,6 @@ const ManageOfficers = () => {
           emptyMessage="No officers registered in systems."
           searchPlaceholder="Search officers by name, badge, contact, or station..."
         />
-      </div>
 
     </div>
   );

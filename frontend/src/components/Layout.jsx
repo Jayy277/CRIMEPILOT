@@ -29,7 +29,7 @@ const Layout = () => {
       style={{
         height: isPortalView ? '100vh' : 'auto',
         minHeight: isPortalView ? '100vh' : '100vh',
-        width: '100vw',
+        width: '100%',
         overflow: isPortalView ? 'hidden' : 'visible',
         display: 'flex',
         flexDirection: 'column',
@@ -57,9 +57,9 @@ const Layout = () => {
             display: 'flex',
             flexDirection: 'column',
             overflowY: isPortalView ? 'auto' : 'visible',
-            padding: '24px 24px 32px 24px',
+            padding: isPublicPath ? 0 : '24px 24px 32px 24px',
             backgroundColor: '#0F1420',
-            background: 'radial-gradient(circle at top right, rgba(var(--theme-accent-rgb, 59, 130, 246), 0.03) 0%, transparent 50%), radial-gradient(circle at bottom left, rgba(var(--theme-accent-rgb, 59, 130, 246), 0.03) 0%, transparent 50%)',
+            background: isPublicPath ? 'none' : 'radial-gradient(circle at top right, rgba(var(--theme-accent-rgb, 59, 130, 246), 0.03) 0%, transparent 50%), radial-gradient(circle at bottom left, rgba(var(--theme-accent-rgb, 59, 130, 246), 0.03) 0%, transparent 50%)',
             scrollBehavior: 'smooth'
           }}
         >

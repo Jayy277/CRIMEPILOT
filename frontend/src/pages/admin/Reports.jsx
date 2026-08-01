@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import AdminDataTable from '../../components/AdminDataTable';
+import { downloadPDFResponse } from '../../utils/downloadPDF';
 
 const Reports = () => {
   const [startDate, setStartDate] = useState('');
@@ -75,17 +76,8 @@ const Reports = () => {
         responseType: 'blob'
       });
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `CrimePilot-AdminReport-${Date.now()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-
-      setSuccessMsg('PDF Report compiled and downloaded successfully.');
+      const downloadedName = downloadPDFResponse(response, 'CrimePilot_Report');
+      setSuccessMsg(`PDF Report compiled and saved as ${downloadedName}`);
     } catch (err) {
       console.error('Error generating PDF report:', err);
       setError('Failed to generate compilation PDF. Check parameters and connection.');
@@ -209,93 +201,91 @@ const Reports = () => {
       </div>
 
       {/* Matching Cases Preview Table using AdminDataTable */}
-      <div className="glass-card">
-        <AdminDataTable
-          title={`Matching Report Cases (${previewCrimes.length})`}
-          columns={[
-            {
-              key: 'crimeId',
-              label: 'Case ID',
-              sortable: true,
-              render: (c) => <span style={{ fontWeight: '700', color: '#00D9FF', fontFamily: 'monospace' }}>{c.crimeId || c.id}</span>
-            },
-            {
-              key: 'date',
-              label: 'Date',
-              sortable: true,
-              render: (c) => c.date ? new Date(c.date).toLocaleDateString() : 'N/A'
-            },
-            {
-              key: 'crimeCategory.name',
-              label: 'Category',
-              sortable: true,
-              render: (c) => c.crimeCategory?.name || c.category || 'Unassigned'
-            },
-            {
-              key: 'location.policeStation',
-              label: 'Police Station',
-              sortable: true,
-              render: (c) => (
-                <span>
-                  {c.location?.policeStation || c.policeStation || 'N/A'}
-                  <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>
-                    {c.location?.city || c.city}
-                  </span>
+      <AdminDataTable
+        title={`Matching Report Cases (${previewCrimes.length})`}
+        columns={[
+          {
+            key: 'crimeId',
+            label: 'Case ID',
+            sortable: true,
+            render: (c) => <span style={{ fontWeight: '700', color: '#00D9FF', fontFamily: 'monospace' }}>{c.crimeId || c.id}</span>
+          },
+          {
+            key: 'date',
+            label: 'Date',
+            sortable: true,
+            render: (c) => c.date ? new Date(c.date).toLocaleDateString() : 'N/A'
+          },
+          {
+            key: 'crimeCategory.name',
+            label: 'Category',
+            sortable: true,
+            render: (c) => c.crimeCategory?.name || c.category || 'Unassigned'
+          },
+          {
+            key: 'location.policeStation',
+            label: 'Police Station',
+            sortable: true,
+            render: (c) => (
+              <span>
+                {c.location?.policeStation || c.policeStation || 'N/A'}
+                <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>
+                  {c.location?.city || c.city}
                 </span>
-              )
-            },
-            {
-              key: 'priority',
-              label: 'Priority',
-              sortable: true,
-              render: (c) => {
-                const prio = c.priority || 'Medium';
-                let color = '#f59e0b';
-                if (prio === 'High') color = '#ef4444';
-                if (prio === 'Critical') color = '#ec4899';
-                if (prio === 'Low') color = '#10b981';
-                return (
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    color,
-                    backgroundColor: `${color}15`,
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    border: `1px solid ${color}30`
-                  }}>
-                    {prio}
-                  </span>
-                );
-              }
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              sortable: true,
-              render: (c) => (
+              </span>
+            )
+          },
+          {
+            key: 'priority',
+            label: 'Priority',
+            sortable: true,
+            render: (c) => {
+              const prio = c.priority || 'Medium';
+              let color = '#f59e0b';
+              if (prio === 'High') color = '#ef4444';
+              if (prio === 'Critical') color = '#ec4899';
+              if (prio === 'Low') color = '#10b981';
+              return (
                 <span style={{
                   fontSize: '10px',
                   fontWeight: '800',
                   textTransform: 'uppercase',
-                  color: ['Solved', 'Closed'].includes(c.status) ? '#10b981' : '#06b6d4',
-                  backgroundColor: ['Solved', 'Closed'].includes(c.status) ? 'rgba(16,185,129,0.1)' : 'rgba(6,182,212,0.1)',
+                  color,
+                  backgroundColor: `${color}15`,
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  border: `1px solid ${['Solved', 'Closed'].includes(c.status) ? 'rgba(16,185,129,0.2)' : 'rgba(6,182,212,0.2)'}`
+                  border: `1px solid ${color}30`
                 }}>
-                  {c.status}
+                  {prio}
                 </span>
-              )
+              );
             }
-          ]}
-          data={previewCrimes}
-          loading={previewLoading}
-          emptyMessage="No crime cases matched the current scope criteria."
-          searchPlaceholder="Search preview cases by ID, category, or station..."
-        />
-      </div>
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            sortable: true,
+            render: (c) => (
+              <span style={{
+                fontSize: '10px',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                color: ['Solved', 'Closed'].includes(c.status) ? '#10b981' : '#06b6d4',
+                backgroundColor: ['Solved', 'Closed'].includes(c.status) ? 'rgba(16,185,129,0.1)' : 'rgba(6,182,212,0.1)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: `1px solid ${['Solved', 'Closed'].includes(c.status) ? 'rgba(16,185,129,0.2)' : 'rgba(6,182,212,0.2)'}`
+              }}>
+                {c.status}
+              </span>
+            )
+          }
+        ]}
+        data={previewCrimes}
+        loading={previewLoading}
+        emptyMessage="No crime cases matched the current scope criteria."
+        searchPlaceholder="Search preview cases by ID, category, or station..."
+      />
 
     </div>
   );

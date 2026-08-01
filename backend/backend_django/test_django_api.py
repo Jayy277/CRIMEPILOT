@@ -66,7 +66,7 @@ def run_tests():
     # Test 1: Admin login
     log("Test 1: Admin Login...")
     status_code, res = request('/auth/login', 'POST', {
-      'usernameOrEmail': 'admin@command.crimepilot.com',
+      'usernameOrEmail': 'admin@crimepilot.com',
       'password': 'admin@1234'
     })
     
