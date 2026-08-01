@@ -6,3 +6,17 @@ backend/.env
 __pycache__/
 
 *.pyc
+backend/backend_django/.env
+backend/uploads/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+models/*.pkl
+models/*.joblib
+dataset/vectorstore/
+dataset/processed/embeddings/
+*.log

@@ -144,3 +144,15 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'crimepilot111@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'crimepilot1234')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# Bypass Django's MariaDB version check for compatibility with older XAMPP versions
+from django.db.backends.mysql.base import DatabaseWrapper
+DatabaseWrapper.check_database_version_supported = lambda self: None
+
+# Disable RETURNING statements for older MariaDB versions
+from django.db.backends.mysql.features import DatabaseFeatures
+DatabaseFeatures.can_return_columns_from_insert = False
+DatabaseFeatures.can_return_rows_from_bulk_insert = False
+DatabaseFeatures.can_return_rows_from_update = False
+
+
+

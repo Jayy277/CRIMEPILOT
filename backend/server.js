@@ -2,9 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-
-// Load environment variables FIRST
-dotenv.config();
+// Load environment variables FIRST from the shared backend_django/.env file
+dotenv.config({ path: path.join(__dirname, 'backend_django', '.env') });
 
 // MySQL sync via Sequelize
 const { syncDatabase } = require('./models/index');

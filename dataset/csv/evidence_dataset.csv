@@ -1,0 +1,11 @@
+evidence_type,applicability_desc
+DNA,"Standard procedures for collecting, hashing, and presenting DNA evidence in court according to BSA."
+Fingerprint,"Standard procedures for collecting, hashing, and presenting Fingerprint evidence in court according to BSA."
+Witness,"Standard procedures for collecting, hashing, and presenting Witness evidence in court according to BSA."
+Medical,"Standard procedures for collecting, hashing, and presenting Medical evidence in court according to BSA."
+Digital,"Standard procedures for collecting, hashing, and presenting Digital evidence in court according to BSA."
+CCTV,"Standard procedures for collecting, hashing, and presenting CCTV evidence in court according to BSA."
+Documents,"Standard procedures for collecting, hashing, and presenting Documents evidence in court according to BSA."
+Audio,"Standard procedures for collecting, hashing, and presenting Audio evidence in court according to BSA."
+Video,"Standard procedures for collecting, hashing, and presenting Video evidence in court according to BSA."
+Mobile Records,"Standard procedures for collecting, hashing, and presenting Mobile Records evidence in court according to BSA."

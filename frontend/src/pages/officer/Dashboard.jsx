@@ -128,9 +128,10 @@ const Dashboard = () => {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {recentCases.map(crime => (
-              <CaseCard key={crime._id} crime={crime} role="officer" />
-            ))}
+            {recentCases.map(crime => {
+              const caseKey = crime._id || crime.id;
+              return <CaseCard key={caseKey} crime={crime} role="officer" />;
+            })}
           </div>
         )}
       </div>

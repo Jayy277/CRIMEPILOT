@@ -190,7 +190,8 @@ const CrimeDetails = () => {
     e.preventDefault();
     if (!evidenceForm.type) return;
 
-    if (!details?._id) {
+    const officerId = details?._id || details?.id;
+    if (!officerId) {
       alert('Officer profile details missing. Cannot log evidence.');
       return;
     }
@@ -201,7 +202,7 @@ const CrimeDetails = () => {
       formData.append('type', evidenceForm.type);
       formData.append('description', evidenceForm.description);
       formData.append('collectionDate', evidenceForm.collectionDate);
-      formData.append('assignedOfficer', details._id);
+      formData.append('assignedOfficer', officerId);
       formData.append('linkedCrime', id);
       if (evidenceForm.file) {
         formData.append('file', evidenceForm.file);
@@ -276,7 +277,7 @@ const CrimeDetails = () => {
             )}
           </div>
           <span style={{ color: 'var(--theme-accent, #06b6d4)', fontWeight: '700', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {crime.crimeCategory?.name}
+            {crime.category?.name || crime.crimeCategory?.name}
           </span>
         </div>
 
@@ -466,8 +467,8 @@ const CrimeDetails = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {suspects.map(sus => (
-                      <tr key={sus._id}>
+                      {suspects.map(sus => (
+                        <tr key={sus.id || sus._id}>
                         <td style={{ fontWeight: '700', color: '#22d3ee' }}>{sus.name}</td>
                         <td>{sus.age ? `${sus.age} yrs` : 'N/A'} / {sus.gender}</td>
                         <td>{sus.address || 'N/A'}</td>
@@ -551,7 +552,7 @@ const CrimeDetails = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {victims.map((vic) => (
-                  <div key={vic._id} style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px', background: 'rgba(15,22,42,0.2)' }}>
+                  <div key={vic.id || vic._id} style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px', background: 'rgba(15,22,42,0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                       <span style={{ fontWeight: '700', color: '#fff', fontSize: '15px' }}>{vic.name} <span style={{ color: '#64748b', fontWeight: '500', fontSize: '12px' }}>({vic.contact || 'No contact logged'})</span></span>
                       {vic.evidenceReference && (
@@ -637,7 +638,7 @@ const CrimeDetails = () => {
                       const officerName = ev.assignedOfficer?.user?.name || 'Unknown Officer';
 
                       return (
-                        <tr key={ev._id}>
+                        <tr key={ev.id || ev._id}>
                           <td style={{ fontWeight: '700', color: '#fbbf24' }}>{ev.type}</td>
                           <td>{ev.description || 'N/A'}</td>
                           <td>{colDate}</td>
@@ -750,7 +751,7 @@ const CrimeDetails = () => {
                     const noteDate = new Date(noteItem.createdAt).toLocaleString();
 
                     return (
-                      <div key={noteItem._id || nIdx} style={{ position: 'relative' }}>
+                      <div key={noteItem.id || noteItem._id || nIdx} style={{ position: 'relative' }}>
                         {/* Timeline dot accent */}
                         <div style={{
                           position: 'absolute',

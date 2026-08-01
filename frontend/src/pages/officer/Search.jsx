@@ -250,7 +250,7 @@ const Search = () => {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
               {results.map(crime => (
-                <CaseCard key={crime._id} crime={crime} role="officer" />
+                <CaseCard key={crime._id || crime.id} crime={crime} role="officer" />
               ))}
             </div>
           )}
