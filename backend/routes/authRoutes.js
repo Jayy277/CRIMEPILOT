@@ -5,11 +5,10 @@ const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
+// General Staff Auth Routes
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
-
-// Only admins can signup/register officers/analysts
 router.post('/signup', protect, restrictTo('admin'), signup);
 
 // Profile Picture operations for officers

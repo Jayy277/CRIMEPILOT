@@ -74,11 +74,17 @@ app.use((err, req, res, next) => {
   });
 });
 
+// MongoDB connection via Mongoose
+const connectMongoDB = require('./config/mongodb');
+
+// Connect MongoDB in background
+connectMongoDB();
+
 const PORT = process.env.PORT || 5000;
 
 // Connect MySQL and sync tables BEFORE starting server
 syncDatabase().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT} [MySQL mode]`);
+    console.log(`🚀 Server running on port ${PORT} [Express + MongoDB + MySQL]`);
   });
 });

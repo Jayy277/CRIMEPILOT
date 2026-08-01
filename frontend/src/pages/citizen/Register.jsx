@@ -1,13 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const ID_CONFIGS = {
   'Aadhaar Card': {
     label: 'Aadhaar Card',
     placeholder: '123456789012',
     helperText: 'Enter your 12-digit Aadhaar number',
-    maxLength: 14, // 12 digits + optional spaces
+    maxLength: 14,
     errorMessage: 'Aadhaar number must contain exactly 12 digits.',
     validate: (val) => {
       const clean = val.replace(/[\s-]/g, '');
@@ -55,6 +57,14 @@ const ID_CONFIGS = {
     formatInput: (val) => val.toUpperCase().replace(/\s/g, '').slice(0, 10)
   }
 };
+const GUJARAT_CITIES = [
+  "Ahmedabad", "Amreli", "Anand", "Bharuch", "Bhavnagar", 
+  "Bhuj", "Botad", "Dahod", "Deesa", "Gandhinagar", 
+  "Godhra", "Gondal", "Jamnagar", "Jetpur", "Junagadh", 
+  "Kalol", "Mehsana", "Morbi", "Nadiad", "Navsari", 
+  "Palanpur", "Patan", "Porbandar", "Rajkot", "Surat", 
+  "Surendranagar", "Vadodara", "Valsad", "Vapi", "Veraval"
+];
 
 const CitizenRegister = () => {
   const [name, setName] = useState('');
@@ -62,15 +72,18 @@ const CitizenRegister = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [mobile, setMobile] = useState('');
-  const [dob, setDob] = useState('');
+  const [dob, setDob] = useState(null);
   const [gender, setGender] = useState('Male');
   const [address, setAddress] = useState('');
-  const [state, setState] = useState('');
+  const [state, setState] = useState('Gujarat');
   const [city, setCity] = useState('');
   const [pincode, setPincode] = useState('');
   const [identityType, setIdentityType] = useState('Aadhaar Card');
   const [identityNumber, setIdentityNumber] = useState('');
   const [idFile, setIdFile] = useState(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [identityTypeError, setIdentityTypeError] = useState('');
   const [identityTouch, setIdentityTouch] = useState(false);
@@ -79,6 +92,170 @@ const CitizenRegister = () => {
   const [mobileError, setMobileError] = useState('');
   const [mobileTouch, setMobileTouch] = useState(false);
   const mobileInputRef = useRef(null);
+
+  // Email OTP Verification States (Strict requirement 14)
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showOTPSection, setShowOTPSection] = useState(false);
+
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  const otpInputsRef = useRef([]);
+
+  // Auto focus first box when OTP section opens
+  useEffect(() => {
+    if ((showOTPSection || otpSent) && !otpVerified && otpInputsRef.current[0]) {
+      setTimeout(() => {
+        otpInputsRef.current[0]?.focus();
+      }, 100);
+    }
+  }, [showOTPSection, otpSent, otpVerified]);
+
+  // Countdown Timer for Resend OTP (Requirement 6)
+  useEffect(() => {
+    let interval = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  const sendEmailOTP = async (e) => {
+    if (e) e.preventDefault();
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setOtpError('Please enter a valid email address.');
+      return;
+    }
+
+    setSendingOtp(true);
+    setOtpError('');
+    setOtpSuccess('Sending...');
+
+    console.log('[Frontend OTP] Sending POST /api/auth/send-email-otp request for email:', cleanEmail);
+
+    try {
+      const res = await axiosInstance.post('/auth/send-email-otp', { email: cleanEmail });
+      console.log('[Frontend OTP] Received response from send-email-otp:', res.data);
+      
+      // Automatically render OTP verification component on success (Requirement 1, 7, 15)
+      if (res.data && (res.data.success === true || res.data.success === 'true')) {
+        setOtpSent(true);
+        setShowOTPSection(true);
+        setOtpDigits(['', '', '', '', '', '']);
+        setOtpSuccess('OTP Sent Successfully');
+        setResendTimer(60);
+      } else {
+        setOtpSuccess('');
+        setOtpError(res.data?.message || 'Failed to send OTP.');
+      }
+    } catch (err) {
+      console.error('[Frontend OTP] Error sending Email OTP:', err);
+      setOtpSuccess('');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to send OTP email.';
+      setOtpError(errorMsg);
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyEmailOTP = async (e) => {
+    if (e) e.preventDefault();
+    const fullOtp = otpDigits.join('');
+    if (fullOtp.length !== 6) {
+      setOtpError('Please enter all 6 digits of the verification code.');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    setOtpError('');
+    setOtpSuccess('Verifying...');
+
+    try {
+      const res = await axiosInstance.post('/auth/verify-email-otp', {
+        email: email.trim(),
+        otp: fullOtp,
+      });
+
+      if (res.data && (res.data.success === true || res.data.success === 'true')) {
+        setOtpVerified(true);
+        setOtpSuccess('Email Verified Successfully');
+        setError('');
+      } else {
+        setOtpSuccess('');
+        setOtpError(res.data?.message || 'Invalid OTP');
+      }
+    } catch (err) {
+      console.error('Error verifying Email OTP:', err);
+      setOtpSuccess('');
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        if (serverMsg.toLowerCase().includes('expire')) {
+          setOtpError('OTP has expired. Please resend a new code.');
+        } else {
+          setOtpError(serverMsg);
+        }
+      } else {
+        setOtpError('Invalid OTP');
+      }
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleOtpDigitChange = (index, value) => {
+    if (otpVerified) return;
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = digit;
+    setOtpDigits(newDigits);
+    setOtpError('');
+
+    // Auto focus next box if digit entered
+    if (digit && index < 5 && otpInputsRef.current[index + 1]) {
+      otpInputsRef.current[index + 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (otpVerified) return;
+    if (e.key === 'Backspace') {
+      if (!otpDigits[index] && index > 0 && otpInputsRef.current[index - 1]) {
+        otpInputsRef.current[index - 1].focus();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      verifyEmailOTP();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    if (otpVerified) return;
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData) {
+      const newDigits = ['', '', '', '', '', ''];
+      for (let i = 0; i < pastedData.length; i++) {
+        newDigits[i] = pastedData[i];
+      }
+      setOtpDigits(newDigits);
+      setOtpError('');
+      const nextFocusIndex = Math.min(pastedData.length, 5);
+      if (otpInputsRef.current[nextFocusIndex]) {
+        otpInputsRef.current[nextFocusIndex].focus();
+      }
+    }
+  };
 
   const handleMobileChange = (e) => {
     const cleanDigits = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -110,8 +287,6 @@ const CitizenRegister = () => {
     }
   };
 
-  const loadingStateRef = useRef(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
@@ -170,6 +345,11 @@ const CitizenRegister = () => {
       return;
     }
 
+    if (!otpVerified) {
+      setError('Please verify your email address using the Email OTP before submitting.');
+      return;
+    }
+
     const phoneRegex = /^[6-9]\d{9}$/;
     if (!mobile || !phoneRegex.test(mobile)) {
       setMobileTouch(true);
@@ -190,7 +370,6 @@ const CitizenRegister = () => {
       return;
     }
 
-    // Dynamic Identity Validation on Submit
     const currentConfig = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
     if (!identityNumber || !currentConfig.validate(identityNumber)) {
       setIdentityTouch(true);
@@ -211,7 +390,6 @@ const CitizenRegister = () => {
     setError('');
     setSuccess('');
 
-    // Normalize identity number before sending to backend (strip spaces)
     const normalizedIdentityNumber = identityNumber.replace(/[\s-]/g, '').toUpperCase();
 
     const formData = new FormData();
@@ -219,7 +397,7 @@ const CitizenRegister = () => {
     formData.append('email', email);
     formData.append('password', password);
     formData.append('mobile', mobile);
-    formData.append('dob', dob);
+    formData.append('dob', dob ? (dob instanceof Date ? dob.toISOString().split('T')[0] : dob) : '');
     formData.append('gender', gender);
     formData.append('address', address);
     formData.append('state', state);
@@ -231,7 +409,7 @@ const CitizenRegister = () => {
     formData.append('idProof', idFile);
 
     try {
-      const res = await axios.post('/api/citizen/register', formData, {
+      const res = await axiosInstance.post('/auth/citizen/signup/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -239,6 +417,13 @@ const CitizenRegister = () => {
 
       if (res.data.success) {
         setSuccess('Registration successful! Redirecting to login...');
+        if (res.data.token && res.data.user) {
+          localStorage.setItem('crimepilot_token', res.data.token);
+          localStorage.setItem('crimepilot_user', JSON.stringify(res.data.user));
+          if (res.data.details) {
+            localStorage.setItem('crimepilot_details', JSON.stringify(res.data.details));
+          }
+        }
         setTimeout(() => {
           navigate('/citizen/login');
         }, 2000);
@@ -253,7 +438,7 @@ const CitizenRegister = () => {
           idInputRef.current.focus();
         }
       } else {
-        setError(serverMsg || 'Server error. Please try again.');
+        setError(serverMsg || 'Server error during registration. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -262,6 +447,7 @@ const CitizenRegister = () => {
 
   const currentConfig = ID_CONFIGS[identityType] || ID_CONFIGS['Aadhaar Card'];
   const isValidFormat = identityNumber.trim() && currentConfig.validate(identityNumber);
+  const isOtpComplete = otpDigits.join('').length === 6;
 
   return (
     <div style={{
@@ -329,7 +515,7 @@ const CitizenRegister = () => {
           {error && (
             <div style={{
               background: 'rgba(239, 68, 68, 0.12)',
-              borderLeft: '3.5px solid #ef4444',
+              borderLeft: '3.5px solid #EF4444',
               padding: '12px',
               borderRadius: '6px',
               fontSize: '12px',
@@ -342,8 +528,8 @@ const CitizenRegister = () => {
 
           {success && (
             <div style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              borderLeft: '3.5px solid #10b981',
+              background: 'rgba(34, 197, 94, 0.12)',
+              borderLeft: '3.5px solid #22C55E',
               padding: '12px',
               borderRadius: '6px',
               fontSize: '12px',
@@ -362,14 +548,251 @@ const CitizenRegister = () => {
               <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required placeholder="John Doe" />
             </div>
 
-            <div className="form-group">
-              <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Email Address</label>
-              <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required placeholder="john@example.com" />
+            {/* Email Address Field */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Email Address <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="email"
+                  className="form-control"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  disabled={showOTPSection || otpSent || otpVerified}
+                  required
+                  placeholder="john@example.com"
+                  style={{
+                    flex: 1,
+                    borderColor: otpVerified ? '#22C55E' : ((showOTPSection || otpSent) ? 'rgba(0, 217, 255, 0.3)' : undefined),
+                    opacity: (showOTPSection || otpSent || otpVerified) ? 0.8 : 1
+                  }}
+                />
+                
+                {/* Send Email OTP Button (Strict Requirement 1: Immediately hide when OTP is sent) */}
+                {!showOTPSection && !otpSent && !otpVerified && (
+                  <button
+                    type="button"
+                    disabled={sendingOtp || !email.trim()}
+                    onClick={sendEmailOTP}
+                    className="btn"
+                    style={{
+                      padding: '10px 18px',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      backgroundColor: (sendingOtp || !email.trim()) ? 'rgba(0, 217, 255, 0.05)' : 'rgba(0, 217, 255, 0.15)',
+                      border: '1px solid rgba(0, 217, 255, 0.4)',
+                      borderRadius: '8px',
+                      color: '#00D9FF',
+                      cursor: (sendingOtp || !email.trim()) ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {sendingOtp ? 'Sending...' : 'Send Email OTP'}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Email Verification Section (Strict Requirement 2, 7, 8: Appears ONLY after send-email-otp API returns success) */}
+            {(showOTPSection || otpSent) && (
+              <div className="form-group" style={{
+                gridColumn: 'span 2',
+                background: '#121B2D',
+                border: otpVerified ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(0, 217, 255, 0.25)',
+                padding: '20px',
+                borderRadius: '14px',
+                boxShadow: otpVerified ? '0 0 20px rgba(34, 197, 94, 0.15)' : '0 0 20px rgba(0, 217, 255, 0.1)',
+                transition: 'all 0.3s ease'
+              }}>
+                <div style={{ marginBottom: '14px' }}>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '800', color: '#FFFFFF', letterSpacing: '0.02em' }}>
+                    Email Verification
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#9AA4B2' }}>
+                    Enter the 6-digit verification code sent to your email.
+                  </p>
+                </div>
+
+                {/* 6-Digit Separate OTP Input Boxes (Requirement 3) */}
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px' }} onPaste={handleOtpPaste}>
+                  {otpDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => (otpInputsRef.current[index] = el)}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      disabled={otpVerified || verifyingOtp}
+                      onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      style={{
+                        width: '44px',
+                        height: '50px',
+                        backgroundColor: '#0B1220',
+                        border: otpVerified
+                          ? '1.5px solid #22C55E'
+                          : (digit ? '1.5px solid #00D9FF' : '1px solid rgba(0, 217, 255, 0.25)'),
+                        borderRadius: '10px',
+                        textAlign: 'center',
+                        fontSize: '22px',
+                        fontWeight: '900',
+                        fontFamily: 'monospace',
+                        color: otpVerified ? '#22C55E' : '#FFFFFF',
+                        boxShadow: digit ? '0 0 10px rgba(0, 217, 255, 0.25)' : 'none',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        opacity: (otpVerified || verifyingOtp) ? 0.7 : 1
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Status Feedback Messages (Requirement 9, Error Handling) */}
+                {otpError && (
+                  <div style={{
+                    color: '#EF4444',
+                    fontSize: '11.5px',
+                    marginBottom: '14px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                  }}>
+                    ⚠️ {otpError}
+                  </div>
+                )}
+
+                {otpVerified && (
+                  <div style={{
+                    color: '#22C55E',
+                    fontSize: '12px',
+                    marginBottom: '14px',
+                    fontWeight: '800',
+                    textAlign: 'center',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}>
+                    ✓ Email Verified Successfully
+                  </div>
+                )}
+
+                {/* Buttons & Resend Countdown Timer (Requirement 4, 5, 6, 9) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    {/* Primary Verify Button / Verified Badge */}
+                    {!otpVerified ? (
+                      <button
+                        type="button"
+                        disabled={verifyingOtp || !isOtpComplete}
+                        onClick={verifyEmailOTP}
+                        className="btn"
+                        style={{
+                          flex: 1,
+                          padding: '11px',
+                          backgroundColor: (verifyingOtp || !isOtpComplete) ? 'rgba(0, 217, 255, 0.15)' : '#00D9FF',
+                          color: (verifyingOtp || !isOtpComplete) ? '#00D9FF' : '#0B1220',
+                          border: '1px solid rgba(0, 217, 255, 0.4)',
+                          borderRadius: '8px',
+                          fontWeight: '800',
+                          fontSize: '12.5px',
+                          cursor: (verifyingOtp || !isOtpComplete) ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        {verifyingOtp ? (
+                          <>
+                            <span className="spinner" style={{
+                              width: '14px',
+                              height: '14px',
+                              border: '2px solid rgba(0, 217, 255, 0.3)',
+                              borderTop: '2px solid #00D9FF',
+                              borderRadius: '50%',
+                              animation: 'spin 0.8s linear infinite',
+                              display: 'inline-block'
+                            }} />
+                            Verifying...
+                          </>
+                        ) : (
+                          'Verify OTP'
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        style={{
+                          flex: 1,
+                          padding: '11px',
+                          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                          color: '#22C55E',
+                          border: '1px solid rgba(34, 197, 94, 0.5)',
+                          borderRadius: '8px',
+                          fontWeight: '800',
+                          fontSize: '12.5px',
+                          cursor: 'default',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        Verified ✓
+                      </button>
+                    )}
+
+                    {/* Secondary Resend OTP Button */}
+                    {!otpVerified && (
+                      <button
+                        type="button"
+                        disabled={sendingOtp || resendTimer > 0}
+                        onClick={sendEmailOTP}
+                        className="btn"
+                        style={{
+                          padding: '11px 18px',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          backgroundColor: resendTimer > 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 217, 255, 0.12)',
+                          border: '1px solid rgba(0, 217, 255, 0.3)',
+                          borderRadius: '8px',
+                          color: resendTimer > 0 ? '#9AA4B2' : '#00D9FF',
+                          cursor: (sendingOtp || resendTimer > 0) ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {sendingOtp ? 'Sending...' : 'Resend OTP'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Resend Timer Text */}
+                  {!otpVerified && resendTimer > 0 && (
+                    <div style={{ textAlign: 'center', fontSize: '11px', color: '#9AA4B2', fontWeight: '500' }}>
+                      Resend available in <span style={{ color: '#00D9FF', fontWeight: 'bold' }}>{resendTimer}</span> seconds
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Mobile Number <span style={{ color: '#ef4444' }}>*</span>
+                Mobile Number <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 ref={mobileInputRef}
@@ -385,12 +808,12 @@ const CitizenRegister = () => {
                 pattern="[6-9][0-9]{9}"
                 placeholder="9876543210"
                 style={{
-                  borderColor: mobileError ? '#ef4444' : undefined,
-                  boxShadow: mobileError ? '0 0 0 1px #ef4444' : undefined
+                  borderColor: mobileError ? '#EF4444' : undefined,
+                  boxShadow: mobileError ? '0 0 0 1px #EF4444' : undefined,
                 }}
               />
               {mobileError ? (
-                <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>
+                <div style={{ color: '#EF4444', fontSize: '11px', marginTop: '4px', fontWeight: '500' }}>
                   {mobileError}
                 </div>
               ) : (
@@ -402,18 +825,53 @@ const CitizenRegister = () => {
 
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Password</label>
-              <input type="password" className="form-control" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+              <div style={{ position: 'relative' }}>
+                <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" style={{ paddingRight: '40px' }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#00D9FF'}}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#9AA4B2'}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
+              </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Confirm Password</label>
-              <input type="password" className="form-control" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="••••••••" />
+              <div style={{ position: 'relative' }}>
+                <input type={showConfirmPassword ? "text" : "password"} className="form-control" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="••••••••" style={{ paddingRight: '40px' }} />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+                  {showConfirmPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#00D9FF'}}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#9AA4B2'}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Personal details */}
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Date of Birth</label>
-              <input type="date" className="form-control" value={dob} onChange={e => setDob(e.target.value)} required />
+              <div className="custom-datepicker-wrapper">
+                <DatePicker
+                  selected={dob}
+                  onChange={(date) => setDob(date)}
+                  className="form-control"
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="YYYY-MM-DD"
+                  showYearDropdown
+                  showMonthDropdown
+                  scrollableYearDropdown
+                  yearDropdownItemNumber={100}
+                  dropdownMode="scroll"
+                  minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
+                  maxDate={new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate())}
+                  openToDate={new Date(new Date().getFullYear() - 18, 0, 1)}
+                  required
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -433,17 +891,33 @@ const CitizenRegister = () => {
 
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>City</label>
-              <input type="text" className="form-control" value={city} onChange={e => setCity(e.target.value)} required placeholder="Ahmedabad" />
+              <select className="form-control" value={city} onChange={e => setCity(e.target.value)} required>
+                <option value="" disabled>Select a city</option>
+                {GUJARAT_CITIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>State</label>
-              <input type="text" className="form-control" value={state} onChange={e => setState(e.target.value)} required placeholder="Gujarat" />
+              <input type="text" className="form-control" value={state} readOnly disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
             </div>
 
             <div className="form-group">
               <label style={{ display: 'block', fontSize: '10px', color: '#9AA4B2', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>Pincode</label>
-              <input type="text" className="form-control" value={pincode} onChange={e => setPincode(e.target.value)} required placeholder="380015" />
+              <input
+                type="text"
+                className="form-control"
+                value={pincode}
+                onChange={e => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                minLength={6}
+                maxLength={6}
+                pattern="\d{6}"
+                placeholder="380015"
+                title="Pincode must be exactly 6 digits"
+              />
             </div>
 
             {/* Identity Proof */}
@@ -463,7 +937,7 @@ const CitizenRegister = () => {
                   Identity Card Number
                 </label>
                 {isValidFormat && (
-                  <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '11px', color: '#22C55E', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✓ Valid format
                   </span>
                 )}
@@ -480,7 +954,7 @@ const CitizenRegister = () => {
                 required
                 placeholder={currentConfig.placeholder}
                 style={{
-                  borderColor: identityTypeError ? '#ef4444' : (isValidFormat ? '#10b981' : undefined),
+                  borderColor: identityTypeError ? '#EF4444' : (isValidFormat ? '#22C55E' : undefined),
                   boxShadow: identityTypeError ? '0 0 10px rgba(239, 68, 68, 0.3)' : undefined
                 }}
               />
@@ -510,25 +984,26 @@ const CitizenRegister = () => {
               }} />
             </div>
 
+            {/* Create Citizen Account Submit Button (Requirement 10: Disabled until OTP verified) */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !otpVerified}
               className="btn btn-primary"
               style={{
                 gridColumn: 'span 2',
                 padding: '14px',
-                backgroundColor: '#00D9FF',
-                color: '#0B1220',
+                backgroundColor: (loading || !otpVerified) ? 'rgba(0, 217, 255, 0.25)' : '#00D9FF',
+                color: (loading || !otpVerified) ? '#9AA4B2' : '#0B1220',
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: '800',
                 fontSize: '14px',
-                cursor: 'pointer',
+                cursor: (loading || !otpVerified) ? 'not-allowed' : 'pointer',
                 marginTop: '10px',
                 transition: 'all 0.25s ease'
               }}
             >
-              {loading ? 'Submitting Registration...' : 'Submit Citizen Credentials'}
+              {loading ? 'Submitting Registration...' : 'Create Citizen Account'}
             </button>
           </form>
 
@@ -542,6 +1017,10 @@ const CitizenRegister = () => {
       </div>
 
       <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
         .form-control {
           width: 100%;
           background-color: #0B1220;

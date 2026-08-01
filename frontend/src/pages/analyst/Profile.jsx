@@ -113,7 +113,7 @@ const AnalystProfile = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             {profilePicPath ? (
               <img
-                src={`http://localhost:5000${profilePicPath}`}
+                src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${profilePicPath}`}
                 alt="Profile"
                 style={{
                   width: '76px',

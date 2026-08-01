@@ -241,7 +241,7 @@ const FIRDetailsModal = ({ crime, user, onClose, onRefresh, onDownloadPDF }) => 
                   {crime.evidences.map((ev, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#0B1220', border: '1px solid #223248', borderRadius: '8px', fontSize: '12px' }}>
                       <span>📄 {ev.type} ({ev.evidence_id || 'Doc'})</span>
-                      <a href={`http://localhost:5000${ev.file_path}`} target="_blank" rel="noreferrer" style={{ color: '#00D9FF', textDecoration: 'none', fontWeight: 'bold' }}>
+                      <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${ev.file_path}`} target="_blank" rel="noreferrer" style={{ color: '#00D9FF', textDecoration: 'none', fontWeight: 'bold' }}>
                         View
                       </a>
                     </div>

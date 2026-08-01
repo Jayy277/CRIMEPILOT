@@ -367,3 +367,138 @@ code, pre, .mono-text {
   background: #0B1220 !important;
   box-shadow: 0 1px 0 rgba(0, 217, 255, 0.3);
 }
+
+/* ─── CUSTOM REACT DATEPICKER FOR CRIMEPILOT ─── */
+.custom-datepicker-wrapper {
+  width: 100%;
+}
+
+.custom-datepicker-wrapper .react-datepicker {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #0B1220;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 217, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.custom-datepicker-wrapper .react-datepicker__header {
+  background-color: #0B1220;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  padding-top: 12px;
+}
+
+.custom-datepicker-wrapper .react-datepicker__current-month,
+.custom-datepicker-wrapper .react-datepicker-time__header,
+.custom-datepicker-wrapper .react-datepicker-year-header {
+  color: #00D9FF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.custom-datepicker-wrapper .react-datepicker__day-name {
+  color: #9AA4B2;
+  font-weight: 600;
+  margin: 0.166rem;
+}
+
+.custom-datepicker-wrapper .react-datepicker__day {
+  color: #f8fafc;
+  transition: all 0.2s;
+  border-radius: 6px;
+  margin: 0.166rem;
+}
+
+.custom-datepicker-wrapper .react-datepicker__day:hover {
+  background-color: rgba(0, 217, 255, 0.15);
+  color: #00D9FF;
+}
+
+.custom-datepicker-wrapper .react-datepicker__day--selected,
+.custom-datepicker-wrapper .react-datepicker__day--keyboard-selected {
+  background-color: #00D9FF;
+  color: #0B1220;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+}
+
+.custom-datepicker-wrapper .react-datepicker__day--outside-month {
+  color: rgba(248, 250, 252, 0.3);
+}
+
+.custom-datepicker-wrapper .react-datepicker__navigation-icon::before {
+  border-color: #00D9FF;
+  transition: border-color 0.2s;
+}
+
+.custom-datepicker-wrapper .react-datepicker__navigation:hover *::before {
+  border-color: #33E5FF;
+}
+
+/* Year / Month Dropdowns Customization */
+.custom-datepicker-wrapper .react-datepicker__year-dropdown,
+.custom-datepicker-wrapper .react-datepicker__month-dropdown {
+  background-color: #0F1420;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 8px;
+  color: #f8fafc;
+  /* Momentum scrolling & Smooth scroll for dropdowns */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar for Year Dropdown */
+.custom-datepicker-wrapper .react-datepicker__year-dropdown::-webkit-scrollbar,
+.custom-datepicker-wrapper .react-datepicker__month-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-datepicker-wrapper .react-datepicker__year-dropdown::-webkit-scrollbar-track,
+.custom-datepicker-wrapper .react-datepicker__month-dropdown::-webkit-scrollbar-track {
+  background: #0B1220;
+  border-radius: 8px;
+}
+.custom-datepicker-wrapper .react-datepicker__year-dropdown::-webkit-scrollbar-thumb,
+.custom-datepicker-wrapper .react-datepicker__month-dropdown::-webkit-scrollbar-thumb {
+  background: #00D9FF;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+.custom-datepicker-wrapper .react-datepicker__year-dropdown::-webkit-scrollbar-thumb:hover,
+.custom-datepicker-wrapper .react-datepicker__month-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #33E5FF;
+}
+
+.custom-datepicker-wrapper .react-datepicker__year-option,
+.custom-datepicker-wrapper .react-datepicker__month-option {
+  padding: 6px 0;
+  transition: all 0.2s;
+}
+
+.custom-datepicker-wrapper .react-datepicker__year-option:hover,
+.custom-datepicker-wrapper .react-datepicker__month-option:hover {
+  background-color: rgba(0, 217, 255, 0.15);
+  color: #00D9FF;
+}
+
+.custom-datepicker-wrapper .react-datepicker__year-option--selected_year,
+.custom-datepicker-wrapper .react-datepicker__month-option--selected_month {
+  color: #00D9FF;
+  font-weight: bold;
+}
+
+/* Smooth transitions */
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
+  border-bottom-color: rgba(0, 217, 255, 0.3);
+}
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
+  border-bottom-color: #0B1220;
+}
+
+/* Hide native Edge/Chrome password reveal icon */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

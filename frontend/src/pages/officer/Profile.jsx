@@ -101,7 +101,7 @@ const Profile = () => {
           {/* Avatar Picture or Initials */}
           {profilePicPath ? (
             <img
-              src={`http://localhost:5000${profilePicPath}`}
+              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${profilePicPath}`}
               alt="Profile"
               style={{
                 width: '80px',

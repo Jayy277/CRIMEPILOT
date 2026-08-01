@@ -623,7 +623,7 @@ const ManageUsers = () => {
                 render: (c) => (
                   c.identityDocument ? (
                     <a
-                      href={`http://localhost:5000${c.identityDocument}`}
+                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${c.identityDocument}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: '#4DA3FF', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px dashed #4DA3FF' }}

@@ -4,6 +4,14 @@ import { AuthContext } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import { renderDepartmentBadge } from '../api/departmentHelper';
 import { smoothScrollTo } from '../utils/smoothScroll';
+import { FiChevronDown, FiChevronRight, FiUser, FiEdit, FiShield, FiBarChart2 } from 'react-icons/fi';
+
+const CrownIcon = ({ size = 16, color = '#fbbf24' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+    <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+    <path d="M3 20h18" />
+  </svg>
+);
 
 const Navbar = ({ toggleSidebar }) => {
   const { user, logout, details } = useContext(AuthContext);
@@ -11,6 +19,19 @@ const Navbar = ({ toggleSidebar }) => {
   const [activeSection, setActiveSection] = useState('hero');
   const [isScrolled, setIsScrolled] = useState(false);
   const [navMousePos, setNavMousePos] = useState({ x: -500, y: -500 });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Shared Sliding Pill position state & item refs
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
@@ -312,39 +333,226 @@ const Navbar = ({ toggleSidebar }) => {
               Go to Dashboard
             </Link>
           ) : (
-            <Link
-              to="/login"
-              style={{
-                textDecoration: 'none',
-                color: '#fff',
-                background: 'linear-gradient(135deg, #00D9FF, #0088ff)',
-                padding: '8px 18px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: '700',
-                fontFamily: 'Outfit, sans-serif',
-                transition: 'all 280ms cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 0 12px rgba(0, 217, 255, 0.25)',
-                display: 'inline-block',
-                willChange: 'transform, box-shadow'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.97)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'none';
-                e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 217, 255, 0.25)';
-              }}
-            >
-              Login
-            </Link>
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                style={{
+                  background: 'linear-gradient(135deg, #00D9FF, #0088ff)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  fontFamily: 'Outfit, sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 280ms cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: dropdownOpen ? '0 0 25px rgba(0, 217, 255, 0.6)' : '0 0 12px rgba(0, 217, 255, 0.25)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!dropdownOpen) {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 217, 255, 0.25)';
+                  }
+                }}
+              >
+                Login / Register
+                <FiChevronDown
+                  style={{
+                    transform: dropdownOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 250ms ease',
+                    fontSize: '14px'
+                  }}
+                />
+              </button>
+
+              {dropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 10px)',
+                    right: 0,
+                    width: '270px',
+                    backgroundColor: 'rgba(11, 18, 32, 0.98)',
+                    border: '1px solid rgba(0, 217, 255, 0.2)',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 217, 255, 0.1)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    padding: '16px',
+                    zIndex: 1000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    transformOrigin: 'top right',
+                    animation: 'dropdownFadeIn 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  {/* CITIZEN PORTAL */}
+                  <div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#00D9FF', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                      Citizen Portal
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <Link
+                        to="/citizen/login"
+                        onClick={() => setDropdownOpen(false)}
+                        className="dropdown-item"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          borderRadius: '6px',
+                          color: '#e2e8f0',
+                          textDecoration: 'none',
+                          fontSize: '12.5px',
+                          fontWeight: '600',
+                          transition: 'all 0.2s',
+                          fontFamily: 'Outfit, sans-serif',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <FiUser style={{ color: '#00D9FF', fontSize: '15px' }} />
+                          <span>Citizen Login</span>
+                        </div>
+                        <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
+                      </Link>
+                      <Link
+                        to="/citizen/register"
+                        onClick={() => setDropdownOpen(false)}
+                        className="dropdown-item"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          borderRadius: '6px',
+                          color: '#e2e8f0',
+                          textDecoration: 'none',
+                          fontSize: '12.5px',
+                          fontWeight: '600',
+                          transition: 'all 0.2s',
+                          fontFamily: 'Outfit, sans-serif',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <FiEdit style={{ color: '#00D9FF', fontSize: '14px' }} />
+                          <span>Citizen Register</span>
+                        </div>
+                        <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+
+                  {/* OFFICER PORTAL */}
+                  <div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#3B82F6', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                      Officer Portal
+                    </div>
+                    <Link
+                      to="/login"
+                      onClick={() => setDropdownOpen(false)}
+                      className="dropdown-item"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        color: '#e2e8f0',
+                        textDecoration: 'none',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                        fontFamily: 'Outfit, sans-serif',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <FiShield style={{ color: '#3B82F6', fontSize: '15px' }} />
+                        <span>Officer Login</span>
+                      </div>
+                      <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
+                    </Link>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+
+                  {/* ANALYST PORTAL */}
+                  <div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#A855F7', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                      Analyst Portal
+                    </div>
+                    <Link
+                      to="/login"
+                      onClick={() => setDropdownOpen(false)}
+                      className="dropdown-item"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        color: '#e2e8f0',
+                        textDecoration: 'none',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                        fontFamily: 'Outfit, sans-serif',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <FiBarChart2 style={{ color: '#A855F7', fontSize: '15px' }} />
+                        <span>Analyser Login</span>
+                      </div>
+                      <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
+                    </Link>
+                  </div>
+
+                  <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+
+                  {/* ADMIN PORTAL */}
+                  <div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#F97316', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                      Admin Portal
+                    </div>
+                    <Link
+                      to="/login"
+                      onClick={() => setDropdownOpen(false)}
+                      className="dropdown-item"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        color: '#e2e8f0',
+                        textDecoration: 'none',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                        fontFamily: 'Outfit, sans-serif',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <CrownIcon size={14} color="#fbbf24" />
+                        <span>Admin Login</span>
+                      </div>
+                      <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : (
@@ -405,12 +613,31 @@ const Navbar = ({ toggleSidebar }) => {
         )
       )}
 
-      {/* Breathing Active Pill Animation Keyframes */}
+      {/* Breathing Active Pill & Dropdown Animation Styles */}
       <style>{`
         @keyframes pillBreathing {
           0% { box-shadow: 0 0 18px rgba(0, 217, 255, 0.25), inset 0 0 8px rgba(0, 217, 255, 0.12); }
           50% { box-shadow: 0 0 28px rgba(0, 217, 255, 0.45), inset 0 0 14px rgba(0, 217, 255, 0.22); }
           100% { box-shadow: 0 0 18px rgba(0, 217, 255, 0.25), inset 0 0 8px rgba(0, 217, 255, 0.12); }
+        }
+        @keyframes dropdownFadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .dropdown-item:hover {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+          color: #ffffff !important;
+        }
+        .dropdown-item:hover .arrow-icon {
+          opacity: 1 !important;
+          color: #00D9FF !important;
+          transform: translateX(4px);
         }
       `}</style>
     </header>

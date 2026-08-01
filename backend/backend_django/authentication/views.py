@@ -13,9 +13,10 @@ import hashlib
 import os
 import re
 
-from .models import Officer, Analyst
+from .models import Officer, Analyst, EmailOTP
 from .serializers import OfficerSerializer, AnalystSerializer
 from .permissions import IsAdminUser
+from .services import generate_otp, send_otp_email
 
 User = get_user_model()
 
@@ -349,7 +350,7 @@ class CitizenSignupView(APIView):
 
   def post(self, request):
     data = request.data
-    name = data.get('name')
+    name = data.get('name') or data.get('fullName')
     email = data.get('email')
     password = data.get('password')
     mobile = data.get('mobile')
@@ -357,19 +358,27 @@ class CitizenSignupView(APIView):
     gender = data.get('gender')
     address = data.get('address')
     state = data.get('state')
-    city = data.get('city')
+    city = data.get('city') or data.get('district')
     pincode = data.get('pincode')
-    identity_type = data.get('identityType')
-    identity_number = data.get('identityNumber')
+    identity_type = data.get('identityType') or data.get('identity_type') or 'Aadhaar Card'
+    identity_number = data.get('identityNumber') or data.get('identity_number') or ''
 
-    if not email or not name or not password or not mobile or not identity_type or not identity_number:
+    if not email or not name or not password or not mobile:
       return Response(
-        {'success': False, 'message': 'Required fields: Full Name, Email, Password, Mobile, Identity Type, Identity Number'},
+        {'success': False, 'message': 'Required fields: Full Name, Email, Password, Mobile'},
         status=status.HTTP_400_BAD_REQUEST
       )
 
+    email = email.lower().strip()
+
+    # Ensure email is verified via OTP (Req 10: Return 403 if unverified)
+    verified_otp = EmailOTP.objects.filter(email=email, verified=True).first()
+    if not verified_otp:
+      return Response({'success': False, 'message': 'Email has not been verified.'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Req 9: Return 409 if email already exists
     if User.objects.filter(email__iexact=email).exists():
-      return Response({'success': False, 'message': 'Email already registered'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'success': False, 'message': 'Email already registered'}, status=status.HTTP_409_CONFLICT)
 
     if not re.match(r'^[6-9]\d{9}$', str(mobile)):
       return Response({'success': False, 'message': 'Mobile number must be compulsory 10 digits starting with 6, 7, 8, or 9.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -473,9 +482,12 @@ class CitizenSignupView(APIView):
         user.delete()
       return Response({'success': False, 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # Clean up OTP after successful registration
+    EmailOTP.objects.filter(email=email).delete()
+
     return Response({
       'success': True,
-      'message': 'Citizen registered successfully. Account is pending verification.',
+      'message': 'Citizen Registered Successfully',
       'user': {
         '_id': str(user.id),
         'name': user.name,
@@ -484,4 +496,137 @@ class CitizenSignupView(APIView):
         'isActive': user.is_active,
       },
       'details': details_data
-    }, status=status.HTTP_201_CREATED)
+    }, status=status.HTTP_200_OK)
+
+class CitizenPhoneLoginView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    mobile = request.data.get('mobile')
+    if not mobile:
+      return Response(
+        {'success': False, 'message': 'Mobile number is required'},
+        status=status.HTTP_400_BAD_REQUEST
+      )
+
+    clean_mobile = re.sub(r'\D', '', str(mobile))
+    if not re.match(r'^[6-9]\d{9}$', clean_mobile):
+      return Response(
+        {'success': False, 'message': 'Please enter a valid 10-digit Indian mobile number.'},
+        status=status.HTTP_400_BAD_REQUEST
+      )
+
+    from .models import Citizen
+    from .serializers import CitizenSerializer
+
+    citizen = Citizen.objects.filter(mobile=clean_mobile).first()
+    if not citizen:
+      return Response(
+        {'success': False, 'message': 'No registered citizen found with this mobile number. Please register first.'},
+        status=status.HTTP_404_NOT_FOUND
+      )
+
+    user = citizen.user
+    if not user.is_active:
+      return Response(
+        {'success': False, 'message': 'Your citizen account is deactivated. Please contact support.'},
+        status=status.HTTP_403_FORBIDDEN
+      )
+
+    # Generate JWT
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+
+    details_data = CitizenSerializer(citizen).data
+
+    return Response({
+      'success': True,
+      'token': access_token,
+      'user': {
+        '_id': str(user.id),
+        'name': user.name,
+        'email': user.email,
+        'role': user.role,
+        'isActive': user.is_active,
+      },
+      'details': details_data
+    }, status=status.HTTP_200_OK)
+
+
+class SendEmailOTPView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    email = request.data.get('email')
+    if not email:
+      return Response({'success': False, 'message': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    email = email.lower().strip()
+    
+    # Check rate limiting (60 seconds)
+    recent_otp = EmailOTP.objects.filter(email=email).order_by('-created_at').first()
+    if recent_otp and (timezone.now() - recent_otp.created_at).total_seconds() < 60:
+      return Response({'success': False, 'message': 'Please wait 60 seconds before requesting another OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    
+    # Check if already registered
+    if User.objects.filter(email__iexact=email).exists():
+      return Response({'success': False, 'message': 'Email is already registered.'}, status=status.HTTP_400_BAD_REQUEST)
+      
+    # Check max resend attempts within last 5 minutes
+    five_mins_ago = timezone.now() - timedelta(minutes=5)
+    recent_attempts = EmailOTP.objects.filter(email=email, created_at__gte=five_mins_ago).count()
+    if recent_attempts >= 5:
+      return Response({'success': False, 'message': 'Maximum OTP requests exceeded. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    otp_code = generate_otp()
+    
+    success, msg = send_otp_email(email, otp_code)
+    
+    if not success:
+      return Response({'success': False, 'message': f'Failed to send OTP email: {msg}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+      
+    # Save to db
+    EmailOTP.objects.create(
+      email=email,
+      otp=otp_code,
+      expires_at=timezone.now() + timedelta(minutes=5)
+    )
+    
+    return Response({'success': True, 'message': 'OTP Sent Successfully'}, status=status.HTTP_200_OK)
+
+
+class VerifyEmailOTPView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+    
+    if not email or not otp:
+      return Response({'success': False, 'message': 'Email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+      
+    email = email.lower().strip()
+    
+    # Find latest unverified OTP
+    otp_record = EmailOTP.objects.filter(email=email, verified=False).order_by('-created_at').first()
+    
+    if not otp_record:
+      return Response({'success': False, 'message': 'No OTP found for this email. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+      
+    if timezone.now() > otp_record.expires_at:
+      return Response({'success': False, 'message': 'OTP has expired. Please resend a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+      
+    if otp_record.attempts >= 5:
+      return Response({'success': False, 'message': 'Maximum verification attempts exceeded. Please request a new OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+      
+    if otp_record.otp != otp:
+      otp_record.attempts += 1
+      otp_record.save()
+      return Response({'success': False, 'message': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+      
+    # Success
+    otp_record.verified = True
+    otp_record.save()
+    
+    return Response({'success': True, 'message': 'Email Verified Successfully'}, status=status.HTTP_200_OK)
+
