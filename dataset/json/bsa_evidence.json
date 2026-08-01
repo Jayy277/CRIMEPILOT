@@ -1,0 +1,62 @@
+[
+  {
+    "evidence_rule": "57",
+    "title": "Admissibility of Electronic Records",
+    "description": "Evidence rules governing Digital proof admissability in court.",
+    "evidence_type": "Digital"
+  },
+  {
+    "evidence_rule": "60",
+    "title": "Primary Evidence",
+    "description": "Evidence rules governing Documents proof admissability in court.",
+    "evidence_type": "Documents"
+  },
+  {
+    "evidence_rule": "32",
+    "title": "Relevancy of Statement of Dead Person",
+    "description": "Evidence rules governing Witness proof admissability in court.",
+    "evidence_type": "Witness"
+  },
+  {
+    "evidence_rule": "45",
+    "title": "Opinions of Experts",
+    "description": "Evidence rules governing Medical proof admissability in court.",
+    "evidence_type": "Medical"
+  },
+  {
+    "evidence_rule": "63",
+    "title": "Admissibility of Electronic Signatures",
+    "description": "Evidence rules governing Digital proof admissability in court.",
+    "evidence_type": "Digital"
+  },
+  {
+    "evidence_rule": "65",
+    "title": "Special Provisions as to Evidence Relating to Electronic Record",
+    "description": "Evidence rules governing Digital proof admissability in court.",
+    "evidence_type": "Digital"
+  },
+  {
+    "evidence_rule": "26",
+    "title": "Admission by Party to Proceeding",
+    "description": "Evidence rules governing DNA proof admissability in court.",
+    "evidence_type": "DNA"
+  },
+  {
+    "evidence_rule": "32",
+    "title": "Dying Declaration",
+    "description": "Evidence rules governing Witness proof admissability in court.",
+    "evidence_type": "Witness"
+  },
+  {
+    "evidence_rule": "114",
+    "title": "Presumption as to Absence of Consent",
+    "description": "Evidence rules governing Mobile Records proof admissability in court.",
+    "evidence_type": "Mobile Records"
+  },
+  {
+    "evidence_rule": "45",
+    "title": "Expert Opinion on Handwriting",
+    "description": "Evidence rules governing Documents proof admissability in court.",
+    "evidence_type": "Documents"
+  }
+]

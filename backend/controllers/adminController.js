@@ -40,7 +40,19 @@ exports.getCategories = async (req, res) => {
       include: [{ model: CrimeCategorySection, as: 'sections' }],
       order: [['name', 'ASC']],
     });
-    res.status(200).json({ success: true, categories });
+    const normalizedCategories = categories.map((cat) => {
+      const data = cat.toJSON ? cat.toJSON() : { ...cat };
+      data._id = data.id;
+      if (Array.isArray(data.sections)) {
+        data.sections = data.sections.map((section) => {
+          const secData = section.toJSON ? section.toJSON() : { ...section };
+          secData._id = secData.id;
+          return secData;
+        });
+      }
+      return data;
+    });
+    res.status(200).json({ success: true, categories: normalizedCategories });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -277,10 +289,33 @@ exports.getUsers = async (req, res) => {
       });
     }
 
+    const formattedOfficers = officerResults.map(o => {
+      const data = o.toJSON ? o.toJSON() : { ...o };
+      data._id = data.id;
+      data.user = data.User || data.user;
+      if (data.user) {
+        data.user._id = data.user.id;
+      }
+      if (data.station) {
+        data.station._id = data.station.id;
+      }
+      return data;
+    });
+
+    const formattedAnalysts = analystResults.map(a => {
+      const data = a.toJSON ? a.toJSON() : { ...a };
+      data._id = data.id;
+      data.user = data.User || data.user;
+      if (data.user) {
+        data.user._id = data.user.id;
+      }
+      return data;
+    });
+
     res.status(200).json({
       success: true,
-      officers: officerResults,
-      analysts: analystResults,
+      officers: formattedOfficers,
+      analysts: formattedAnalysts,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

@@ -104,9 +104,10 @@ const MyCases = () => {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
-          {filteredCases.map(crime => (
-            <CaseCard key={crime._id} crime={crime} role="officer" />
-          ))}
+          {filteredCases.map(crime => {
+            const caseKey = crime._id || crime.id;
+            return <CaseCard key={caseKey} crime={crime} role="officer" />;
+          })}
         </div>
       )}
 

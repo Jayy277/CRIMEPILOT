@@ -1,0 +1,216 @@
+[
+  {
+    "section_number": "303",
+    "title": "Theft",
+    "description": "Theft in dwelling house, etc.",
+    "punishment": "Up to 3 years imprisonment or fine or both",
+    "keywords": [
+      "steal",
+      "robbery",
+      "broken lock",
+      "gold chain",
+      "jewelry",
+      "house break",
+      "thief",
+      "missing cash",
+      "night burglary",
+      "locker forced"
+    ]
+  },
+  {
+    "section_number": "305",
+    "title": "Theft in Dwelling",
+    "description": "Theft inside residential building.",
+    "punishment": "Up to 7 years imprisonment and fine",
+    "keywords": [
+      "steal",
+      "robbery",
+      "broken lock",
+      "gold chain",
+      "jewelry",
+      "house break",
+      "thief",
+      "missing cash",
+      "night burglary",
+      "locker forced"
+    ]
+  },
+  {
+    "section_number": "331",
+    "title": "Lurking House-trespass",
+    "description": "House-trespass or house-breaking by night.",
+    "punishment": "Up to 5 years imprisonment and fine",
+    "keywords": [
+      "steal",
+      "robbery",
+      "broken lock",
+      "gold chain",
+      "jewelry",
+      "house break",
+      "thief",
+      "missing cash",
+      "night burglary",
+      "locker forced"
+    ]
+  },
+  {
+    "section_number": "115",
+    "title": "Voluntarily Causing Hurt",
+    "description": "Causing bodily pain, disease, or infirmity.",
+    "punishment": "Up to 1 year imprisonment or fine up to INR 10000 or both",
+    "keywords": [
+      "fight",
+      "beating",
+      "broken arm",
+      "bleeding",
+      "physical attack",
+      "stab wound",
+      "iron rod",
+      "hospitalized",
+      "scuffle",
+      "bruises"
+    ]
+  },
+  {
+    "section_number": "117",
+    "title": "Voluntarily Causing Grievous Hurt",
+    "description": "Grievous hurt causing permanent damage or severe pain.",
+    "punishment": "Up to 7 years imprisonment and fine",
+    "keywords": [
+      "fight",
+      "beating",
+      "broken arm",
+      "bleeding",
+      "physical attack",
+      "stab wound",
+      "iron rod",
+      "hospitalized",
+      "scuffle",
+      "bruises"
+    ]
+  },
+  {
+    "section_number": "318",
+    "title": "Cheating",
+    "description": "Cheating and dishonestly inducing delivery of property.",
+    "punishment": "Up to 3 years imprisonment or fine or both",
+    "keywords": [
+      "online scam",
+      "phishing",
+      "fake website",
+      "unauthorized transaction",
+      "credit card fraud",
+      "forged signature",
+      "cloned identity",
+      "email hacking",
+      "fake profile",
+      "ransomware"
+    ]
+  },
+  {
+    "section_number": "319",
+    "title": "Cheating by Personation",
+    "description": "Cheating by pretending to be someone else.",
+    "punishment": "Up to 5 years imprisonment or fine or both",
+    "keywords": [
+      "online scam",
+      "phishing",
+      "fake website",
+      "unauthorized transaction",
+      "credit card fraud",
+      "forged signature",
+      "cloned identity",
+      "email hacking",
+      "fake profile",
+      "ransomware"
+    ]
+  },
+  {
+    "section_number": "336",
+    "title": "Forgery",
+    "description": "Making a false document or electronic record.",
+    "punishment": "Up to 2 years imprisonment or fine or both",
+    "keywords": [
+      "online scam",
+      "phishing",
+      "fake website",
+      "unauthorized transaction",
+      "credit card fraud",
+      "forged signature",
+      "cloned identity",
+      "email hacking",
+      "fake profile",
+      "ransomware"
+    ]
+  },
+  {
+    "section_number": "101",
+    "title": "Murder",
+    "description": "Causing death with intention or knowledge.",
+    "punishment": "Death or imprisonment for life, and fine",
+    "keywords": [
+      "murder",
+      "strangulation",
+      "gunshot",
+      "stabbed to death",
+      "dead body found",
+      "poisoning",
+      "fatal attack",
+      "autopsy report",
+      "homicide",
+      "motive"
+    ]
+  },
+  {
+    "section_number": "103",
+    "title": "Culpable Homicide Not Amounting to Murder",
+    "description": "Causing death without deliberate murder intent.",
+    "punishment": "Life imprisonment or up to 10 years imprisonment and fine",
+    "keywords": [
+      "murder",
+      "strangulation",
+      "gunshot",
+      "stabbed to death",
+      "dead body found",
+      "poisoning",
+      "fatal attack",
+      "autopsy report",
+      "homicide",
+      "motive"
+    ]
+  },
+  {
+    "section_number": "140",
+    "title": "Kidnapping",
+    "description": "Kidnapping from India or from lawful guardianship.",
+    "punishment": "Up to 7 years imprisonment and fine",
+    "keywords": [
+      "kidnap",
+      "ransom call",
+      "abducted from school",
+      "held hostage",
+      "missing child",
+      "extortion demand",
+      "forced custody",
+      "abduction",
+      "unidentified vehicle"
+    ]
+  },
+  {
+    "section_number": "142",
+    "title": "Kidnapping or Abducting in order to Murder",
+    "description": "Kidnapping for murder or ransom.",
+    "punishment": "Rigorous imprisonment up to 10 years and fine",
+    "keywords": [
+      "kidnap",
+      "ransom call",
+      "abducted from school",
+      "held hostage",
+      "missing child",
+      "extortion demand",
+      "forced custody",
+      "abduction",
+      "unidentified vehicle"
+    ]
+  }
+]

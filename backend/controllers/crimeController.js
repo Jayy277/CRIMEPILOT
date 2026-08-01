@@ -18,10 +18,14 @@ const createNotification = async (type, recipientId, message) => {
 // @access  Private (Officer, Admin)
 exports.registerCrime = async (req, res) => {
   try {
+    console.log('registerCrime request body:', req.body);
     const { crimeCategory, date, time, location, description, officer, priority, sections } = req.body;
+    const categoryId = Number(crimeCategory) || crimeCategory;
+    const officerId = Number(officer) || officer;
+    const locationId = Number(location) || location;
 
     // Verify officer exists
-    const officerExists = await Officer.findByPk(officer, {
+    const officerExists = await Officer.findByPk(officerId, {
       include: [{ model: User }],
     });
     if (!officerExists) {
@@ -29,19 +33,19 @@ exports.registerCrime = async (req, res) => {
     }
 
     // Verify location exists
-    const locationExists = await Location.findByPk(location);
+    const locationExists = await Location.findByPk(locationId);
     if (!locationExists) {
       return res.status(404).json({ success: false, message: 'Location not found' });
     }
 
     // Create crime case
     const crime = await Crime.create({
-      categoryId: crimeCategory,
+      categoryId,
       date,
       time,
-      locationId: location,
+      locationId,
       description,
-      officerId: officer,
+      officerId,
       priority: priority || 'Medium',
       status: 'Reported',
     });
@@ -139,7 +143,21 @@ exports.getCrimes = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.status(200).json({ success: true, count: crimes.length, crimes });
+    const formattedCrimes = crimes.map(c => {
+      const data = c.toJSON ? c.toJSON() : { ...c };
+      data._id = data.id;
+      data.isPending = data.status !== 'Solved' && data.status !== 'Closed';
+      if (data.category) data.category._id = data.category.id;
+      if (data.location) data.location._id = data.location.id;
+      if (data.officer) {
+        data.officer._id = data.officer.id;
+        data.officer.user = data.officer.User || data.officer.user;
+        if (data.officer.user) data.officer.user._id = data.officer.user.id;
+      }
+      return data;
+    });
+
+    res.status(200).json({ success: true, count: crimes.length, crimes: formattedCrimes });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -195,7 +213,7 @@ exports.getCrimeById = async (req, res) => {
         {
           model: CrimeNote,
           as: 'notes',
-          include: [{ model: User, attributes: ['name', 'email', 'role'], foreignKey: 'addedById' }],
+          include: [{ model: User, as: 'addedBy', attributes: ['name', 'email', 'role'] }],
         },
         { model: CrimeSelectedSection, as: 'sections' },
       ],

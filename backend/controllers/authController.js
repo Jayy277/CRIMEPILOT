@@ -5,6 +5,13 @@ const path = require('path');
 const { Op } = require('sequelize');
 const { User, Officer, Analyst, Location } = require('../models');
 
+const normalizeProfileDetails = (profile) => {
+  if (!profile) return profile;
+  const normalized = profile.toJSON ? profile.toJSON() : { ...profile };
+  normalized._id = normalized.id;
+  return normalized;
+};
+
 // Generate JWT Token
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET || 'secret123', {
@@ -52,7 +59,7 @@ exports.login = async (req, res) => {
     const token = generateToken(user.id, user.role);
 
     // Get additional info if officer or analyst
-    let extraDetails = {};
+    let extraDetails = null;
     if (user.role === 'officer') {
       extraDetails = await Officer.findOne({
         where: { userId: user.id },
@@ -63,6 +70,8 @@ exports.login = async (req, res) => {
         where: { userId: user.id },
       });
     }
+
+    extraDetails = normalizeProfileDetails(extraDetails);
 
     // Send response
     res.status(200).json({
@@ -146,6 +155,8 @@ exports.signup = async (req, res) => {
         department,
       });
     }
+
+    extraDetails = normalizeProfileDetails(extraDetails);
 
     res.status(201).json({
       success: true,
@@ -268,9 +279,10 @@ exports.uploadProfilePicture = async (req, res) => {
     officer.profilePicture = `/uploads/${req.file.filename}`;
     await officer.save();
 
-    const populatedOfficer = await Officer.findByPk(officer.id, {
+    let populatedOfficer = await Officer.findByPk(officer.id, {
       include: [{ model: Location, as: 'station' }],
     });
+    populatedOfficer = normalizeProfileDetails(populatedOfficer);
 
     res.status(200).json({
       success: true,
@@ -303,9 +315,10 @@ exports.deleteProfilePicture = async (req, res) => {
     officer.profilePicture = '';
     await officer.save();
 
-    const populatedOfficer = await Officer.findByPk(officer.id, {
+    let populatedOfficer = await Officer.findByPk(officer.id, {
       include: [{ model: Location, as: 'station' }],
     });
+    populatedOfficer = normalizeProfileDetails(populatedOfficer);
 
     res.status(200).json({
       success: true,

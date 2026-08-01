@@ -17,9 +17,11 @@ const Victim                = require('./Victim');
 // ── Associations ──────────────────────────────────────────────────────────────
 User.hasOne(Officer,   { foreignKey: 'userId', as: 'officerProfile' });
 User.hasOne(Analyst,   { foreignKey: 'userId', as: 'analystProfile' });
+User.hasMany(CrimeNote, { foreignKey: 'addedById', as: 'crimeNotes' });
 Officer.belongsTo(User,     { foreignKey: 'userId' });
 Analyst.belongsTo(User,     { foreignKey: 'userId' });
 Officer.belongsTo(Location, { foreignKey: 'stationId', as: 'station' });
+CrimeNote.belongsTo(User,   { foreignKey: 'addedById', as: 'addedBy' });
 
 CrimeCategory.hasMany(Crime,     { foreignKey: 'categoryId', as: 'crimes' });
 Crime.belongsTo(CrimeCategory,   { foreignKey: 'categoryId', as: 'category' });

@@ -72,11 +72,12 @@ const SimilarCaseList = ({ sourceCaseId, role }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {results.map((match) => {
             const matchedCrime = match.crime;
+            const caseId = matchedCrime._id || matchedCrime.id;
             const dateStr = matchedCrime.date ? new Date(matchedCrime.date).toLocaleDateString() : 'N/A';
 
             return (
               <div
-                key={matchedCrime._id}
+                key={caseId}
                 style={{
                   background: 'rgba(30, 41, 59, 0.2)',
                   border: '1px solid rgba(255,255,255,0.06)',
@@ -94,7 +95,7 @@ const SimilarCaseList = ({ sourceCaseId, role }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Link
-                      to={`/${role}/cases/${matchedCrime._id}`}
+                      to={`/${role}/cases/${caseId}`}
                       style={{
                         fontSize: '15px',
                         fontWeight: '700',

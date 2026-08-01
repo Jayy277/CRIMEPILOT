@@ -1,0 +1,62 @@
+[
+  {
+    "procedure_number": "173",
+    "title": "Information in Cognizable Cases",
+    "description": "Standard procedural guidelines for handling cases during Investigation.",
+    "stage": "Investigation"
+  },
+  {
+    "procedure_number": "184",
+    "title": "Medical Examination of Victim",
+    "description": "Standard procedural guidelines for handling cases during Evidence Collection.",
+    "stage": "Evidence Collection"
+  },
+  {
+    "procedure_number": "176",
+    "title": "Inquiry by Police in Custodial Deaths/Violence",
+    "description": "Standard procedural guidelines for handling cases during Inquiry.",
+    "stage": "Inquiry"
+  },
+  {
+    "procedure_number": "202",
+    "title": "Postponement of Issue of Process",
+    "description": "Standard procedural guidelines for handling cases during Pre-Trial.",
+    "stage": "Pre-Trial"
+  },
+  {
+    "procedure_number": "173",
+    "title": "Electronic FIR filing",
+    "description": "Standard procedural guidelines for handling cases during Filing.",
+    "stage": "Filing"
+  },
+  {
+    "procedure_number": "105",
+    "title": "Search and Seizure of Electronic Devices",
+    "description": "Standard procedural guidelines for handling cases during Investigation.",
+    "stage": "Investigation"
+  },
+  {
+    "procedure_number": "194",
+    "title": "Inquest Reports on Accidental or Unnatural Deaths",
+    "description": "Standard procedural guidelines for handling cases during Inquest.",
+    "stage": "Inquest"
+  },
+  {
+    "procedure_number": "196",
+    "title": "Power to Summon Persons",
+    "description": "Standard procedural guidelines for handling cases during Investigation.",
+    "stage": "Investigation"
+  },
+  {
+    "procedure_number": "173",
+    "title": "Zero FIR registration",
+    "description": "Standard procedural guidelines for handling cases during Filing.",
+    "stage": "Filing"
+  },
+  {
+    "procedure_number": "184",
+    "title": "Medical Examination of Kidnapped Person",
+    "description": "Standard procedural guidelines for handling cases during Evidence Collection.",
+    "stage": "Evidence Collection"
+  }
+]

@@ -10,6 +10,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import OverviewAnimation from './components/OverviewAnimation';
+import AILegalPrediction from './pages/AILegalPrediction';
 
 // Officer Portal Pages
 import OfficerDashboard from './pages/officer/Dashboard';
@@ -76,6 +77,7 @@ function App() {
             <Route path="my-cases" element={<MyCases />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} />
             <Route path="search" element={<OfficerSearch />} />
+            <Route path="legal-prediction" element={<AILegalPrediction />} />
             <Route path="profile" element={<OfficerProfile />} />
           </Route>
 
@@ -95,6 +97,7 @@ function App() {
             <Route path="heatmap" element={<Heatmap />} />
             <Route path="reports" element={<AnalystReports />} />
             <Route path="prediction" element={<PredictionPlaceholder />} />
+            <Route path="legal-prediction" element={<AILegalPrediction />} />
             <Route path="profile" element={<OfficerProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}
           </Route>
@@ -116,6 +119,7 @@ function App() {
             <Route path="locations" element={<Locations />} />
             <Route path="logs" element={<SystemLogs />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="legal-prediction" element={<AILegalPrediction />} />
             <Route path="profile" element={<OfficerProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}
           </Route>

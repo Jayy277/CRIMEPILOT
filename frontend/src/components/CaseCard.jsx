@@ -5,7 +5,7 @@ import StatusTimeline from './StatusTimeline';
 
 const CaseCard = ({ crime, role }) => {
   const dateStr = crime.date ? new Date(crime.date).toLocaleDateString() : 'N/A';
-  const categoryName = crime.crimeCategory?.name || 'Unassigned';
+  const categoryName = crime.category?.name || crime.crimeCategory?.name || 'Unassigned';
   const stationName = crime.location?.policeStation || 'N/A';
   const priority = crime.priority || 'Medium';
   const status = crime.status || 'Reported';
@@ -25,7 +25,8 @@ const CaseCard = ({ crime, role }) => {
     return { color: '#38bdf8', border: '1px solid rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.08)' };
   };
 
-  const detailsPath = `/${role}/cases/${crime._id}`;
+  const caseId = crime._id || crime.id;
+  const detailsPath = `/${role}/cases/${caseId}`;
 
   return (
     <div className={`glass-card ${getRoleClass()}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>

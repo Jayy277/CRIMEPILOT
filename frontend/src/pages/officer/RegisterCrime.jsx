@@ -58,25 +58,30 @@ const RegisterCrime = () => {
       return;
     }
 
-    if (!details?._id) {
+    const officerId = Number(details?._id || details?.id || details?.userId) || details?._id || details?.id || details?.userId;
+    if (!officerId) {
       setError('Officer profile metadata is missing from your session. Please contact the administrator.');
       return;
     }
+
+    const categoryId = Number(crimeCategory) || crimeCategory;
+    const locationId = Number(location) || location;
 
     setLoading(true);
     setError('');
 
     try {
       const payload = {
-        crimeCategory,
+        crimeCategory: categoryId,
         date,
         time,
-        location,
+        location: locationId,
         description,
-        officer: details._id, // Officer DB ID
+        officer: Number(officerId), // Officer DB ID
         priority,
-        sections: selectedSections, // Custom Feature A selection
+        sections: selectedSections || [], // Custom Feature A selection
       };
+      console.log('RegisterCrime payload:', payload);
 
       const response = await axiosInstance.post('/crimes', payload);
       if (response.data && response.data.success) {
@@ -84,7 +89,7 @@ const RegisterCrime = () => {
       }
     } catch (err) {
       console.error('Error registering crime:', err);
-      const msg = err.response?.data?.message || 'Failed to submit crime case report.';
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to submit crime case report.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -170,11 +175,14 @@ const RegisterCrime = () => {
                 }}
               >
                 <option value="">-- Select Category --</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
+                {categories.map((cat) => {
+                  const categoryId = cat._id || cat.id;
+                  return (
+                    <option key={categoryId} value={categoryId}>
+                      {cat.name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -188,11 +196,14 @@ const RegisterCrime = () => {
                 onChange={(e) => setLocation(e.target.value)}
               >
                 <option value="">-- Select Location/Station --</option>
-                {locations.map((loc) => (
-                  <option key={loc._id} value={loc._id}>
-                    {loc.policeStation} ({loc.city}, {loc.state})
-                  </option>
-                ))}
+                {locations.map((loc) => {
+                  const locationId = loc._id || loc.id;
+                  return (
+                    <option key={locationId} value={locationId}>
+                      {loc.policeStation} ({loc.city}, {loc.state})
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
