@@ -28,6 +28,7 @@ import CrimeTrends from './pages/analyst/CrimeTrends';
 import Heatmap from './pages/analyst/Heatmap';
 import AnalystReports from './pages/analyst/Reports';
 import PredictionPlaceholder from './pages/analyst/Prediction';
+import AnalystProfile from './pages/analyst/Profile';
 
 // Admin Portal Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -37,6 +38,7 @@ import CrimeCategories from './pages/admin/CrimeCategories';
 import Locations from './pages/admin/Locations';
 import SystemLogs from './pages/admin/Logs';
 import AdminReports from './pages/admin/Reports';
+import AdminProfile from './pages/admin/AdminProfile';
 
 // Citizen Portal Pages
 import CitizenLogin from './pages/citizen/Login';
@@ -103,7 +105,7 @@ function App() {
             <Route path="reports" element={<AnalystReports />} />
             <Route path="prediction" element={<PredictionPlaceholder />} />
             <Route path="legal-prediction" element={<AILegalPrediction />} />
-            <Route path="profile" element={<OfficerProfile />} />
+            <Route path="profile" element={<AnalystProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}
           </Route>
 
@@ -125,7 +127,7 @@ function App() {
             <Route path="logs" element={<SystemLogs />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="legal-prediction" element={<AILegalPrediction />} />
-            <Route path="profile" element={<OfficerProfile />} />
+            <Route path="profile" element={<AdminProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}
           </Route>
 
