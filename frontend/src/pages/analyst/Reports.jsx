@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { downloadPDFResponse } from '../../utils/downloadPDF';
+import { getTodayDateString, validateDateRange } from '../../utils/dateValidation';
 
 const Reports = () => {
   const [startDate, setStartDate] = useState('');
@@ -10,6 +11,18 @@ const Reports = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const todayStr = getTodayDateString();
+
+  // Validate dates
+  useEffect(() => {
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+    } else {
+      setError('');
+    }
+  }, [startDate, endDate]);
 
   // Handle Preset Ranges
   const handlePreset = (preset) => {
@@ -28,11 +41,17 @@ const Reports = () => {
     }
 
     setStartDate(start.toISOString().substring(0, 10));
-    setEndDate(today.toISOString().substring(0, 10));
+    setEndDate(todayStr);
   };
 
   const handleDownloadPDF = async (e) => {
     e.preventDefault();
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccessMsg('');
@@ -117,6 +136,7 @@ const Reports = () => {
               <input
                 type="date"
                 className="form-control"
+                max={todayStr}
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
               />
@@ -126,6 +146,7 @@ const Reports = () => {
               <input
                 type="date"
                 className="form-control"
+                max={todayStr}
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
               />

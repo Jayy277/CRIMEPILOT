@@ -146,6 +146,15 @@ class ReportView(APIView):
     priority = request.query_params.get('priority')
     status_filter = request.query_params.get('status')
 
+    today_str = datetime.date.today().isoformat()
+
+    if start_date and start_date > today_str:
+      return Response({'success': False, 'message': "Start Date cannot be greater than today's date."}, status=status.HTTP_400_BAD_REQUEST)
+    if end_date and end_date > today_str:
+      return Response({'success': False, 'message': "End Date cannot be greater than today's date."}, status=status.HTTP_400_BAD_REQUEST)
+    if start_date and end_date and end_date < start_date:
+      return Response({'success': False, 'message': "End Date must be greater than or equal to Start Date."}, status=status.HTTP_400_BAD_REQUEST)
+
     crimes = Crime.objects.all().select_related('crime_category', 'location').order_by('date')
 
     if start_date:

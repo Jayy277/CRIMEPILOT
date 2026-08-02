@@ -129,6 +129,8 @@ class CrimeViewSet(viewsets.ModelViewSet):
     search = params.get('search')
     suspect_name = params.get('suspectName')
     assigned_only = params.get('assignedOnly')
+    start_date = params.get('startDate') or params.get('start_date')
+    end_date = params.get('endDate') or params.get('end_date')
 
     if crime_id:
       queryset = queryset.filter(crime_id__icontains=crime_id)
@@ -142,6 +144,10 @@ class CrimeViewSet(viewsets.ModelViewSet):
       queryset = queryset.filter(status=status_filter)
     if search:
       queryset = queryset.filter(description__icontains=search)
+    if start_date:
+      queryset = queryset.filter(date__gte=start_date)
+    if end_date:
+      queryset = queryset.filter(date__lte=end_date)
       
     if suspect_name:
       crime_ids = Suspect.objects.filter(name__icontains=suspect_name).values_list('linked_crime_id', flat=True)
@@ -155,6 +161,18 @@ class CrimeViewSet(viewsets.ModelViewSet):
     return queryset
 
   def list(self, request, *args, **kwargs):
+    params = request.query_params
+    start_date = params.get('startDate') or params.get('start_date')
+    end_date = params.get('endDate') or params.get('end_date')
+    today_str = datetime.date.today().isoformat()
+
+    if start_date and start_date > today_str:
+      return Response({'success': False, 'message': "Start Date cannot be greater than today's date."}, status=status.HTTP_400_BAD_REQUEST)
+    if end_date and end_date > today_str:
+      return Response({'success': False, 'message': "End Date cannot be greater than today's date."}, status=status.HTTP_400_BAD_REQUEST)
+    if start_date and end_date and end_date < start_date:
+      return Response({'success': False, 'message': "End Date must be greater than or equal to Start Date."}, status=status.HTTP_400_BAD_REQUEST)
+
     queryset = self.filter_queryset(self.get_queryset())
     serializer = self.get_serializer(queryset, many=True)
     return Response({'success': True, 'count': len(serializer.data), 'crimes': serializer.data})

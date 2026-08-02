@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Tooltip, XAxis, YAxis } from 'recharts';
 import { FaShieldAlt, FaUserShield, FaCheckCircle, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
+import { getTodayDateString, validateDateRange } from '../../utils/dateValidation';
 
 const Analytics = () => {
   const [categories, setCategories] = useState([]);
@@ -15,6 +16,18 @@ const Analytics = () => {
   const [endDate, setEndDate] = useState('');
   const [crimeCategory, setCrimeCategory] = useState('');
   const [location, setLocation] = useState('');
+
+  const todayStr = getTodayDateString();
+
+  // Validate dates
+  useEffect(() => {
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+    } else {
+      setError('');
+    }
+  }, [startDate, endDate]);
 
   // Aggregated Data
   const [crimes, setCrimes] = useState([]);
@@ -192,6 +205,7 @@ const Analytics = () => {
             <input
               type="date"
               className="form-control"
+              max={todayStr}
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', fontSize: '13px' }}
@@ -202,6 +216,7 @@ const Analytics = () => {
             <input
               type="date"
               className="form-control"
+              max={todayStr}
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', fontSize: '13px' }}

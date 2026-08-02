@@ -4,6 +4,7 @@ import axiosInstance from '../../api/axiosInstance';
 import CaseTrackerModal, { getStageIndex, INVESTIGATION_STAGES } from '../../components/citizen/CaseTrackerModal';
 import FIRDetailsModal from '../../components/citizen/FIRDetailsModal';
 import { downloadPDFResponse } from '../../utils/downloadPDF';
+import { getTodayDateString, validateDateRange } from '../../utils/dateValidation';
 
 // Status color helper per prompt instructions
 export const getStatusColor = (statusStr) => {
@@ -52,6 +53,19 @@ const MyFIRs = () => {
   const [stationFilter, setStationFilter] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [dateError, setDateError] = useState('');
+
+  const todayStr = getTodayDateString();
+
+  // Validate dates
+  useEffect(() => {
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setDateError(val.error);
+    } else {
+      setDateError('');
+    }
+  }, [startDate, endDate]);
 
   // Lists for dropdown options
   const [categories, setCategories] = useState([]);
@@ -332,6 +346,7 @@ const MyFIRs = () => {
             </label>
             <input
               type="date"
+              max={todayStr}
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
               style={{
@@ -353,6 +368,7 @@ const MyFIRs = () => {
             </label>
             <input
               type="date"
+              max={todayStr}
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
               style={{
@@ -368,6 +384,21 @@ const MyFIRs = () => {
           </div>
 
         </div>
+
+        {dateError && (
+          <div style={{
+            marginTop: '12px',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderLeft: '4px solid #ef4444',
+            color: '#fca5a5',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}>
+            ⚠️ {dateError}
+          </div>
+        )}
       </div>
 
       {/* FIR Cards Grid */}

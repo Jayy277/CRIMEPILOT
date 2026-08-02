@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import AdminDataTable from '../../components/AdminDataTable';
 import { downloadPDFResponse } from '../../utils/downloadPDF';
+import { getTodayDateString, validateDateRange } from '../../utils/dateValidation';
 
 const Reports = () => {
   const [startDate, setStartDate] = useState('');
@@ -16,8 +17,28 @@ const Reports = () => {
   const [previewCrimes, setPreviewCrimes] = useState([]);
   const [previewLoading, setPreviewLoading] = useState(true);
 
+  const todayStr = getTodayDateString();
+
+  // Validate dates
+  useEffect(() => {
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+    } else {
+      setError('');
+    }
+  }, [startDate, endDate]);
+
   // Fetch preview matching crimes
   const fetchPreviewCrimes = async () => {
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+      setPreviewCrimes([]);
+      setPreviewLoading(false);
+      return;
+    }
+
     try {
       setPreviewLoading(true);
       const params = new URLSearchParams();
@@ -55,11 +76,17 @@ const Reports = () => {
     }
 
     setStartDate(start.toISOString().substring(0, 10));
-    setEndDate(today.toISOString().substring(0, 10));
+    setEndDate(todayStr);
   };
 
   const handleDownloadPDF = async (e) => {
     e.preventDefault();
+    const val = validateDateRange(startDate, endDate);
+    if (!val.isValid) {
+      setError(val.error);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccessMsg('');
@@ -143,6 +170,7 @@ const Reports = () => {
               <input
                 type="date"
                 className="form-control"
+                max={todayStr}
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
               />
@@ -152,6 +180,7 @@ const Reports = () => {
               <input
                 type="date"
                 className="form-control"
+                max={todayStr}
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
               />

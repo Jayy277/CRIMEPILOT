@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import { AuthContext } from '../../context/AuthContext';
 import LegalSectionDropdown from '../../components/LegalSectionDropdown';
+import { getTodayDateString } from '../../utils/dateValidation';
 
 const RegisterCrime = () => {
   const { user, details } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const todayStr = getTodayDateString();
 
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -16,7 +19,7 @@ const RegisterCrime = () => {
   
   // Form fields
   const [crimeCategory, setCrimeCategory] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
+  const [date, setDate] = useState(todayStr);
   const [time, setTime] = useState(
     new Date().toLocaleTimeString('en-US', { hour12: false }).substring(0, 5)
   );
@@ -55,6 +58,11 @@ const RegisterCrime = () => {
     e.preventDefault();
     if (!crimeCategory || !location || !description) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    if (date > todayStr) {
+      setError("Start Date cannot be greater than today's date.");
       return;
     }
 
@@ -216,6 +224,7 @@ const RegisterCrime = () => {
                 type="date"
                 required
                 className="form-control"
+                max={todayStr}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
