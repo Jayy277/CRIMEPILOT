@@ -94,6 +94,7 @@ const CitizenRegister = () => {
   const mobileInputRef = useRef(null);
 
   // Email OTP Verification States (Strict requirement 14)
+  const [alreadyRegisteredError, setAlreadyRegisteredError] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -162,8 +163,14 @@ const CitizenRegister = () => {
     } catch (err) {
       console.error('[Frontend OTP] Error sending Email OTP:', err);
       setOtpSuccess('');
-      const errorMsg = err.response?.data?.message || err.message || 'Failed to send OTP email.';
-      setOtpError(errorMsg);
+      const isDup = err.response?.data?.already_registered || err.response?.status === 409 || err.response?.data?.message?.includes('already exists');
+      if (isDup) {
+        setAlreadyRegisteredError(true);
+        setError('An account with this Email Address or Mobile Number already exists. Please login to continue.');
+      } else {
+        const errorMsg = err.response?.data?.message || err.message || 'Failed to send OTP email.';
+        setOtpError(errorMsg);
+      }
     } finally {
       setSendingOtp(false);
     }
@@ -512,7 +519,44 @@ const CitizenRegister = () => {
             </h2>
           </div>
 
-          {error && (
+          {alreadyRegisteredError ? (
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '24px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(239, 68, 68, 0.15)'
+            }}>
+              <div style={{ fontSize: '18px', fontWeight: '900', color: '#EF4444', marginBottom: '8px' }}>
+                Account Already Registered
+              </div>
+              <div style={{ fontSize: '13.5px', color: '#E2E8F0', lineHeight: '1.6', marginBottom: '16px' }}>
+                An account with this Email Address or Mobile Number already exists.
+                <br />
+                Please login to continue.
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/citizen/login')}
+                style={{
+                  padding: '12px 28px',
+                  background: 'linear-gradient(90deg, #00B8D9, #00D9FF)',
+                  color: '#060D1A',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '800',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(0, 217, 255, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Go to Login
+              </button>
+            </div>
+          ) : error ? (
             <div style={{
               background: 'rgba(239, 68, 68, 0.12)',
               borderLeft: '3.5px solid #EF4444',
@@ -524,7 +568,7 @@ const CitizenRegister = () => {
             }}>
               {error}
             </div>
-          )}
+          ) : null}
 
           {success && (
             <div style={{

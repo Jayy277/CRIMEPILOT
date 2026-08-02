@@ -62,7 +62,12 @@ const ManageUsers = () => {
 
   const fetchCitizens = async () => {
     try {
-      const res = await axiosInstance.get('/api/admin/citizens');
+      let res;
+      try {
+        res = await axiosInstance.get('/admin/citizens');
+      } catch (e) {
+        res = await axiosInstance.get('/api/admin/citizens');
+      }
       if (res.data && res.data.success) {
         setCitizens(res.data.citizens || []);
       }
@@ -75,7 +80,12 @@ const ManageUsers = () => {
     setError('');
     setSuccess('');
     try {
-      const res = await axiosInstance.post(`/api/admin/citizens/${citizenId}/verify`, { action });
+      let res;
+      try {
+        res = await axiosInstance.post(`/admin/citizens/${citizenId}/verify`, { action });
+      } catch (e) {
+        res = await axiosInstance.post(`/api/admin/citizens/${citizenId}/verify`, { action });
+      }
       if (res.data && res.data.success) {
         setSuccess(res.data.message);
         fetchCitizens();

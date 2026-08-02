@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaBalanceScale, FaFileAlt, FaFilePdf, FaFileImage, FaBrain, 
   FaCalendarAlt, FaShieldAlt, FaKey, FaListUl, FaGavel, FaCheckCircle, 
-  FaArrowRight, FaArrowLeft, FaClock, FaSpinner
+  FaArrowRight, FaArrowLeft, FaClock, FaSpinner, FaExclamationTriangle, FaInfoCircle
 } from 'react-icons/fa';
 
 const AILegalPrediction = () => {
@@ -12,6 +12,7 @@ const AILegalPrediction = () => {
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   
@@ -21,37 +22,66 @@ const AILegalPrediction = () => {
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
     setError(null);
+    setResult(null);
   };
+
+  const loadingMessages = [
+    '🔍 Extracting incident details & document OCR...',
+    '🏷️ Identifying crime category & key entities...',
+    '⚖️ Mapping BNS, BNSS & BSA legal provisions...',
+    '📊 Calculating confidence matrix & precedents...'
+  ];
 
   const handlePredict = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setResult(null);
 
-    const formData = new FormData();
+    // Client-side quick checks
     if (inputType === 'text') {
-      if (!description.trim()) {
+      const cleanText = description.trim();
+      if (!cleanText) {
         setError('Please enter a crime or complaint description.');
-        setLoading(false);
         return;
       }
-      formData.append('text', description);
+      const words = cleanText.split(/\s+/).filter(Boolean);
+      if (words.length < 10) {
+        setError('Insufficient incident information. Please provide a detailed description of the incident (at least 15-20 words) or upload a valid FIR/PDF/Image.');
+        return;
+      }
     } else {
       if (!selectedFile) {
         setError(`Please select a ${inputType.toUpperCase()} file to upload.`);
-        setLoading(false);
         return;
       }
+    }
+
+    setLoading(true);
+    setLoadingStep(0);
+
+    // Multi-stage realistic AI scan steps animation
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => {
+        if (prev < loadingMessages.length - 1) return prev + 1;
+        return prev;
+      });
+    }, 600);
+
+    const formData = new FormData();
+    if (inputType === 'text') {
+      formData.append('text', description);
+    } else {
       formData.append('file', selectedFile);
     }
 
     try {
-      const response = await axiosInstance.post('/ai/predict', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Minimum 2.2 seconds animation for realistic AI processing UX
+      const [response] = await Promise.all([
+        axiosInstance.post('/ai/predict', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+        new Promise((resolve) => setTimeout(resolve, 2200))
+      ]);
 
       if (response.data && response.data.success) {
         setResult(response.data.prediction);
@@ -61,14 +91,28 @@ const AILegalPrediction = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Error occurred while contacting the legal AI prediction server.');
+      const backendMsg = err.response?.data?.message;
+      if (backendMsg) {
+        setError(backendMsg);
+      } else {
+        setError('Error occurred while contacting the legal AI prediction server. Please try again.');
+      }
     } finally {
+      clearInterval(stepInterval);
       setLoading(false);
     }
   };
 
-  // UI Accent color based on user portal or default theme
-  const accentColor = '#3B82F6'; // Cobalt Blue
+  // UI Accent color
+  const accentColor = '#3B82F6';
+
+  // Get color code for confidence score
+  const getConfidenceColor = (score) => {
+    const pct = Math.round(score * 100);
+    if (pct >= 75) return '#10B981'; // Green
+    if (pct >= 45) return '#F59E0B'; // Yellow
+    return '#EF4444'; // Red
+  };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: 'Outfit, sans-serif' }}>
@@ -129,7 +173,8 @@ const AILegalPrediction = () => {
           {/* Tab Selector */}
           <div style={{ display: 'flex', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: '4px', borderRadius: '10px', marginBottom: '20px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
             <button
-              onClick={() => { setInputType('text'); setSelectedFile(null); }}
+              type="button"
+              onClick={() => { setInputType('text'); setSelectedFile(null); setError(null); setResult(null); }}
               style={{
                 flex: 1,
                 padding: '10px',
@@ -151,7 +196,8 @@ const AILegalPrediction = () => {
               <FaFileAlt /> Manual Description
             </button>
             <button
-              onClick={() => { setInputType('pdf'); setSelectedFile(null); }}
+              type="button"
+              onClick={() => { setInputType('pdf'); setSelectedFile(null); setError(null); setResult(null); }}
               style={{
                 flex: 1,
                 padding: '10px',
@@ -173,7 +219,8 @@ const AILegalPrediction = () => {
               <FaFilePdf /> Upload PDF
             </button>
             <button
-              onClick={() => { setInputType('image'); setSelectedFile(null); }}
+              type="button"
+              onClick={() => { setInputType('image'); setSelectedFile(null); setError(null); setResult(null); }}
               style={{
                 flex: 1,
                 padding: '10px',
@@ -204,7 +251,7 @@ const AILegalPrediction = () => {
                 </label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => { setDescription(e.target.value); setError(null); }}
                   placeholder="Example: Complainant returned home to find front door lock broken. Valuables including a gold chain worth INR 80,000 and laptops stolen. Suspect broke in during the night..."
                   style={{
                     width: '100%',
@@ -266,18 +313,26 @@ const AILegalPrediction = () => {
               </div>
             )}
 
+            {/* Validation Warning Alert */}
             {error && (
               <div style={{
                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                color: '#ef4444',
-                padding: '12px',
-                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#f87171',
+                padding: '14px 16px',
+                borderRadius: '10px',
                 fontSize: '13px',
-                marginBottom: '16px',
-                fontWeight: '500'
+                marginBottom: '20px',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px'
               }}>
-                {error}
+                <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '18px', marginTop: '2px', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontWeight: '700', marginBottom: '2px', color: '#fca5a5' }}>Validation Alert</div>
+                  <div>{error}</div>
+                </div>
               </div>
             )}
 
@@ -288,7 +343,7 @@ const AILegalPrediction = () => {
                 width: '100%',
                 backgroundColor: loading ? 'rgba(59, 130, 246, 0.5)' : accentColor,
                 color: '#fff',
-                padding: '12px',
+                padding: '14px',
                 border: 'none',
                 borderRadius: '10px',
                 cursor: loading ? 'not-allowed' : 'pointer',
@@ -304,7 +359,7 @@ const AILegalPrediction = () => {
             >
               {loading ? (
                 <>
-                  <FaSpinner className="spin" /> Generating Prediction Models...
+                  <FaSpinner className="spin" /> {loadingMessages[loadingStep]}
                 </>
               ) : (
                 <>
@@ -313,6 +368,25 @@ const AILegalPrediction = () => {
               )}
             </button>
           </form>
+
+          {/* Empty State when no prediction is active */}
+          {!result && !loading && (
+            <div style={{
+              marginTop: '24px',
+              borderTop: '1px dashed rgba(255, 255, 255, 0.08)',
+              paddingTop: '20px',
+              textAlign: 'center',
+              color: '#64748b'
+            }}>
+              <FaInfoCircle style={{ fontSize: '24px', color: '#475569', marginBottom: '8px' }} />
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8', marginBottom: '4px' }}>
+                No Active Predictions
+              </div>
+              <div style={{ fontSize: '12px', color: '#64748b', maxWidth: '420px', margin: '0 auto', lineHeight: '1.4' }}>
+                Enter detailed incident facts or upload a genuine complaint PDF/Image to generate BNS/BNSS/BSA legal predictions and precedent matching.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Results Panel */}
@@ -339,9 +413,17 @@ const AILegalPrediction = () => {
                 </h2>
                 
                 {/* Confidence Meter */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <FaShieldAlt style={{ color: '#10B981', fontSize: '12px' }} />
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#10B981' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  backgroundColor: `${getConfidenceColor(result.confidence_score)}1F`, 
+                  padding: '6px 12px', 
+                  borderRadius: '20px', 
+                  border: `1px solid ${getConfidenceColor(result.confidence_score)}44` 
+                }}>
+                  <FaShieldAlt style={{ color: getConfidenceColor(result.confidence_score), fontSize: '12px' }} />
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: getConfidenceColor(result.confidence_score) }}>
                     Confidence Score: {Math.round(result.confidence_score * 100)}%
                   </span>
                 </div>
@@ -352,7 +434,7 @@ const AILegalPrediction = () => {
                 
                 {/* BNS Section */}
                 <div style={{ background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.04)', borderRadius: '12px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyItems: 'center', gap: '8px', color: '#FF7A00', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FF7A00', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
                     <FaGavel /> Predicted BNS Section (Bhartiya Nyaya Sanhita)
                   </div>
                   <div style={{ fontSize: '15px', fontWeight: '600', color: '#fff', marginBottom: '4px' }}>
@@ -365,7 +447,7 @@ const AILegalPrediction = () => {
 
                 {/* BNSS Procedure */}
                 <div style={{ background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.04)', borderRadius: '12px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyItems: 'center', gap: '8px', color: '#3B82F6', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3B82F6', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
                     <FaClock /> Applicable BNSS Procedure (Bhartiya Nagarik Suraksha)
                   </div>
                   <div style={{ fontSize: '15px', fontWeight: '600', color: '#fff', marginBottom: '4px' }}>
@@ -378,14 +460,14 @@ const AILegalPrediction = () => {
 
                 {/* BSA Evidence */}
                 <div style={{ background: 'rgba(15, 23, 42, 0.3)', border: '1px solid rgba(255, 255, 255, 0.04)', borderRadius: '12px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyItems: 'center', gap: '8px', color: '#10B981', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>
                     <FaCheckCircle /> BSA Evidence Rule (Bhartiya Sakshya Adhiniyam)
                   </div>
                   <div style={{ fontSize: '15px', fontWeight: '600', color: '#fff', marginBottom: '4px' }}>
                     {result.predicted_bsa}
                   </div>
                   <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
-                    Evidence standards required to ensure admissability, hashes for electronic records, and statements.
+                    Evidence standards required to ensure admissibility, hashes for electronic records, and statements.
                   </div>
                 </div>
 
@@ -447,10 +529,11 @@ const AILegalPrediction = () => {
                 <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h4 style={{ margin: 0, fontSize: '13px', color: '#94a3b8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <FaGavel /> Similar Judgments retrieved (Vector Search)
+                      <FaGavel /> Similar Precedent Judgments (Vector Search)
                     </h4>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button
+                        type="button"
                         onClick={() => setCurrentJudgmentIdx(prev => (prev === 0 ? result.similar_judgments.length - 1 : prev - 1))}
                         style={{ padding: '4px 8px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '4px', color: '#94a3b8', cursor: 'pointer' }}
                       >
@@ -460,6 +543,7 @@ const AILegalPrediction = () => {
                         {currentJudgmentIdx + 1}/{result.similar_judgments.length}
                       </span>
                       <button
+                        type="button"
                         onClick={() => setCurrentJudgmentIdx(prev => (prev === result.similar_judgments.length - 1 ? 0 : prev + 1))}
                         style={{ padding: '4px 8px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '4px', color: '#94a3b8', cursor: 'pointer' }}
                       >
@@ -472,20 +556,14 @@ const AILegalPrediction = () => {
                   <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255, 255, 255, 0.03)', borderRadius: '8px', padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>
-                        {result.similar_judgments[currentJudgmentIdx].case_id}
+                        {result.similar_judgments[currentJudgmentIdx].title || result.similar_judgments[currentJudgmentIdx].case_id}
                       </span>
                       <span style={{ fontSize: '11px', color: '#10B981', fontWeight: '600' }}>
-                        Cosine Match: {Math.round(result.similar_judgments[currentJudgmentIdx].similarity_score * 100)}%
+                        Citation: {result.similar_judgments[currentJudgmentIdx].citation}
                       </span>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px' }}>
-                      Court: {result.similar_judgments[currentJudgmentIdx].court} | Presiding: {result.similar_judgments[currentJudgmentIdx].judge}
-                    </div>
                     <div style={{ fontSize: '12px', color: '#cbd5e1', fontStyle: 'italic', lineHeight: '1.4', marginBottom: '6px' }}>
-                      "{result.similar_judgments[currentJudgmentIdx].judgment_summary}"
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', borderTop: '1px dashed rgba(255, 255, 255, 0.05)', paddingTop: '6px' }}>
-                      <strong>Decision:</strong> {result.similar_judgments[currentJudgmentIdx].decision}
+                      "{result.similar_judgments[currentJudgmentIdx].relevance || result.similar_judgments[currentJudgmentIdx].judgment_summary}"
                     </div>
                   </div>
                 </div>

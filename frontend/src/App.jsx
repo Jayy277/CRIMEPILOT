@@ -41,6 +41,7 @@ import AdminReports from './pages/admin/Reports';
 // Citizen Portal Pages
 import CitizenLogin from './pages/citizen/Login';
 import CitizenRegister from './pages/citizen/Register';
+import CitizenForgotPassword from './pages/citizen/ForgotPassword';
 import CitizenDashboard from './pages/citizen/Dashboard';
 import RegisterFIR from './pages/citizen/RegisterFIR';
 import TrackFIR from './pages/citizen/TrackFIR';
@@ -55,8 +56,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/overview" element={<PlatformOverview />} />
           <Route path="/platform-overview" element={<PlatformOverview />} />
-          <Route path="/citizen/login" element={<CitizenLogin />} />
+          <Route path="/citizen/login" element={<Navigate to="/login?role=citizen" replace />} />
           <Route path="/citizen/register" element={<CitizenRegister />} />
+          <Route path="/citizen/forgot-password" element={<CitizenForgotPassword />} />
 
           {/* Public Routing Layout */}
           <Route element={<Layout />}>

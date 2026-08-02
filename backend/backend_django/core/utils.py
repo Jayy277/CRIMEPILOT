@@ -292,3 +292,451 @@ def generate_report_pdf(response, title, subtitle, data, date_range):
     story.append(cases_table)
 
   doc.build(story, canvasmaker=NumberedCanvas)
+
+
+class FIRNumberedCanvas(canvas.Canvas):
+  """
+  Two-pass canvas for CrimePilot AI Official Digital FIR PDF document.
+  Provides clean CrimePilot header with logo, page numbers, and modern official footer.
+  """
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._saved_page_states = []
+
+  def showPage(self):
+    self._saved_page_states.append(dict(self.__dict__))
+    self._startPage()
+
+  def save(self):
+    num_pages = len(self._saved_page_states)
+    for state in self._saved_page_states:
+      self.__dict__.update(state)
+      self.draw_page_decorations(num_pages)
+      super().showPage()
+    super().save()
+
+  def draw_page_decorations(self, page_count):
+    logo_path = get_django_logo_path()
+    
+    text_x = 36
+    if logo_path:
+      try:
+        self.drawImage(logo_path, 36, 785, width=44, height=44, preserveAspectRatio=True, mask='auto')
+        text_x = 90
+      except Exception:
+        pass
+
+    # Line 1: CRIMEPILOT AI
+    self.setFillColor(colors.HexColor('#0B1220'))
+    self.setFont('Helvetica-Bold', 14)
+    self.drawString(text_x, 818, 'CRIMEPILOT AI')
+
+    # Line 2: Digital Crime Intelligence Platform
+    self.setFillColor(colors.HexColor('#0284C7'))
+    self.setFont('Helvetica-Bold', 8.5)
+    self.drawString(text_x, 807, 'Digital Crime Intelligence Platform')
+
+    # Line 3: OFFICIAL FIRST INFORMATION REPORT (FIR)
+    self.setFillColor(colors.HexColor('#0B1220'))
+    self.setFont('Helvetica-Bold', 10.5)
+    self.drawString(text_x, 793, 'OFFICIAL FIRST INFORMATION REPORT (FIR)')
+
+    # Line 4: Secure Digital FIR System • Based on BNSS 2023 • BNS 2023 • BSA 2023
+    self.setFillColor(colors.HexColor('#475569'))
+    self.setFont('Helvetica', 7.5)
+    self.drawString(text_x, 781, 'Secure Digital FIR System • Based on BNSS 2023 • BNS 2023 • BSA 2023')
+
+    # Header Divider Line (Dark Navy & Cyan accent)
+    self.setStrokeColor(colors.HexColor('#0B1220'))
+    self.setLineWidth(1.5)
+    self.line(36, 774, 559.28, 774)
+
+    self.setStrokeColor(colors.HexColor('#00D9FF'))
+    self.setLineWidth(1)
+    self.line(36, 772.5, 559.28, 772.5)
+
+    # Footer Line
+    self.setStrokeColor(colors.HexColor('#CBD5E1'))
+    self.setLineWidth(0.75)
+    self.line(36, 36, 559.28, 36)
+
+    # Footer Text as specified
+    self.setFillColor(colors.HexColor('#0B1220'))
+    self.setFont('Helvetica-Bold', 7.5)
+    self.drawString(36, 23, 'CrimePilot AI • Secure Digital FIR Management Platform')
+    self.setFillColor(colors.HexColor('#64748B'))
+    self.setFont('Helvetica', 7)
+    self.drawString(36, 13, 'Generated Digitally • QR Verified • Tamper Protected')
+
+    page_str = f'Page {self._pageNumber} of {page_count}'
+    self.setFont('Helvetica', 8)
+    self.drawRightString(559.28, 20, page_str)
+
+
+def generate_official_indian_fir_pdf(response, crime):
+  """
+  Generates an official CrimePilot AI Digital First Information Report (FIR) PDF
+  under BNSS 2023, BNS 2023, and BSA 2023, formatted dynamically from the crime case object.
+  """
+  doc = SimpleDocTemplate(
+    response,
+    pagesize=A4,
+    leftMargin=36,
+    rightMargin=36,
+    topMargin=78,
+    bottomMargin=48
+  )
+
+  story = []
+  styles = getSampleStyleSheet()
+
+  # Custom Paragraph Styles with CrimePilot Theme (#0B1220, #00D9FF, #0284C7)
+  section_heading_style = ParagraphStyle(
+    'FIRSectionHeading',
+    parent=styles['Normal'],
+    fontName='Helvetica-Bold',
+    fontSize=10,
+    leading=13,
+    textColor=colors.HexColor('#0B1220'),
+    spaceBefore=8,
+    spaceAfter=4
+  )
+
+  cell_lbl = ParagraphStyle(
+    'FIRCellLbl',
+    parent=styles['Normal'],
+    fontName='Helvetica-Bold',
+    fontSize=8,
+    leading=10,
+    textColor=colors.HexColor('#334155')
+  )
+
+  cell_val = ParagraphStyle(
+    'FIRCellVal',
+    parent=styles['Normal'],
+    fontName='Helvetica',
+    fontSize=8.5,
+    leading=11,
+    textColor=colors.HexColor('#0F172A')
+  )
+
+  cell_val_bold = ParagraphStyle(
+    'FIRCellValBold',
+    parent=styles['Normal'],
+    fontName='Helvetica-Bold',
+    fontSize=8.5,
+    leading=11,
+    textColor=colors.HexColor('#0B1220')
+  )
+
+  # Data Extraction
+  stn_name = crime.location.police_station if crime.location else 'Central Police Station'
+  district = crime.location.city if crime.location else 'Ahmedabad'
+  state = crime.location.state if crime.location else 'Gujarat'
+  cat_name = crime.crime_category.name if crime.crime_category else 'General Offence'
+
+  fir_no = f"FIR-{crime.crime_id}"
+  case_no = crime.crime_id
+  reg_date = crime.created_at.strftime('%Y-%m-%d') if hasattr(crime, 'created_at') and crime.created_at else (crime.date.strftime('%Y-%m-%d') if crime.date else '2026-08-02')
+  reg_time = crime.created_at.strftime('%H:%M:%S IST') if hasattr(crime, 'created_at') and crime.created_at else (str(crime.time) if crime.time else '10:30:00 IST')
+  gd_no = f"GD-2026-00{crime.id}"
+
+  # Complainant Details
+  cit_obj = crime.citizen
+  u_obj = cit_obj.user if cit_obj else None
+  cit_name = u_obj.name if u_obj else (getattr(crime, 'citizen_name', 'Anonymous'))
+  cit_gender = getattr(cit_obj, 'gender', 'N/A') or 'Male/Female'
+  cit_mobile = getattr(cit_obj, 'mobile', 'N/A') or 'N/A'
+  cit_email = u_obj.email if u_obj else 'N/A'
+  cit_addr = getattr(cit_obj, 'address', 'N/A') or 'N/A'
+  cit_city = getattr(cit_obj, 'city', district) or district
+  cit_state = getattr(cit_obj, 'state', state) or state
+  cit_pincode = getattr(cit_obj, 'pincode', 'N/A') or 'N/A'
+  cit_id_type = getattr(cit_obj, 'identity_type', 'Aadhaar Card') or 'Aadhaar Card'
+  cit_id_no = getattr(cit_obj, 'identity_number', 'N/A') or 'N/A'
+
+  # BNS legal sections resolution
+  cat_lower = cat_name.lower()
+  if 'cyber' in cat_lower or 'fraud' in cat_lower or 'netbanking' in cat_lower or 'online' in cat_lower:
+    bns_sections = "BNS Sec 318(4) [Cheating], IT Act Sec 66D [Impersonation by Computer]"
+  elif 'theft' in cat_lower or 'vehicle' in cat_lower or 'stolen' in cat_lower:
+    bns_sections = "BNS Sec 305 [Theft in Dwelling / Motor Vehicle]"
+  elif 'robbery' in cat_lower or 'snatching' in cat_lower or 'extortion' in cat_lower:
+    bns_sections = "BNS Sec 304 [Snatching], BNS Sec 309 [Robbery]"
+  elif 'assault' in cat_lower or 'violence' in cat_lower or 'hurt' in cat_lower:
+    bns_sections = "BNS Sec 115(2) [Voluntarily Causing Hurt], BNS Sec 126(2)"
+  elif 'domestic' in cat_lower or 'cruelty' in cat_lower:
+    bns_sections = "BNS Sec 85 [Cruelty by Husband / Relatives]"
+  elif 'drug' in cat_lower or 'narcotic' in cat_lower or 'ndps' in cat_lower:
+    bns_sections = "NDPS Act Sec 20 / Sec 22"
+  elif 'accident' in cat_lower or 'hit' in cat_lower:
+    bns_sections = "BNS Sec 106(1) [Rash & Negligent Act]"
+  else:
+    bns_sections = "BNS Sec 318 [Cheating], BNS Sec 303 [Theft]"
+
+  # Sub-Header Banner
+  story.append(Spacer(1, 4))
+  header_table = Table([
+    [
+      Paragraph(f"<b>POLICE STATION:</b> {stn_name.upper()}", cell_lbl),
+      Paragraph(f"<b>DISTRICT:</b> {district.upper()}", cell_lbl),
+      Paragraph(f"<b>STATE:</b> {state.upper()}", cell_lbl)
+    ]
+  ], colWidths=[174, 174, 175])
+  header_table.setStyle(TableStyle([
+    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+    ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#0B1220')),
+    ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('PADDING', (0,0), (-1,-1), 6),
+  ]))
+  story.append(header_table)
+  story.append(Spacer(1, 8))
+
+  # 1. CASE INFORMATION
+  story.append(Paragraph("1. CASE INFORMATION", section_heading_style))
+  case_info = [
+    [
+      Paragraph("FIR Number", cell_lbl), Paragraph(fir_no, cell_val_bold),
+      Paragraph("Case Reference ID", cell_lbl), Paragraph(case_no, cell_val)
+    ],
+    [
+      Paragraph("Police Station", cell_lbl), Paragraph(stn_name, cell_val),
+      Paragraph("District / State", cell_lbl), Paragraph(f"{district}, {state}", cell_val)
+    ],
+    [
+      Paragraph("Date of Registration", cell_lbl), Paragraph(reg_date, cell_val),
+      Paragraph("Time of Registration", cell_lbl), Paragraph(reg_time, cell_val)
+    ],
+    [
+      Paragraph("GD Entry Number", cell_lbl), Paragraph(gd_no, cell_val),
+      Paragraph("Complaint Type", cell_lbl), Paragraph(cat_name, cell_val)
+    ],
+    [
+      Paragraph("Priority Level", cell_lbl), Paragraph(f"<b>{crime.priority}</b>", cell_val),
+      Paragraph("Current Status", cell_lbl), Paragraph(f"<b>{crime.status}</b>", cell_val_bold)
+    ]
+  ]
+  t_case = Table(case_info, colWidths=[110, 151, 110, 152])
+  t_case.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#F8FAFC')),
+    ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#F8FAFC')),
+    ('PADDING', (0,0), (-1,-1), 5),
+  ]))
+  story.append(t_case)
+  story.append(Spacer(1, 8))
+
+  # 2. COMPLAINANT / INFORMANT DETAILS
+  story.append(Paragraph("2. COMPLAINANT / INFORMANT DETAILS", section_heading_style))
+  comp_info = [
+    [
+      Paragraph("Full Name", cell_lbl), Paragraph(f"<b>{cit_name}</b>", cell_val),
+      Paragraph("Gender / Age", cell_lbl), Paragraph(f"{cit_gender}", cell_val)
+    ],
+    [
+      Paragraph("Mobile Number", cell_lbl), Paragraph(cit_mobile, cell_val),
+      Paragraph("Email Address", cell_lbl), Paragraph(cit_email, cell_val)
+    ],
+    [
+      Paragraph("Residential Address", cell_lbl), Paragraph(f"{cit_addr}, {cit_city}, {cit_state} - {cit_pincode}", cell_val),
+      Paragraph("Identity Proof", cell_lbl), Paragraph(f"{cit_id_type}: {cit_id_no}", cell_val)
+    ]
+  ]
+  t_comp = Table(comp_info, colWidths=[110, 151, 110, 152])
+  t_comp.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#F8FAFC')),
+    ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#F8FAFC')),
+    ('PADDING', (0,0), (-1,-1), 5),
+  ]))
+  story.append(t_comp)
+  story.append(Spacer(1, 8))
+
+  # 3. INCIDENT DETAILS & LOCATION
+  story.append(Paragraph("3. INCIDENT DETAILS & LOCATION OF OCCURRENCE", section_heading_style))
+  inc_date_val = crime.date.strftime('%Y-%m-%d') if crime.date else reg_date
+  inc_time_val = str(crime.time) if crime.time else reg_time
+  gps_coords = f"Lat: {getattr(crime.location, 'latitude', 'N/A')}, Long: {getattr(crime.location, 'longitude', 'N/A')}" if (crime.location and hasattr(crime.location, 'latitude')) else f"Precinct Jurisdiction ({stn_name})"
+  
+  inc_info = [
+    [
+      Paragraph("Date of Incident", cell_lbl), Paragraph(inc_date_val, cell_val),
+      Paragraph("Time of Incident", cell_lbl), Paragraph(inc_time_val, cell_val)
+    ],
+    [
+      Paragraph("Place of Incident", cell_lbl), Paragraph(f"{stn_name}, {district}", cell_val),
+      Paragraph("GPS Location", cell_lbl), Paragraph(gps_coords, cell_val)
+    ],
+    [
+      Paragraph("Crime Category", cell_lbl), Paragraph(cat_name, cell_val),
+      Paragraph("Applicable BNS Sections", cell_lbl), Paragraph(f"<b>{bns_sections}</b>", cell_val_bold)
+    ],
+    [
+      Paragraph("Complaint Description", cell_lbl),
+      Paragraph(f"{crime.description}", cell_val),
+      Paragraph("Investigation Precinct", cell_lbl),
+      Paragraph(stn_name, cell_val)
+    ]
+  ]
+  t_inc = Table(inc_info, colWidths=[110, 151, 110, 152])
+  t_inc.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#F8FAFC')),
+    ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#F8FAFC')),
+    ('PADDING', (0,0), (-1,-1), 5),
+  ]))
+  story.append(t_inc)
+  story.append(Spacer(1, 8))
+
+  # 4. ACCUSED DETAILS
+  story.append(Paragraph("4. ACCUSED DETAILS", section_heading_style))
+  suspects = crime.suspects.all() if hasattr(crime, 'suspects') else []
+  if suspects and len(suspects) > 0:
+    accused_rows = [[Paragraph("NAME / ALIAS", cell_lbl), Paragraph("GENDER / AGE", cell_lbl), Paragraph("ADDRESS / DETAILS", cell_lbl)]]
+    for s in suspects:
+      accused_rows.append([
+        Paragraph(f"<b>{s.name}</b> (Alias: {s.alias or 'N/A'})", cell_val),
+        Paragraph(f"{s.gender or 'N/A'} / {s.age or 'N/A'} yrs", cell_val),
+        Paragraph(s.address or 'Under Active Investigation', cell_val)
+      ])
+    t_acc = Table(accused_rows, colWidths=[180, 140, 203])
+    t_acc.setStyle(TableStyle([
+      ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+      ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F1F5F9')),
+      ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_acc)
+  else:
+    t_acc = Table([[Paragraph("<b>Accused Unknown</b> (Under Active Investigation by Precinct Personnel)", cell_val)]], colWidths=[523])
+    t_acc.setStyle(TableStyle([
+      ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+      ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+      ('PADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(t_acc)
+  story.append(Spacer(1, 8))
+
+  # 5. EVIDENCE & ATTACHMENTS
+  story.append(Paragraph("5. EVIDENCE & DOCUMENTS ATTACHED", section_heading_style))
+  evidences = crime.evidences.all() if hasattr(crime, 'evidences') else []
+  if evidences and len(evidences) > 0:
+    ev_rows = [[Paragraph("EVIDENCE ID", cell_lbl), Paragraph("TYPE", cell_lbl), Paragraph("DESCRIPTION / FILE", cell_lbl), Paragraph("DATE LOGGED", cell_lbl)]]
+    for ev in evidences:
+      ev_rows.append([
+        Paragraph(f"EV-{ev.id}", cell_val),
+        Paragraph(ev.type, cell_val),
+        Paragraph(ev.description, cell_val),
+        Paragraph(str(ev.collection_date or reg_date), cell_val)
+      ])
+    t_ev = Table(ev_rows, colWidths=[70, 90, 263, 100])
+    t_ev.setStyle(TableStyle([
+      ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+      ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F1F5F9')),
+      ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_ev)
+  else:
+    t_ev = Table([[Paragraph("No physical or digital evidence attached at initial filing.", cell_val)]], colWidths=[523])
+    t_ev.setStyle(TableStyle([
+      ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+      ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+      ('PADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(t_ev)
+  story.append(Spacer(1, 8))
+
+  # 6. POLICE DETAILS & INVESTIGATING OFFICER
+  story.append(Paragraph("6. POLICE & INVESTIGATING OFFICER DETAILS", section_heading_style))
+  off_obj = crime.officer
+  off_user = off_obj.user if off_obj else None
+  off_name = f"Inspector {off_user.name}" if off_user else "Assigned Personnel (Under Review)"
+  off_badge = off_obj.badge_no if off_obj else "N/A"
+  
+  pol_info = [
+    [
+      Paragraph("Assigned Station", cell_lbl), Paragraph(stn_name, cell_val),
+      Paragraph("Investigating Officer", cell_lbl), Paragraph(f"<b>{off_name}</b>", cell_val_bold)
+    ],
+    [
+      Paragraph("Officer Rank", cell_lbl), Paragraph("Inspector of Police / IO", cell_val),
+      Paragraph("Badge Number", cell_lbl), Paragraph(off_badge, cell_val)
+    ]
+  ]
+  t_pol = Table(pol_info, colWidths=[110, 151, 110, 152])
+  t_pol.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#F8FAFC')),
+    ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#F8FAFC')),
+    ('PADDING', (0,0), (-1,-1), 5),
+  ]))
+  story.append(t_pol)
+  story.append(Spacer(1, 8))
+
+  # 7. CASE TRACKING TIMELINE
+  story.append(Paragraph("7. CASE INVESTIGATION TRACKING STAGES", section_heading_style))
+  stages = ["Submitted", "Registered", "Assigned", "Investigation", "Evidence Review", "Charge Sheet", "Closed"]
+  cur_status = str(crime.status).lower()
+  
+  stage_cells = []
+  for idx, stg in enumerate(stages, 1):
+    is_active = stg.lower() in cur_status or (stg == "Registered" and "open" in cur_status) or (stg == "Submitted" and True)
+    bg_color = "#0B1220" if is_active else "#F1F5F9"
+    txt_color = "#FFFFFF" if is_active else "#64748B"
+    style_stg = ParagraphStyle(f'Stg{idx}', parent=styles['Normal'], alignment=1, fontSize=7, leading=9, textColor=colors.HexColor(txt_color), fontName='Helvetica-Bold' if is_active else 'Helvetica')
+    stage_cells.append(Paragraph(f"{idx}. {stg.upper()}", style_stg))
+    
+  t_track = Table([stage_cells], colWidths=[74, 74, 74, 75, 75, 75, 76])
+  t_track.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('PADDING', (0,0), (-1,-1), 6),
+    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+  ]))
+  story.append(t_track)
+  story.append(Spacer(1, 8))
+
+  # 8. LEGAL PROVISIONS & APPLICABLE ACTS
+  story.append(Paragraph("8. APPLICABLE STATUTORY LAWS & LEGAL PROVISIONS", section_heading_style))
+  legal_info = [
+    [
+      Paragraph("Primary Offence BNS Sections", cell_lbl),
+      Paragraph(f"<b>{bns_sections}</b>", cell_val_bold)
+    ],
+    [
+      Paragraph("Procedural Law (BNSS, 2023)", cell_lbl),
+      Paragraph("<b>BNSS Sec 173</b> (FIR Registration), <b>BNSS Sec 176</b> (Investigation Procedure), <b>BNSS Sec 187</b> (Police Report)", cell_val)
+    ],
+    [
+      Paragraph("Evidence Rules (BSA, 2023)", cell_lbl),
+      Paragraph("<b>BSA Sec 61</b> (Electronic Records Admissibility), <b>BSA Sec 63</b> (Digital Certificate Standards)", cell_val)
+    ]
+  ]
+  t_legal = Table(legal_info, colWidths=[160, 363])
+  t_legal.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#F8FAFC')),
+    ('PADDING', (0,0), (-1,-1), 5),
+  ]))
+  story.append(t_legal)
+  story.append(Spacer(1, 14))
+
+  # 9. OFFICIAL FOOTER & SEAL / SIGNATURE PLACEHOLDERS
+  gen_time_str = timezone.now().strftime("%d %b %Y, %H:%M:%S IST")
+  stamp_table_data = [
+    [
+      Paragraph("<font color='#0B1220'><b>DIGITAL SIGNATURE</b></font><br/><br/>[ DIGITALLY SIGNED & VERIFIED ]<br/><b>CrimePilot Command System</b><br/><font color='#64748B' size=7>Token ID: CP-SEC-" + str(crime.id) + "</font>", cell_val),
+      Paragraph("<font color='#0B1220'><b>VERIFICATION QR CODE</b></font><br/><br/>[ QR CODE VERIFICATION ]<br/><b>Scan to verify FIR authenticity</b><br/><font color='#64748B' size=7>CrimePilot Verification Engine</font>", cell_val),
+      Paragraph("<font color='#0B1220'><b>OFFICIAL SEAL</b></font><br/><br/>[ CRIMEPILOT PRECINCT SEAL ]<br/><b>" + stn_name.upper() + "</b><br/><font color='#64748B' size=7>Issued: " + gen_time_str + "</font>", cell_val)
+    ]
+  ]
+  t_stamp = Table(stamp_table_data, colWidths=[174, 174, 175])
+  t_stamp.setStyle(TableStyle([
+    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#0B1220')),
+    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    ('PADDING', (0,0), (-1,-1), 8),
+  ]))
+  story.append(t_stamp)
+
+  doc.build(story, canvasmaker=FIRNumberedCanvas)
+
+

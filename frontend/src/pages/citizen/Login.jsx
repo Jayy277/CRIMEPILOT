@@ -78,14 +78,14 @@ const glass = {
 };
 
 const label = {
-  display:'block', fontSize:'9px', color:'#9AA4B2',
-  fontWeight:'800', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'6px',
+  display:'block', fontSize:'10.5px', color:'#9AA4B2',
+  fontWeight:'800', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'8px',
 };
 
 const inputStyle = {
   width:'100%', backgroundColor:'rgba(11,18,32,0.9)',
-  border:'1px solid rgba(0,217,255,0.2)', borderRadius:'8px',
-  padding:'10px 14px', color:'#FFFFFF', fontSize:'13px',
+  border:'1px solid rgba(0,217,255,0.25)', borderRadius:'10px',
+  padding:'13px 16px', color:'#FFFFFF', fontSize:'14.5px',
   outline:'none', boxSizing:'border-box', transition:'border-color .2s',
 };
 
@@ -261,23 +261,23 @@ export default function CitizenLogin() {
         </div>
 
         {/* ══════ CENTER — LOGIN CARD ══════ */}
-        <div style={{flex:'0 0 420px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
+        <div style={{flex:'0 0 500px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
           <div className="login-card" style={{
-            width:'420px', padding:'36px 38px',
-            borderRadius:'20px',
-            background:'rgba(8,16,32,0.88)',
-            border:'1px solid rgba(0,217,255,0.22)',
-            backdropFilter:'blur(18px)',
-            boxShadow:'0 0 40px rgba(0,217,255,0.18), inset 0 0 20px rgba(0,217,255,0.04)',
+            width:'500px', padding:'44px 46px',
+            borderRadius:'22px',
+            background:'rgba(8,16,32,0.92)',
+            border:'1px solid rgba(0,217,255,0.28)',
+            backdropFilter:'blur(20px)',
+            boxShadow:'0 0 50px rgba(0,217,255,0.22), inset 0 0 25px rgba(0,217,255,0.06)',
             transition:'box-shadow .3s',
           }}>
-            <div style={{textAlign:'center',marginBottom:'26px'}}>
-              <div style={{fontSize:'10px',color:'#9AA4B2',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'4px'}}>WELCOME TO</div>
-              <h2 style={{margin:0,fontSize:'22px',fontWeight:'900',letterSpacing:'-0.01em'}}>
+            <div style={{textAlign:'center',marginBottom:'30px'}}>
+              <div style={{fontSize:'11.5px',color:'#9AA4B2',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'6px'}}>WELCOME TO</div>
+              <h2 style={{margin:0,fontSize:'26px',fontWeight:'900',letterSpacing:'-0.01em'}}>
                 CrimePilot <span style={{color:'#00D9FF'}}>AI</span>
               </h2>
-              <div style={{fontSize:'9px',color:'#00D9FF',fontWeight:'800',letterSpacing:'0.08em',
-                textTransform:'uppercase',marginTop:'5px'}}>
+              <div style={{fontSize:'11px',color:'#00D9FF',fontWeight:'800',letterSpacing:'0.08em',
+                textTransform:'uppercase',marginTop:'6px'}}>
                 DIGITAL FIR & CITIZEN SAFETY PORTAL
               </div>
             </div>
@@ -344,30 +344,36 @@ export default function CitizenLogin() {
                     {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <Link to="/citizen/forgot-password" style={{ color: '#00D9FF', fontSize: '12px', fontWeight: '700', textDecoration: 'none' }}>
+                    Forgot Password?
+                  </Link>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
                 style={{
-                  marginTop: '6px',
-                  padding: '12px',
+                  marginTop: '8px',
+                  padding: '15px',
                   background: 'linear-gradient(90deg,#00B8D9,#00D9FF)',
                   color: '#060D1A',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   fontWeight: '900',
-                  fontSize: '13px',
+                  fontSize: '15px',
                   letterSpacing: '0.03em',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.7 : 1,
+                  boxShadow: '0 4px 20px rgba(0,217,255,0.3)',
                 }}
               >
                 {loading ? 'Authorizing...' : 'Secure Citizen Authorization'}
               </button>
             </form>
 
-            <div style={{textAlign:'center',marginTop:'18px',fontSize:'12px',color:'#9AA4B2'}}>
+            <div style={{textAlign:'center',marginTop:'22px',fontSize:'13.5px',color:'#9AA4B2'}}>
               New to the platform?{' '}
               <Link to="/citizen/register" style={{color:'#00D9FF',textDecoration:'none',fontWeight:'800'}}>
                 Register Citizen Account

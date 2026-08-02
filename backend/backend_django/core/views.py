@@ -890,16 +890,38 @@ class CitizenDownloadFIRView(APIView):
       if not citizen or crime.citizen != citizen:
         return Response({'success': False, 'message': 'Access denied to this FIR'}, status=status.HTTP_403_FORBIDDEN)
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="FIR-{crime.crime_id}.pdf"'
+    # Extract FIR Number
+    fir_number = (crime.crime_id or f"CRIME-{crime.id}").strip()
+    
+    # Extract & Sanitize Citizen Name
+    raw_name = ""
+    if crime.citizen and crime.citizen.user and crime.citizen.user.name:
+      raw_name = crime.citizen.user.name
+    elif hasattr(crime, 'citizen_name') and crime.citizen_name:
+      raw_name = crime.citizen_name
 
-    generate_report_pdf(
-      response,
-      f"FIR DETAILS COMPILATION - {crime.crime_id}",
-      f"Submitted by citizen: {crime.citizen.user.name if crime.citizen else 'Anonymous'}",
-      [crime],
-      f"Date Filed: {crime.date}"
-    )
+    import re
+    clean_name = ""
+    if raw_name:
+      words = raw_name.strip().split()
+      capitalized_words = [w.capitalize() for w in words]
+      joined = "".join(capitalized_words)
+      clean_name = re.sub(r'[^a-zA-Z0-9]', '', joined)
+
+    # Format dynamic filename: CrimePilot_FIR_<FIR_NUMBER>_<CITIZEN_NAME>.pdf
+    if clean_name:
+      filename = f"CrimePilot_FIR_{fir_number}_{clean_name}.pdf"
+    else:
+      filename = f"CrimePilot_FIR_{fir_number}.pdf"
+
+    from .utils import generate_official_indian_fir_pdf
+    from urllib.parse import quote
+
+    response = HttpResponse(content_type='application/pdf')
+    encoded_filename = quote(filename)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}'
+
+    generate_official_indian_fir_pdf(response, crime)
     return response
 
 

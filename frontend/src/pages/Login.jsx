@@ -1,7 +1,50 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+
+const ROLE_CONFIGS = {
+  citizen: {
+    roleKey: 'citizen',
+    badgeText: '🟢 CITIZEN PORTAL',
+    badgeColor: '#10B981',
+    badgeBg: 'rgba(16, 185, 129, 0.12)',
+    badgeBorder: 'rgba(16, 185, 129, 0.35)',
+    title: 'Citizen Login',
+    subtitle: 'Sign in to access your Citizen Portal, submit FIRs, track complaints, and receive investigation updates.',
+    documentTitle: 'Citizen Login | CrimePilot',
+  },
+  officer: {
+    roleKey: 'officer',
+    badgeText: '🔵 OFFICER PORTAL',
+    badgeColor: '#00D9FF',
+    badgeBg: 'rgba(0, 217, 255, 0.12)',
+    badgeBorder: 'rgba(0, 217, 255, 0.35)',
+    title: 'Officer Login',
+    subtitle: 'Sign in to access investigation tools, assigned cases, evidence management, and field operations.',
+    documentTitle: 'Officer Login | CrimePilot',
+  },
+  analyst: {
+    roleKey: 'analyst',
+    badgeText: '🟣 ANALYST PORTAL',
+    badgeColor: '#A855F7',
+    badgeBg: 'rgba(168, 85, 247, 0.12)',
+    badgeBorder: 'rgba(168, 85, 247, 0.35)',
+    title: 'Analyst Login',
+    subtitle: 'Sign in to access crime intelligence, AI analytics, legal prediction, and crime pattern analysis.',
+    documentTitle: 'Analyst Login | CrimePilot',
+  },
+  admin: {
+    roleKey: 'admin',
+    badgeText: '🔴 ADMIN PORTAL',
+    badgeColor: '#EF4444',
+    badgeBg: 'rgba(239, 68, 68, 0.12)',
+    badgeBorder: 'rgba(239, 68, 68, 0.35)',
+    title: 'Admin Login',
+    subtitle: 'Sign in to access the CrimePilot Command Center, manage users, officers, reports, AI modules, and system administration.',
+    documentTitle: 'Admin Login | CrimePilot',
+  },
+};
 
 const Login = () => {
   const { user, login } = useContext(AuthContext);
@@ -14,12 +57,25 @@ const Login = () => {
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Detect role from URL query param (?role=officer) or location state or fallback to 'citizen'
+  const roleParam = searchParams.get('role') || location.state?.role;
+  const currentRole = (roleParam ? String(roleParam).toLowerCase() : 'citizen');
+  const roleConfig = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.citizen;
+
+  // Dynamic Browser Document Title
+  useEffect(() => {
+    document.title = roleConfig.documentTitle;
+  }, [roleConfig]);
 
   // If already logged in, redirect based on role
   useEffect(() => {
     if (user) {
       if (user.role === 'admin') navigate('/admin/dashboard');
       else if (user.role === 'analyst') navigate('/analyst/dashboard');
+      else if (user.role === 'citizen') navigate('/citizen/dashboard');
       else navigate('/officer/dashboard');
     }
   }, [user, navigate]);
@@ -50,6 +106,7 @@ const Login = () => {
     if (result.success) {
       if (result.role === 'admin') navigate('/admin/dashboard');
       else if (result.role === 'analyst') navigate('/analyst/dashboard');
+      else if (result.role === 'citizen') navigate('/citizen/dashboard');
       else navigate('/officer/dashboard');
     } else {
       setError(result.message);
@@ -461,14 +518,38 @@ const Login = () => {
                   height: '48px',
                   borderRadius: '10px',
                   objectFit: 'cover',
-                  margin: '0 auto 12px',
+                  margin: '0 auto 10px',
                   display: 'block',
                   boxShadow: '0 0 10px rgba(0, 240, 255, 0.3)',
                   border: '1.5px solid rgba(0, 240, 255, 0.3)'
                 }}
               />
-              <h2 style={{ fontSize: '22px', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Access CrimePilot</h2>
-              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Enter credentials to access secure terminal</p>
+
+              {/* Small Colored Role Badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                backgroundColor: roleConfig.badgeBg,
+                border: `1px solid ${roleConfig.badgeBorder}`,
+                color: roleConfig.badgeColor,
+                fontSize: '10.5px',
+                fontWeight: '800',
+                letterSpacing: '1px',
+                marginBottom: '10px',
+                boxShadow: `0 0 12px ${roleConfig.badgeBg}`
+              }}>
+                {roleConfig.badgeText}
+              </div>
+
+              <h2 style={{ fontSize: '22px', color: '#fff', fontFamily: 'Outfit, sans-serif', margin: 0 }}>
+                {roleConfig.title}
+              </h2>
+              <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px', lineHeight: '1.5' }}>
+                {roleConfig.subtitle}
+              </p>
             </div>
 
             {error && (
@@ -554,6 +635,16 @@ const Login = () => {
                     {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
                 </div>
+                {currentRole === 'citizen' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', fontSize: '11px' }}>
+                    <Link to="/citizen/forgot-password" style={{ color: '#00D9FF', textDecoration: 'none', fontWeight: 'bold' }}>
+                      Forgot Password?
+                    </Link>
+                    <Link to="/citizen/register" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+                      New Citizen? <span style={{ color: '#10B981', fontWeight: 'bold' }}>Register</span>
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <button

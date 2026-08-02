@@ -193,4 +193,59 @@ class Command(BaseCommand):
         linked_crime=crime
       )
 
-    self.stdout.write(self.style.SUCCESS(f'Successfully seeded 30 multi-city cases across Ahmedabad, Rajkot, and Gandhinagar!'))
+    # 6. Seed 25 Gujarat Citizen Accounts Across 25 Cities
+    citizens_25 = [
+      ('Rahul Shah', 'rahul.shah@gmail.com', 'Rahul@1234', 'Ahmedabad', '102 Satellite Road, Ahmedabad', '9876500101', '123456789011', 'Male'),
+      ('Priya Patel', 'priya.patel@gmail.com', 'Priya@1234', 'Surat', '45 Ring Road, Surat', '9876500102', '123456789012', 'Female'),
+      ('Amit Joshi', 'amit.joshi@gmail.com', 'Amit@1234', 'Vadodara', '12 Alkapuri Complex, Vadodara', '9876500103', '123456789013', 'Male'),
+      ('Sneha Trivedi', 'sneha.trivedi@gmail.com', 'Sneha@1234', 'Rajkot', '88 Kalawad Road, Rajkot', '9876500104', '123456789014', 'Female'),
+      ('Hardik Mehta', 'hardik.mehta@gmail.com', 'Hardik@1234', 'Gandhinagar', 'Sector 7 Housing, Gandhinagar', '9876500105', '123456789015', 'Male'),
+      ('Riya Desai', 'riya.desai@gmail.com', 'Riya@1234', 'Bhavnagar', '15 Waghawadi Road, Bhavnagar', '9876500106', '123456789016', 'Female'),
+      ('Vikram Vora', 'vikram.vora@gmail.com', 'Vikram@1234', 'Jamnagar', '30 Bedi Port Road, Jamnagar', '9876500107', '123456789017', 'Male'),
+      ('Pooja Bhatt', 'pooja.bhatt@gmail.com', 'Pooja@1234', 'Junagadh', '22 Girnar Road, Junagadh', '9876500108', '123456789018', 'Female'),
+      ('Devansh Solanki', 'devansh.solanki@gmail.com', 'Devansh@1234', 'Anand', '18 Amul Dairy Road, Anand', '9876500109', '123456789019', 'Male'),
+      ('Ananya Parikh', 'ananya.parikh@gmail.com', 'Ananya@1234', 'Mehsana', '7 Highway Enclave, Mehsana', '9876500110', '123456789020', 'Female'),
+      ('Jayesh Rathod', 'jayesh.rathod@gmail.com', 'Jayesh@1234', 'Palanpur', '54 Station Road, Palanpur', '9876500111', '123456789021', 'Male'),
+      ('Sonal Chawla', 'sonal.chawla@gmail.com', 'Sonal@1234', 'Morbi', '9 Ceramic Zone, Morbi', '9876500112', '123456789022', 'Female'),
+      ('Tarun Rajput', 'tarun.rajput@gmail.com', 'Tarun@1234', 'Bharuch', '41 Narmada Bridge Area, Bharuch', '9876500113', '123456789023', 'Male'),
+      ('Neha Verma', 'neha.verma@gmail.com', 'Neha@1234', 'Valsad', '19 Tithal Beach Road, Valsad', '9876500114', '123456789024', 'Female'),
+      ('Bhavna Solanki', 'bhavna.solanki@gmail.com', 'Bhavna@1234', 'Navsari', '63 Tower Road, Navsari', '9876500115', '123456789025', 'Female'),
+      ('Chirag Parmar', 'chirag.parmar@gmail.com', 'Chirag@1234', 'Porbandar', '11 Chowpati Marg, Porbandar', '9876500116', '123456789026', 'Male'),
+      ('Dipti Shah', 'dipti.shah@gmail.com', 'Dipti@1234', 'Amreli', '27 Station Circle, Amreli', '9876500117', '123456789027', 'Female'),
+      ('Gopal Trivedi', 'gopal.trivedi@gmail.com', 'Gopal@1234', 'Patan', '35 Rani ki Vav Road, Patan', '9876500118', '123456789028', 'Male'),
+      ('Hema Patel', 'hema.patel@gmail.com', 'Hema@1234', 'Nadiad', '88 College Road, Nadiad', '9876500119', '123456789029', 'Female'),
+      ('Kunal Joshi', 'kunal.joshi@gmail.com', 'Kunal@1234', 'Godhra', '14 Bus Stand Colony, Godhra', '9876500120', '123456789030', 'Male'),
+      ('Maya Mehta', 'maya.mehta@gmail.com', 'Maya@1234', 'Veraval', '5 Somnath Temple Way, Veraval', '9876500121', '123456789031', 'Female'),
+      ('Pankaj Rana', 'pankaj.rana@gmail.com', 'Pankaj@1234', 'Botad', '72 Market Yard, Botad', '9876500122', '123456789032', 'Male'),
+      ('Rekha Bhatt', 'rekha.bhatt@gmail.com', 'Rekha@1234', 'Dahod', '93 Station Road, Dahod', '9876500123', '123456789033', 'Female'),
+      ('Siddharth Varma', 'siddharth.varma@gmail.com', 'Siddharth@1234', 'Himmatnagar', '48 Sabarkantha Society, Himmatnagar', '9876500124', '123456789034', 'Male'),
+      ('Tanvi Chawla', 'tanvi.chawla@gmail.com', 'Tanvi@1234', 'Bhuj', '16 Kutch Craft Avenue, Bhuj', '9876500125', '123456789035', 'Female')
+    ]
+
+    for c_name, c_email, c_pwd, c_city, c_addr, c_mob, c_aadhaar, c_gen in citizens_25:
+      u, _ = User.objects.get_or_create(
+        email=c_email,
+        defaults={'name': c_name, 'role': 'citizen', 'is_active': True}
+      )
+      u.name = c_name
+      u.role = 'citizen'
+      u.is_active = True
+      u.set_password(c_pwd)
+      u.save()
+
+      Citizen.objects.update_or_create(
+        user=u,
+        defaults={
+          'mobile': c_mob,
+          'address': c_addr,
+          'city': c_city,
+          'state': 'Gujarat',
+          'identity_type': 'Aadhaar Card',
+          'identity_number': c_aadhaar,
+          'gender': c_gen,
+          'status': 'verified'
+        }
+      )
+
+    self.stdout.write(self.style.SUCCESS(f'Successfully seeded 30 multi-city cases and 25 verified citizen accounts!'))
+

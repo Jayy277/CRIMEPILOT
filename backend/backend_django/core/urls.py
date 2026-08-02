@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
@@ -14,7 +14,7 @@ from .admin_views import (
   AdminUsersListView, AdminUserDetailView, AdminUserToggleActiveView, 
   AdminStaffSearchView, AdminSystemLogsView
 )
-from .ai_views import AIChatView
+from .ai_views import AIChatView, AIPredictView
 from authentication.views import CitizenSignupView
 
 router = DefaultRouter(trailing_slash=False) # Keep URL compatibility matching Express paths
@@ -35,35 +35,37 @@ urlpatterns = [
   path('', include(router.urls)),
 
   # AI Assistant Conversational Endpoint
-  path('ai/chat', AIChatView.as_view(), name='ai_chat'),
+  re_path(r'^ai/chat/?$', AIChatView.as_view(), name='ai_chat'),
+  re_path(r'^ai/predict/?$', AIPredictView.as_view(), name='ai_predict'),
 
   # Notification endpoints
-  path('notifications', NotificationViewSet.as_view({'get': 'list'}), name='notifications_list'),
-  path('notifications/read-all', NotificationViewSet.as_view({'patch': 'mark_all_read'}), name='notifications_read_all'),
-  path('notifications/<int:pk>/read', NotificationViewSet.as_view({'patch': 'mark_read'}), name='notifications_mark_read'),
+  re_path(r'^notifications/?$', NotificationViewSet.as_view({'get': 'list'}), name='notifications_list'),
+  re_path(r'^notifications/read-all/?$', NotificationViewSet.as_view({'patch': 'mark_all_read'}), name='notifications_read_all'),
+  re_path(r'^notifications/(?P<pk>\d+)/read/?$', NotificationViewSet.as_view({'patch': 'mark_read'}), name='notifications_mark_read'),
 
   # Dashboard endpoints
-  path('dashboard/officer', OfficerDashboardView.as_view(), name='dashboard_officer'),
-  path('dashboard/analyst', AnalystDashboardView.as_view(), name='dashboard_analyst'),
-  path('dashboard/admin', AdminDashboardView.as_view(), name='dashboard_admin'),
-  path('dashboard/report', ReportView.as_view(), name='dashboard_report'),
+  re_path(r'^dashboard/officer/?$', OfficerDashboardView.as_view(), name='dashboard_officer'),
+  re_path(r'^dashboard/analyst/?$', AnalystDashboardView.as_view(), name='dashboard_analyst'),
+  re_path(r'^dashboard/admin/?$', AdminDashboardView.as_view(), name='dashboard_admin'),
+  re_path(r'^dashboard/report/?$', ReportView.as_view(), name='dashboard_report'),
 
   # Admin management endpoints
-  path('admin/users', AdminUsersListView.as_view(), name='admin_users_list'),
-  path('admin/users/<int:pk>', AdminUserDetailView.as_view(), name='admin_user_detail'),
-  path('admin/users/<int:pk>/toggle-active', AdminUserToggleActiveView.as_view(), name='admin_user_toggle_active'),
-  path('admin/staff-search', AdminStaffSearchView.as_view(), name='admin_staff_search'),
-  path('admin/logs', AdminSystemLogsView.as_view(), name='admin_system_logs'),
+  re_path(r'^admin/users/?$', AdminUsersListView.as_view(), name='admin_users_list'),
+  re_path(r'^admin/users/(?P<pk>\d+)/?$', AdminUserDetailView.as_view(), name='admin_user_detail'),
+  re_path(r'^admin/users/(?P<pk>\d+)/toggle-active/?$', AdminUserToggleActiveView.as_view(), name='admin_user_toggle_active'),
+  re_path(r'^admin/staff-search/?$', AdminStaffSearchView.as_view(), name='admin_staff_search'),
+  re_path(r'^admin/logs/?$', AdminSystemLogsView.as_view(), name='admin_system_logs'),
 
   # Citizen routes
-  path('citizen/register', CitizenSignupView.as_view(), name='citizen_register_core'),
-  path('citizen/fir', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
-  path('citizen/my-cases', CitizenFIRListView.as_view(), name='citizen_fir_list'),
-  path('citizen/cases/<int:crime_pk>', CitizenFIRDetailView.as_view(), name='citizen_fir_detail'),
-  path('citizen/cases/<int:crime_pk>/evidence', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
-  path('citizen/cases/<int:crime_pk>/download', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
+  re_path(r'^citizen/register/?$', CitizenSignupView.as_view(), name='citizen_register_core'),
+  re_path(r'^citizen/fir/?$', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
+  re_path(r'^citizen/my-cases/?$', CitizenFIRListView.as_view(), name='citizen_fir_list'),
+  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/?$', CitizenFIRDetailView.as_view(), name='citizen_fir_detail'),
+  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/evidence/?$', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
+  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/download/?$', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
   
   # Admin citizen lists & verify
-  path('admin/citizens', AdminCitizenListView.as_view(), name='admin_citizen_list'),
-  path('admin/citizens/<int:citizen_pk>/verify', AdminVerifyCitizenView.as_view(), name='admin_verify_citizen'),
+  re_path(r'^admin/citizens/?$', AdminCitizenListView.as_view(), name='admin_citizen_list'),
+  re_path(r'^admin/citizens/(?P<citizen_pk>\d+)/verify/?$', AdminVerifyCitizenView.as_view(), name='admin_verify_citizen'),
 ]
+

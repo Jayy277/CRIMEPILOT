@@ -397,12 +397,12 @@ const Navbar = ({ toggleSidebar }) => {
                 >
                   {/* CITIZEN PORTAL */}
                   <div>
-                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#00D9FF', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#10B981', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
                       Citizen Portal
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <Link
-                        to="/citizen/login"
+                        to="/login?role=citizen"
                         onClick={() => setDropdownOpen(false)}
                         className="dropdown-item"
                         style={{
@@ -420,7 +420,7 @@ const Navbar = ({ toggleSidebar }) => {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <FiUser style={{ color: '#00D9FF', fontSize: '15px' }} />
+                          <FiUser style={{ color: '#10B981', fontSize: '15px' }} />
                           <span>Citizen Login</span>
                         </div>
                         <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
@@ -444,7 +444,7 @@ const Navbar = ({ toggleSidebar }) => {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <FiEdit style={{ color: '#00D9FF', fontSize: '14px' }} />
+                          <FiEdit style={{ color: '#10B981', fontSize: '14px' }} />
                           <span>Citizen Register</span>
                         </div>
                         <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
@@ -456,11 +456,11 @@ const Navbar = ({ toggleSidebar }) => {
 
                   {/* OFFICER PORTAL */}
                   <div>
-                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#3B82F6', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#00D9FF', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
                       Officer Portal
                     </div>
                     <Link
-                      to="/login"
+                      to="/login?role=officer"
                       onClick={() => setDropdownOpen(false)}
                       className="dropdown-item"
                       style={{
@@ -478,7 +478,7 @@ const Navbar = ({ toggleSidebar }) => {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <FiShield style={{ color: '#3B82F6', fontSize: '15px' }} />
+                        <FiShield style={{ color: '#00D9FF', fontSize: '15px' }} />
                         <span>Officer Login</span>
                       </div>
                       <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
@@ -493,7 +493,7 @@ const Navbar = ({ toggleSidebar }) => {
                       Analyst Portal
                     </div>
                     <Link
-                      to="/login"
+                      to="/login?role=analyst"
                       onClick={() => setDropdownOpen(false)}
                       className="dropdown-item"
                       style={{
@@ -512,7 +512,7 @@ const Navbar = ({ toggleSidebar }) => {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <FiBarChart2 style={{ color: '#A855F7', fontSize: '15px' }} />
-                        <span>Analyser Login</span>
+                        <span>Analyst Login</span>
                       </div>
                       <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />
                     </Link>
@@ -522,11 +522,11 @@ const Navbar = ({ toggleSidebar }) => {
 
                   {/* ADMIN PORTAL */}
                   <div>
-                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#F97316', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: '#EF4444', letterSpacing: '0.08em', marginBottom: '6px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
                       Admin Portal
                     </div>
                     <Link
-                      to="/login"
+                      to="/login?role=admin"
                       onClick={() => setDropdownOpen(false)}
                       className="dropdown-item"
                       style={{
@@ -544,7 +544,7 @@ const Navbar = ({ toggleSidebar }) => {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <CrownIcon size={14} color="#fbbf24" />
+                        <CrownIcon size={14} color="#EF4444" />
                         <span>Admin Login</span>
                       </div>
                       <FiChevronRight className="arrow-icon" style={{ color: '#94a3b8', opacity: 0.5, transition: 'all 0.2s' }} />

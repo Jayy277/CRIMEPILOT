@@ -12,12 +12,17 @@ def generate_otp(length=6):
 def send_otp_email(to_email, otp_code):
     """
     Sends an OTP email using Django's SMTP backend.
+    Sender: settings.EMAIL_HOST_USER (crimepilot111@gmail.com)
+    Recipient: to_email (the email entered by the user)
     """
+    clean_to_email = str(to_email).strip().lower()
+    sender_email = getattr(settings, 'EMAIL_HOST_USER', getattr(settings, 'DEFAULT_FROM_EMAIL', 'crimepilot111@gmail.com'))
+
     subject = "Your CrimePilot AI Verification Code"
     message = f"""
     Dear Citizen,
 
-    Your One-Time Password (OTP) for CrimePilot AI Registration is:
+    Your One-Time Password (OTP) for CrimePilot AI Account Verification is:
 
     {otp_code}
 
@@ -31,7 +36,7 @@ def send_otp_email(to_email, otp_code):
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0d1117; color: #c9d1d9; padding: 20px; border-radius: 10px; border: 1px solid #30363d;">
         <h2 style="color: #58a6ff; text-align: center; border-bottom: 1px solid #30363d; padding-bottom: 10px;">CrimePilot AI</h2>
         <p style="font-size: 16px;">Dear Citizen,</p>
-        <p style="font-size: 16px;">Your One-Time Password (OTP) for registration is:</p>
+        <p style="font-size: 16px;">Your One-Time Password (OTP) for account verification is:</p>
         <div style="text-align: center; margin: 30px 0;">
             <span style="font-size: 32px; font-weight: bold; background-color: #1f2428; padding: 15px 30px; border-radius: 8px; color: #58a6ff; letter-spacing: 5px;">
                 {otp_code}
@@ -44,17 +49,21 @@ def send_otp_email(to_email, otp_code):
     """
 
     try:
-        logger.info(f"[EmailService] Sending OTP to {to_email}")
+        logger.info(f"[EmailService] Sending OTP from {sender_email} to RECIPIENT: {clean_to_email}")
+        print(f"[EmailService DISPATCH] SENDER: {sender_email} ===> RECIPIENT: {clean_to_email} | OTP: {otp_code}")
         send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[to_email],
+            from_email=sender_email,
+            recipient_list=[clean_to_email],
             fail_silently=False,
             html_message=html_message
         )
-        logger.info(f"[EmailService] Successfully sent OTP to {to_email}")
+        logger.info(f"[EmailService] Successfully sent OTP to {clean_to_email}")
+        print(f"[EmailService SUCCESS] Sent OTP to {clean_to_email}")
         return True, "Email sent successfully"
     except Exception as e:
-        logger.error(f"[EmailService] Failed to send OTP to {to_email}: {str(e)}")
+        logger.error(f"[EmailService] Failed to send OTP to {clean_to_email}: {str(e)}")
+        print(f"[EmailService ERROR] Failed to send OTP to {clean_to_email}: {e}")
         return False, str(e)
+

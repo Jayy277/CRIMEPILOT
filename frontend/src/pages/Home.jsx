@@ -236,9 +236,6 @@ const Home = () => {
             </p>
 
             <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
-              <Link to="/login" className="btn btn-primary" style={{ padding: '14px 28px', backgroundColor: '#00D9FF', color: '#0B1220', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #00D9FF' }}>
-                Launch Secure Portal
-              </Link>
               <button
                 onClick={() => navigate('/overview')}
                 style={{
@@ -496,7 +493,7 @@ const Home = () => {
                 </div>
                 <p style={{ fontSize: '12px', color: '#9AA4B2', lineHeight: '1.5', margin: 0, minHeight: '60px' }}>{portal.desc}</p>
                 <Link
-                  to={portal.role === 'citizen' ? '/citizen/login' : '/login'}
+                  to={`/login?role=${portal.role}`}
                   style={{
                     marginTop: '8px',
                     display: 'block',

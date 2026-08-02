@@ -33,9 +33,17 @@ class LoginView(APIView):
         status=status.HTTP_400_BAD_REQUEST
       )
 
-    user = User.objects.filter(email__iexact=username_or_email).first()
+    query_val = str(username_or_email).strip()
+    user = User.objects.filter(email__iexact=query_val).first()
     if not user:
-      user = User.objects.filter(name=username_or_email).first()
+      user = User.objects.filter(name__iexact=query_val).first()
+    if not user:
+      from .models import Citizen
+      clean_mobile = re.sub(r'\D', '', query_val)
+      if clean_mobile:
+        citizen = Citizen.objects.filter(mobile=clean_mobile).first()
+        if citizen:
+          user = citizen.user
 
     if not user:
       return Response({'success': False, 'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -130,27 +138,38 @@ class SignupView(APIView):
     try:
       if role == 'officer':
         badge_no = data.get('badgeNo')
-        station_id = data.get('station')
+        station_val = data.get('station')
         contact = data.get('contact')
 
-        if not badge_no or not station_id or not contact:
+        from core.models import Location
+        loc_obj = None
+        if station_val:
+          if str(station_val).isdigit():
+            loc_obj = Location.objects.filter(id=int(station_val)).first()
+          if not loc_obj:
+            loc_obj = Location.objects.filter(police_station__icontains=str(station_val)).first()
+
+        if not loc_obj:
+          loc_obj = Location.objects.first()
+
+        if not badge_no or not loc_obj or not contact:
           user.delete()
           return Response(
-            {'success': False, 'message': 'Officer requires badgeNo, station, and contact'},
+            {'success': False, 'message': 'Officer requires badgeNo, valid police station, and contact'},
             status=status.HTTP_400_BAD_REQUEST
           )
 
-        if not re.match(r'^[789]\d{9}$', str(contact)):
+        if not re.match(r'^[6-9]\d{9}$', str(contact)):
           user.delete()
           return Response(
-            {'success': False, 'message': 'Contact phone number must be 10 digits starting with 7, 8, or 9.'},
+            {'success': False, 'message': 'Contact phone number must be 10 digits starting with 6, 7, 8, or 9.'},
             status=status.HTTP_400_BAD_REQUEST
           )
 
         officer = Officer.objects.create(
           user=user,
           badge_no=badge_no,
-          station_id=station_id,
+          station=loc_obj,
           contact=contact
         )
         details_data = OfficerSerializer(officer).data
@@ -376,9 +395,15 @@ class CitizenSignupView(APIView):
     if not verified_otp:
       return Response({'success': False, 'message': 'Email has not been verified.'}, status=status.HTTP_403_FORBIDDEN)
 
-    # Req 9: Return 409 if email already exists
-    if User.objects.filter(email__iexact=email).exists():
-      return Response({'success': False, 'message': 'Email already registered'}, status=status.HTTP_409_CONFLICT)
+    # Check if Email or Mobile Number already exists
+    clean_mobile = re.sub(r'\D', '', str(mobile))
+    from .models import Citizen
+    if User.objects.filter(email__iexact=email).exists() or Citizen.objects.filter(mobile=clean_mobile).exists():
+      return Response({
+        'success': False,
+        'already_registered': True,
+        'message': 'An account with this Email Address or Mobile Number already exists. Please login to continue.'
+      }, status=status.HTTP_409_CONFLICT)
 
     if not re.match(r'^[6-9]\d{9}$', str(mobile)):
       return Response({'success': False, 'message': 'Mobile number must be compulsory 10 digits starting with 6, 7, 8, or 9.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -568,9 +593,17 @@ class SendEmailOTPView(APIView):
     if recent_otp and (timezone.now() - recent_otp.created_at).total_seconds() < 60:
       return Response({'success': False, 'message': 'Please wait 60 seconds before requesting another OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
     
-    # Check if already registered
-    if User.objects.filter(email__iexact=email).exists():
-      return Response({'success': False, 'message': 'Email is already registered.'}, status=status.HTTP_400_BAD_REQUEST)
+    otp_type = request.data.get('type', 'signup')
+    if otp_type == 'forgot_password':
+      if not User.objects.filter(email__iexact=email).exists():
+        return Response({'success': False, 'message': 'No registered account found with this email address.'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+      if User.objects.filter(email__iexact=email).exists():
+        return Response({
+          'success': False,
+          'already_registered': True,
+          'message': 'An account with this Email Address or Mobile Number already exists. Please login to continue.'
+        }, status=status.HTTP_409_CONFLICT)
       
     # Check max resend attempts within last 5 minutes
     five_mins_ago = timezone.now() - timedelta(minutes=5)
@@ -592,7 +625,138 @@ class SendEmailOTPView(APIView):
       expires_at=timezone.now() + timedelta(minutes=5)
     )
     
-    return Response({'success': True, 'message': 'OTP Sent Successfully'}, status=status.HTTP_200_OK)
+    return Response({'success': True, 'message': 'OTP sent successfully.'}, status=status.HTTP_200_OK)
+
+
+class CitizenForgotPasswordSendOTPView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    email = request.data.get('email')
+    if not email:
+      return Response({'success': False, 'message': 'Email address is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    email = email.lower().strip()
+
+    # Query CustomUser database first
+    user = User.objects.filter(email__iexact=email).first()
+    if not user:
+      return Response({
+        'success': False,
+        'not_registered': True,
+        'message': 'No CrimePilot Citizen account was found with this email address.'
+      }, status=status.HTTP_404_NOT_FOUND)
+
+    # Check rate limiting (60 seconds)
+    recent_otp = EmailOTP.objects.filter(email=email).order_by('-created_at').first()
+    if recent_otp and (timezone.now() - recent_otp.created_at).total_seconds() < 60:
+      return Response({
+        'success': False,
+        'message': 'Please wait 60 seconds before requesting another OTP.'
+      }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    # Generate 6-digit OTP
+    otp_code = generate_otp()
+    
+    # Send OTP and handle SMTP failure separately
+    success, msg = send_otp_email(email, otp_code)
+    if not success:
+      return Response({
+        'success': False,
+        'email_service_error': True,
+        'message': 'We found your account, but the email service is currently unavailable. Please try again in a few minutes.'
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Save to DB valid for 5 minutes
+    EmailOTP.objects.create(
+      email=email,
+      otp=otp_code,
+      expires_at=timezone.now() + timedelta(minutes=5)
+    )
+
+    return Response({
+      'success': True,
+      'message': 'A verification code has been sent to your registered email address. Please enter the OTP to continue.'
+    }, status=status.HTTP_200_OK)
+
+
+class CitizenForgotPasswordVerifyOTPView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+
+    if not email or not otp:
+      return Response({'success': False, 'message': 'Email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    email = email.lower().strip()
+    otp_record = EmailOTP.objects.filter(email=email).order_by('-created_at').first()
+
+    if not otp_record:
+      return Response({'success': False, 'message': 'No OTP requested for this email.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if timezone.now() > otp_record.expires_at:
+      return Response({'success': False, 'message': 'OTP Expired. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if otp_record.attempts >= 5:
+      return Response({'success': False, 'message': 'Please request a new OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    if otp_record.otp != str(otp).strip():
+      otp_record.attempts += 1
+      otp_record.save()
+      if otp_record.attempts >= 5:
+        return Response({'success': False, 'message': 'Please request a new OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+      return Response({'success': False, 'message': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    otp_record.verified = True
+    otp_record.save()
+    return Response({'success': True, 'message': 'OTP verified successfully.'}, status=status.HTTP_200_OK)
+
+
+class CitizenForgotPasswordResetView(APIView):
+  permission_classes = [AllowAny]
+
+  def post(self, request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+    new_password = request.data.get('newPassword')
+    confirm_password = request.data.get('confirmPassword')
+
+    if not email or not new_password or not confirm_password:
+      return Response({'success': False, 'message': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    email = email.lower().strip()
+
+    if new_password != confirm_password:
+      return Response({'success': False, 'message': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Password policy: Min 8 chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special Char
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$'
+    if not re.match(pattern, new_password):
+      return Response({
+        'success': False,
+        'message': 'Password must be at least 8 characters long, contain an uppercase letter, lowercase letter, number, and special character.'
+      }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check verified OTP
+    otp_record = EmailOTP.objects.filter(email=email, verified=True).order_by('-created_at').first()
+    if not otp_record or timezone.now() > otp_record.expires_at:
+      return Response({'success': False, 'message': 'OTP Expired. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.filter(email__iexact=email).first()
+    if not user:
+      return Response({'success': False, 'message': 'No registered account found with this email address.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Store password using Django hashing only
+    user.set_password(new_password)
+    user.save()
+
+    # Invalidate OTP after successful reset
+    EmailOTP.objects.filter(email=email).delete()
+
+    return Response({'success': True, 'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+
 
 
 class VerifyEmailOTPView(APIView):
