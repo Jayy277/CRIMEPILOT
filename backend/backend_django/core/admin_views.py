@@ -193,10 +193,15 @@ class AdminStaffSearchView(APIView):
     analysts_data = []
 
     if not role or role == 'officer':
+      from django.db.models import Count
       officer_query = Q(user_id__in=user_ids)
       if badge_no:
         officer_query &= Q(badge_no__icontains=badge_no)
-      officers = Officer.objects.filter(officer_query).select_related('user', 'station')
+      officers = Officer.objects.filter(officer_query).select_related('user', 'station').annotate(
+        total_cases=Count('crimes'),
+        active_cases=Count('crimes', filter=~Q(crimes__status__in=['Solved', 'Closed'])),
+        resolved_cases=Count('crimes', filter=Q(crimes__status__in=['Solved', 'Closed']))
+      )
       officers_data = OfficerSerializer(officers, many=True).data
 
     if not role or role == 'analyst':

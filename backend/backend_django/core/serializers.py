@@ -10,7 +10,9 @@ class LocationSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
     rep = super().to_representation(instance)
     rep['_id'] = str(instance.id)
-    rep['policeStation'] = rep.pop('police_station')
+    police_stn = instance.police_station
+    rep['police_station'] = police_stn
+    rep['policeStation'] = police_stn
     return rep
 
   def to_internal_value(self, data):
@@ -53,7 +55,16 @@ class CrimeSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
     rep = super().to_representation(instance)
     rep['_id'] = str(instance.id)
-    rep['crimeCategory'] = CrimeCategorySerializer(instance.crime_category).data
+    cid = instance.crime_id or f"CR-{instance.created_at.year if hasattr(instance, 'created_at') and instance.created_at else 2026}-{instance.id:05d}"
+    rep['crime_id'] = cid
+    rep['crimeId'] = cid
+    rep['firNumber'] = f"FIR-{cid}" if not cid.startswith('FIR-') else cid
+    rep['fir_number'] = rep['firNumber']
+    
+    cat_data = CrimeCategorySerializer(instance.crime_category).data
+    rep['crimeCategory'] = cat_data
+    rep['crime_category'] = cat_data
+    
     rep['location'] = LocationSerializer(instance.location).data
     rep['officer'] = OfficerSerializer(instance.officer).data
     rep['createdAt'] = instance.created_at

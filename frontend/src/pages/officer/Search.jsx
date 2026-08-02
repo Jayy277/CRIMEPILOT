@@ -25,16 +25,24 @@ const Search = () => {
     const fetchSearchOptions = async () => {
       try {
         setFetchingOptions(true);
-        const [categoriesRes, locationsRes] = await Promise.all([
-          axiosInstance.get('/admin/crime-categories'),
-          axiosInstance.get('/admin/locations'),
-        ]);
-
-        if (categoriesRes.data && categoriesRes.data.categories) {
-          setCategories(categoriesRes.data.categories);
+        let categoriesRes, locationsRes;
+        try {
+          [categoriesRes, locationsRes] = await Promise.all([
+            axiosInstance.get('/crime-categories'),
+            axiosInstance.get('/locations'),
+          ]);
+        } catch (e) {
+          [categoriesRes, locationsRes] = await Promise.all([
+            axiosInstance.get('/admin/crime-categories'),
+            axiosInstance.get('/admin/locations'),
+          ]);
         }
-        if (locationsRes.data && locationsRes.data.locations) {
-          setLocations(locationsRes.data.locations);
+
+        if (categoriesRes.data) {
+          setCategories(categoriesRes.data.categories || categoriesRes.data.results || (Array.isArray(categoriesRes.data) ? categoriesRes.data : []));
+        }
+        if (locationsRes.data) {
+          setLocations(locationsRes.data.locations || locationsRes.data.results || (Array.isArray(locationsRes.data) ? locationsRes.data : []));
         }
       } catch (err) {
         console.error('Error fetching search page filters:', err);

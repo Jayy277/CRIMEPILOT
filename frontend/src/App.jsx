@@ -103,7 +103,7 @@ function App() {
             <Route path="trends" element={<CrimeTrends />} />
             <Route path="heatmap" element={<Heatmap />} />
             <Route path="reports" element={<AnalystReports />} />
-            <Route path="prediction" element={<PredictionPlaceholder />} />
+            <Route path="prediction" element={<AILegalPrediction />} />
             <Route path="legal-prediction" element={<AILegalPrediction />} />
             <Route path="profile" element={<AnalystProfile />} />
             <Route path="cases/:id" element={<OfficerCrimeDetails />} /> {/* Reused CrimeDetails */}

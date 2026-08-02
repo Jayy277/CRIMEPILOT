@@ -112,6 +112,12 @@ export const getExpectedNextStep = (stageIndex, crime) => {
 const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
   if (!crime) return null;
 
+  const rawCid = crime.crime_id || crime.crimeId || crime.id || '';
+  const firNo = crime.firNumber || crime.fir_number || (rawCid.startsWith('FIR-') ? rawCid : `FIR-${rawCid}`);
+  const policeStation = crime.location?.policeStation || crime.location?.police_station || 'Jurisdiction Police Station';
+  const officerName = crime.officer?.user?.name || crime.officer?.name || 'Assigned Officer';
+  const officerBadge = crime.officer?.badgeNo || crime.officer?.badge_no || 'BADGE-OFFICER';
+
   const currentStageIdx = getStageIndex(crime.status);
   const progressPercent = Math.round(((currentStageIdx + 1) / INVESTIGATION_STAGES.length) * 100);
   const nextStep = getExpectedNextStep(currentStageIdx, crime);
@@ -129,7 +135,7 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
       date: formatDate(regDate),
       time: formatTime(regDate),
       title: 'FIR Submitted',
-      description: `Digital FIR ${crime.crime_id} successfully filed by citizen under category: ${crime.crime_category?.name || 'Complaint'}.`,
+      description: `Digital FIR ${firNo} successfully filed by citizen under category: ${crime.crime_category?.name || crime.crimeCategory?.name || 'Complaint'}.`,
       status: 'completed'
     });
 
@@ -151,8 +157,8 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
       timeline.push({
         date: formatDate(d),
         time: formatTime(d),
-        title: `Assigned to ${crime.location?.police_station || 'Jurisdiction Police Station'}`,
-        description: `Case dispatched to local station jurisdiction (${crime.location?.city || 'City'}, ${crime.location?.state || 'State'}).`,
+        title: `Assigned to ${policeStation}`,
+        description: `Case dispatched to local station jurisdiction (${crime.location?.city || 'Gujarat'}, Gujarat).`,
         status: 'completed'
       });
     }
@@ -160,12 +166,11 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
     // Stage 4
     if (currentStageIdx >= 3) {
       const d = new Date(regDate.getTime() + 120 * 60000);
-      const officerName = crime.officer?.user?.name || crime.officer?.name || 'Inspector Raj Mehta';
       timeline.push({
         date: formatDate(d),
         time: formatTime(d),
         title: 'Assigned Investigating Officer',
-        description: `Lead investigating officer assigned: ${officerName} (Badge No: ${crime.officer?.badge_no || 'POL-8942'}).`,
+        description: `Lead investigating officer assigned: ${officerName} (Badge No: ${officerBadge}).`,
         status: 'completed'
       });
     }
@@ -299,11 +304,11 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
                 LIVE CASE TRACKER
               </span>
               <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                FIR No: <strong style={{ color: '#fff', fontFamily: 'monospace' }}>{crime.crime_id}</strong>
+                FIR No: <strong style={{ color: '#00D9FF', fontFamily: 'monospace' }}>{firNo}</strong>
               </span>
             </div>
             <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginTop: '6px', fontFamily: 'Outfit, sans-serif' }}>
-              {crime.crime_category?.name || 'Crime Report'} Investigation Progress
+              {crime.crime_category?.name || crime.crimeCategory?.name || 'Crime Report'} Investigation Progress
             </h2>
           </div>
 
@@ -530,10 +535,12 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
                 CASE SPECIFICATIONS
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', color: '#cbd5e1' }}>
-                <div><strong>Station:</strong> {crime.location?.police_station || 'N/A'}</div>
-                <div><strong>Officer:</strong> {crime.officer?.user?.name || crime.officer?.name || 'Assigned'}</div>
+                <div><strong>FIR Number:</strong> <span style={{ fontFamily: 'monospace', color: '#00D9FF' }}>{firNo}</span></div>
+                <div><strong>Police Station:</strong> <span style={{ color: '#fff', fontWeight: '600' }}>{policeStation}</span></div>
+                <div><strong>District / City:</strong> {crime.location?.city || 'Gujarat'}, Gujarat</div>
+                <div><strong>Assigned Officer:</strong> {officerName}</div>
+                <div><strong>Officer Badge:</strong> <span style={{ fontFamily: 'monospace', color: '#00D9FF' }}>{officerBadge}</span></div>
                 <div><strong>Priority:</strong> {crime.priority}</div>
-                <div><strong>Last Updated:</strong> {crime.updated_at ? crime.updated_at.substring(0, 10) : 'Today'}</div>
               </div>
             </div>
 

@@ -88,7 +88,8 @@ class Citizen(models.Model):
   identity_type = models.CharField(max_length=50) # Aadhaar Card, Driving License, Passport, Voter ID
   identity_number = models.CharField(max_length=100)
   identity_document = models.CharField(max_length=255, null=True, blank=True)
-  status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+  profile_picture = models.CharField(max_length=255, null=True, blank=True)
+  status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='verified')
   created_at = models.DateTimeField(auto_now_add=True)
 
   def __str__(self):

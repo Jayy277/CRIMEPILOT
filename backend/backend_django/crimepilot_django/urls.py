@@ -24,10 +24,10 @@ urlpatterns = [
 
 # Serves local media upload files in development
 if settings.DEBUG:
-    uploads_path = os.path.join(settings.BASE_DIR, 'uploads')
-    # Ensure folder exists
+    uploads_path = getattr(settings, 'MEDIA_ROOT', os.path.join(settings.BASE_DIR, 'uploads'))
     if not os.path.exists(uploads_path):
         os.makedirs(uploads_path)
     
     urlpatterns += static('/uploads/', document_root=uploads_path)
+    urlpatterns += static('/media/', document_root=uploads_path)
 

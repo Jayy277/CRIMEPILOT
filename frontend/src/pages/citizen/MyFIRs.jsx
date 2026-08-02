@@ -84,8 +84,8 @@ const MyFIRs = () => {
         setCrimes(res.data.crimes);
 
         // Derive categories & stations for filters
-        const cats = Array.from(new Set(res.data.crimes.map(c => c.crime_category?.name).filter(Boolean)));
-        const stns = Array.from(new Set(res.data.crimes.map(c => c.location?.police_station).filter(Boolean)));
+        const cats = Array.from(new Set(res.data.crimes.map(c => c.crime_category?.name || c.crimeCategory?.name).filter(Boolean)));
+        const stns = Array.from(new Set(res.data.crimes.map(c => c.location?.policeStation || c.location?.police_station).filter(Boolean)));
         setCategories(cats);
         setStations(stns);
       }
@@ -140,12 +140,13 @@ const MyFIRs = () => {
     }
 
     // Category Filter
-    if (categoryFilter !== 'ALL' && c.crime_category?.name !== categoryFilter) {
+    if (categoryFilter !== 'ALL' && (c.crime_category?.name || c.crimeCategory?.name) !== categoryFilter) {
       return false;
     }
 
     // Station Filter
-    if (stationFilter !== 'ALL' && c.location?.police_station !== stationFilter) {
+    const cStation = c.location?.policeStation || c.location?.police_station;
+    if (stationFilter !== 'ALL' && cStation !== stationFilter) {
       return false;
     }
 
@@ -426,6 +427,12 @@ const MyFIRs = () => {
             const stageName = INVESTIGATION_STAGES[sIdx];
             const colorScheme = getStatusColor(stageName);
 
+            const rawCid = crime.crime_id || crime.crimeId || crime.id || '';
+            const cardFirNo = crime.firNumber || crime.fir_number || (rawCid.startsWith('FIR-') ? rawCid : `FIR-${rawCid}`);
+            const cardStation = crime.location?.policeStation || crime.location?.police_station || 'Assigned Station';
+            const cardOfficer = crime.officer?.user?.name || crime.officer?.name || 'Assigned Officer';
+            const cardCat = crime.crime_category?.name || crime.crimeCategory?.name || 'FIR Complaint';
+
             return (
               <div
                 key={crime.id}
@@ -444,8 +451,8 @@ const MyFIRs = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'monospace', color: '#fff' }}>
-                        {crime.crime_id}
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'monospace', color: '#00D9FF' }}>
+                        {cardFirNo}
                       </span>
                       <span style={{
                         fontSize: '11px',
@@ -471,12 +478,12 @@ const MyFIRs = () => {
                     </div>
 
                     <h3 style={{ fontSize: '18px', color: '#fff', fontWeight: '800', marginTop: '6px', fontFamily: 'Outfit, sans-serif' }}>
-                      {crime.crime_category?.name || 'FIR Complaint'}
+                      {cardCat}
                     </h3>
                   </div>
 
                   <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'right' }}>
-                    <div>Registered: <strong>{crime.created_at ? crime.created_at.substring(0, 10) : crime.date}</strong></div>
+                    <div>Registered: <strong>{crime.created_at ? String(crime.created_at).substring(0, 10) : crime.date}</strong></div>
                     <div>Incident Date: <strong>{crime.date}</strong></div>
                   </div>
                 </div>
@@ -495,11 +502,11 @@ const MyFIRs = () => {
                 }}>
                   <div>
                     <span style={{ display: 'block', fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>POLICE STATION</span>
-                    <strong>🏫 {crime.location?.police_station || 'Assigned Station'}</strong>
+                    <strong style={{ color: '#fff' }}>🏫 {cardStation}</strong>
                   </div>
                   <div>
                     <span style={{ display: 'block', fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>INVESTIGATING OFFICER</span>
-                    <strong>👮 {crime.officer?.user?.name || crime.officer?.name || 'Pending Allocation'}</strong>
+                    <strong>👮 {cardOfficer}</strong>
                   </div>
                   <div>
                     <span style={{ display: 'block', fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>LAST UPDATED</span>

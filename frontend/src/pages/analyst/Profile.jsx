@@ -9,14 +9,15 @@ import {
   FiZap, FiPieChart, FiBarChart2, FiSliders, FiDownload, FiCamera, FiCheck
 } from 'react-icons/fi';
 
+import { getProfilePictureUrl } from '../../utils/profileImage';
+
+const DEFAULT_ANALYST_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80';
+
 const AnalystProfile = () => {
   const { user, details, setUser, setDetails } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Avatar Upload State
-  const [avatarUrl, setAvatarUrl] = useState(
-    details?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80'
-  );
+  const avatarUrl = getProfilePictureUrl(user, details, DEFAULT_ANALYST_AVATAR);
   const [uploading, setUploading] = useState(false);
 
   // Modals & Messages
@@ -50,10 +51,6 @@ const AnalystProfile = () => {
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
-    setMsg({ type: 'success', text: 'Profile picture updated successfully!' });
-
     const formData = new FormData();
     formData.append('file', file);
     setUploading(true);
@@ -61,12 +58,20 @@ const AnalystProfile = () => {
       const res = await axiosInstance.post('/auth/profile-picture', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      if (res.data && res.data.success && res.data.details) {
-        setDetails(res.data.details);
-        localStorage.setItem('crimepilot_details', JSON.stringify(res.data.details));
+      if (res.data && res.data.success) {
+        if (res.data.user) {
+          setUser(res.data.user);
+          localStorage.setItem('crimepilot_user', JSON.stringify(res.data.user));
+        }
+        if (res.data.details) {
+          setDetails(res.data.details);
+          localStorage.setItem('crimepilot_details', JSON.stringify(res.data.details));
+        }
+        setMsg({ type: 'success', text: 'Analyst profile picture uploaded and saved successfully!' });
       }
     } catch (err) {
       console.error('Error saving profile picture:', err);
+      setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to upload profile picture.' });
     } finally {
       setUploading(false);
     }

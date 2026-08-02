@@ -131,49 +131,61 @@ const FIRDetailsModal = ({ crime, user, onClose, onRefresh, onDownloadPDF }) => 
           {success && <div style={{ background: 'rgba(34, 197, 94, 0.1)', borderLeft: '4px solid #22c55e', padding: '12px', color: '#86efac', borderRadius: '8px', fontSize: '12px' }}>{success}</div>}
 
           {/* Grid of Key Info */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-            
-            {/* Case Info */}
-            <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
-              <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
-                📁 Case Specifications
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
-                <div><strong>FIR Number:</strong> <span style={{ fontFamily: 'monospace', color: '#fff' }}>{crime.crime_id}</span></div>
-                <div><strong>Category:</strong> {crime.crime_category?.name || 'N/A'}</div>
-                <div><strong>Priority:</strong> {crime.priority}</div>
-                <div><strong>Current Stage:</strong> <span style={{ color: '#00D9FF', fontWeight: 'bold' }}>{INVESTIGATION_STAGES[currentStageIdx]}</span></div>
-                <div><strong>Registration Date:</strong> {crime.created_at ? crime.created_at.substring(0, 10) : crime.date}</div>
-              </div>
-            </div>
+          {(() => {
+            const rawCid = crime.crime_id || crime.crimeId || crime.id || '';
+            const firNo = crime.firNumber || crime.fir_number || (rawCid.startsWith('FIR-') ? rawCid : `FIR-${rawCid}`);
+            const stationName = crime.location?.policeStation || crime.location?.police_station || 'Jurisdiction Police Station';
+            const cityState = `${crime.location?.city || 'Gujarat'}, ${crime.location?.state || 'Gujarat'}`;
+            const offName = crime.officer?.user?.name || crime.officer?.name || 'Assigned Station Officer';
+            const offBadge = crime.officer?.badgeNo || crime.officer?.badge_no || 'BADGE-OFFICER';
+            const catName = crime.crime_category?.name || crime.crimeCategory?.name || 'General Offence';
 
-            {/* Citizen Details */}
-            <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
-              <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
-                👤 Citizen Complainant
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
-                <div><strong>Name:</strong> {user?.name || 'Citizen'}</div>
-                <div><strong>Email:</strong> {user?.email || 'N/A'}</div>
-                <div><strong>Role:</strong> Registered Citizen</div>
-                <div><strong>Status:</strong> Verified Account</div>
-              </div>
-            </div>
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                
+                {/* Case Info */}
+                <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
+                  <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
+                    📁 Case Specifications
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
+                    <div><strong>FIR Number:</strong> <span style={{ fontFamily: 'monospace', color: '#00D9FF', fontWeight: 'bold' }}>{firNo}</span></div>
+                    <div><strong>Category:</strong> {catName}</div>
+                    <div><strong>Priority:</strong> {crime.priority}</div>
+                    <div><strong>Current Stage:</strong> <span style={{ color: '#00D9FF', fontWeight: 'bold' }}>{INVESTIGATION_STAGES[currentStageIdx]}</span></div>
+                    <div><strong>Registration Date:</strong> {crime.created_at ? String(crime.created_at).substring(0, 10) : crime.date}</div>
+                  </div>
+                </div>
 
-            {/* Station & Officer Details */}
-            <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
-              <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
-                🏫 Assigned Authority
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
-                <div><strong>Police Station:</strong> {crime.location?.police_station || 'N/A'}</div>
-                <div><strong>District / City:</strong> {crime.location?.city || 'N/A'}, {crime.location?.state || ''}</div>
-                <div><strong>Assigned Officer:</strong> {crime.officer?.user?.name || crime.officer?.name || 'Pending Assignment'}</div>
-                <div><strong>Officer Badge:</strong> {crime.officer?.badge_no || 'POL-8942'}</div>
-              </div>
-            </div>
+                {/* Citizen Details */}
+                <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
+                  <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
+                    👤 Citizen Complainant
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
+                    <div><strong>Name:</strong> {user?.name || 'Citizen'}</div>
+                    <div><strong>Email:</strong> {user?.email || 'N/A'}</div>
+                    <div><strong>Role:</strong> Registered Citizen</div>
+                    <div><strong>Status:</strong> Verified Account</div>
+                  </div>
+                </div>
 
-          </div>
+                {/* Station & Officer Details */}
+                <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>
+                  <h3 style={{ fontSize: '13px', color: '#00D9FF', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 'bold' }}>
+                    🏫 Assigned Authority
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#cbd5e1' }}>
+                    <div><strong>Police Station:</strong> <span style={{ color: '#fff', fontWeight: 'bold' }}>{stationName}</span></div>
+                    <div><strong>District / City:</strong> {cityState}</div>
+                    <div><strong>Assigned Officer:</strong> {offName}</div>
+                    <div><strong>Officer Badge:</strong> <span style={{ fontFamily: 'monospace', color: '#00D9FF' }}>{offBadge}</span></div>
+                  </div>
+                </div>
+
+              </div>
+            );
+          })()}
 
           {/* Incident Details Description */}
           <div style={{ background: '#111827', border: '1px solid #223248', padding: '20px', borderRadius: '14px' }}>

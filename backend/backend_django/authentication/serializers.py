@@ -12,10 +12,13 @@ class UserSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
     rep = super().to_representation(instance)
     rep['_id'] = str(instance.id)
-    rep['isActive'] = rep.pop('is_active')
+    if 'is_active' in rep:
+      rep['isActive'] = rep.pop('is_active')
     rep['createdAt'] = instance.created_at
-    if 'profile_picture' in rep:
-      rep['profilePicture'] = rep.pop('profile_picture')
+    pic = instance.profile_picture
+    rep['profile_picture'] = pic
+    rep['profilePicture'] = pic
+    rep['avatar'] = pic
       
     # Dynamic department field based on user role
     role = instance.role
@@ -41,11 +44,19 @@ class OfficerSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
     rep = super().to_representation(instance)
     rep['_id'] = str(instance.id)
-    if 'badge_no' in rep:
-      rep['badgeNo'] = rep.pop('badge_no')
+    badge = instance.badge_no
+    rep['badge_no'] = badge
+    rep['badgeNo'] = badge
+    rep['name'] = instance.user.name if instance.user else 'Officer'
     
-    if 'profile_picture' in rep:
-      rep['profilePicture'] = rep.pop('profile_picture')
+    pic = instance.profile_picture or (instance.user.profile_picture if instance.user else None)
+    rep['profile_picture'] = pic
+    rep['profilePicture'] = pic
+    rep['avatar'] = pic
+
+    rep['total_cases'] = getattr(instance, 'total_cases', 0)
+    rep['active_cases'] = getattr(instance, 'active_cases', 0)
+    rep['resolved_cases'] = getattr(instance, 'resolved_cases', 0)
     
     # Populate station with Location details
     from core.serializers import LocationSerializer
@@ -66,8 +77,10 @@ class AnalystSerializer(serializers.ModelSerializer):
   def to_representation(self, instance):
     rep = super().to_representation(instance)
     rep['_id'] = str(instance.id)
-    if 'profile_picture' in rep:
-      rep['profilePicture'] = rep.pop('profile_picture')
+    pic = instance.profile_picture or (instance.user.profile_picture if instance.user else None)
+    rep['profile_picture'] = pic
+    rep['profilePicture'] = pic
+    rep['avatar'] = pic
     return rep
 
 from .models import Citizen
@@ -79,7 +92,7 @@ class CitizenSerializer(serializers.ModelSerializer):
     model = Citizen
     fields = (
       'id', 'user', 'mobile', 'dob', 'gender', 'address', 'state', 'city', 'pincode', 
-      'identity_type', 'identity_number', 'identity_document', 'status', 'created_at'
+      'identity_type', 'identity_number', 'identity_document', 'status', 'profile_picture', 'created_at'
     )
 
   def to_representation(self, instance):
@@ -97,4 +110,9 @@ class CitizenSerializer(serializers.ModelSerializer):
       rep['identityNumber'] = rep.pop('identity_number')
     if 'identity_document' in rep:
       rep['identityDocument'] = rep.pop('identity_document')
+    
+    pic = getattr(instance, 'profile_picture', None) or (instance.user.profile_picture if instance.user else None)
+    rep['profile_picture'] = pic
+    rep['profilePicture'] = pic
+    rep['avatar'] = pic
     return rep

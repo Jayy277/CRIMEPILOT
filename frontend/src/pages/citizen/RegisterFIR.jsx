@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 
+const GUJARAT_CITIES = [
+  "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch",
+  "Bhavnagar", "Botad", "Chhota Udepur", "Dahod", "Dang", "Devbhumi Dwarka",
+  "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch",
+  "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal",
+  "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar",
+  "Tapi", "Vadodara", "Valsad"
+];
+
 const RegisterFIR = () => {
   const [categories, setCategories] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
@@ -12,8 +21,10 @@ const RegisterFIR = () => {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
   
-  const [state, setState] = useState('');
+  const state = 'Gujarat'; // Permanently Gujarat, disabled & read-only
   const [city, setCity] = useState('');
+  const [citySearch, setCitySearch] = useState('');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [district, setDistrict] = useState('Central');
   const [policeStation, setPoliceStation] = useState('');
   const [stationSearch, setStationSearch] = useState('');
@@ -68,24 +79,44 @@ const RegisterFIR = () => {
     fetchData();
   }, []);
 
+  const getFilteredCities = () => {
+    const q = citySearch.trim().toLowerCase();
+    if (!q) return GUJARAT_CITIES;
+    return GUJARAT_CITIES.filter(c => c.toLowerCase().includes(q));
+  };
+
   const getMatchingStations = () => {
-    const q = stationSearch.trim().toLowerCase();
-    if (!q) return locationsList;
-    return locationsList.filter(loc => {
-      const name = (loc.police_station || loc.policeStation || '').toLowerCase();
-      const c = (loc.city || '').toLowerCase();
-      const s = (loc.state || '').toLowerCase();
-      const d = (loc.district || '').toLowerCase();
-      return name.includes(q) || c.includes(q) || s.includes(q) || d.includes(q);
+    if (!city) return [];
+
+    const selCity = city.trim().toLowerCase();
+    const cityStations = locationsList.filter(loc => {
+      const c = (loc.city || '').toLowerCase().trim();
+      const d = (loc.district || '').toLowerCase().trim();
+      return c === selCity || d === selCity;
     });
+
+    const q = stationSearch.trim().toLowerCase();
+    if (!q) return cityStations;
+
+    return cityStations.filter(loc => {
+      const name = (loc.police_station || loc.policeStation || '').toLowerCase();
+      return name.includes(q);
+    });
+  };
+
+  const handleSelectCity = (cityName) => {
+    setCity(cityName);
+    setCitySearch(cityName);
+    setShowCityDropdown(false);
+    setPoliceStation('');
+    setStationSearch('');
+    setFieldErrors(prev => ({ ...prev, city: null, policeStation: null }));
   };
 
   const handleSelectStation = (station) => {
     const name = station.police_station || station.policeStation;
     setPoliceStation(name);
     setStationSearch(name);
-    if (station.state) setState(station.state);
-    if (station.city) setCity(station.city);
     if (station.district) setDistrict(station.district);
     setShowDropdown(false);
     setFieldErrors(prev => ({ ...prev, policeStation: null }));
@@ -154,12 +185,8 @@ const RegisterFIR = () => {
       }
     }
 
-    if (!state.trim()) {
-      newErrors.state = 'State is required.';
-    }
-
-    if (!city.trim()) {
-      newErrors.city = 'City is required.';
+    if (!city.trim() || !GUJARAT_CITIES.some(c => c.toLowerCase() === city.trim().toLowerCase())) {
+      newErrors.city = 'City selection is mandatory. Please select a valid Gujarat city from the list.';
     }
 
     const pincodeClean = pincode.trim();
@@ -169,11 +196,12 @@ const RegisterFIR = () => {
       newErrors.pincode = 'Pincode must be compulsory 6 digits (e.g. 380015).';
     }
 
-    const isValidStation = locationsList.some(
+    const matchingStations = getMatchingStations();
+    const isValidStation = matchingStations.some(
       loc => (loc.police_station || loc.policeStation) === policeStation
     );
     if (!policeStation || !isValidStation) {
-      newErrors.policeStation = 'Please search and select a valid registered Police Station from the list.';
+      newErrors.policeStation = city ? `Please search and select a registered Police Station in ${city}.` : 'Please select a City above first to choose a Police Station.';
     }
 
     if (!description.trim()) {
@@ -215,25 +243,25 @@ const RegisterFIR = () => {
     if (docFile) formData.append('document', docFile);
 
     try {
-      let res;
-      try {
-        res = await axiosInstance.post('/citizen/fir', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      } catch (e) {
-        res = await axiosInstance.post('/api/citizen/fir', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      }
-      if (res.data && res.data.success) {
-        setSuccess(`Digital FIR filed successfully! Case ID: ${res.data.crimeId}. Redirecting to tracker...`);
+      const res = await axiosInstance.post('/citizen/fir', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data && (res.data.success || res.status === 201 || res.status === 200)) {
+        const caseId = res.data.crimeId || res.data.crime_id || 'REGISTERED';
+        setSuccess(`Digital FIR filed successfully! Case ID: ${caseId}. Redirecting to tracker...`);
         setTimeout(() => {
           navigate('/citizen/track-fir');
-        }, 3000);
+        }, 2500);
       }
     } catch (err) {
-      console.error(err);
-      const apiMsg = err.response?.data?.message || err.response?.data?.error || 'FIR filing failed. Please check your account status and inputs.';
+      console.error('FIR submit error:', err);
+      const resData = err.response?.data;
+      let apiMsg = 'FIR filing failed. Please check your account status and inputs.';
+      if (resData) {
+        if (typeof resData.message === 'string') apiMsg = resData.message;
+        else if (typeof resData.error === 'string') apiMsg = resData.error;
+        else if (typeof resData.detail === 'string') apiMsg = resData.detail;
+      }
       setError(apiMsg);
     } finally {
       setLoading(false);
@@ -387,54 +415,180 @@ const RegisterFIR = () => {
 
         {/* Location selectors */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+          {/* Read-Only State Field */}
           <div className="form-group">
-            <label style={{ color: fieldErrors.state ? '#fca5a5' : '#64748b' }}>State *</label>
+            <label style={{ color: '#64748b' }}>State *</label>
             <input
               type="text"
               className="form-control"
-              placeholder="Gujarat"
-              value={state}
-              onChange={e => {
-                setState(e.target.value);
-                setFieldErrors(prev => ({ ...prev, state: null }));
-              }}
-              required
+              value="Gujarat"
+              disabled
+              readOnly
               style={{
-                borderColor: fieldErrors.state ? '#ef4444' : '#223248',
-                boxShadow: fieldErrors.state ? '0 0 0 1px #ef4444' : 'none'
+                backgroundColor: 'rgba(18, 27, 45, 0.6)',
+                color: '#00D9FF',
+                borderColor: '#223248',
+                cursor: 'not-allowed',
+                fontWeight: 'bold',
+                letterSpacing: '0.5px'
               }}
             />
-            {fieldErrors.state && (
-              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
-                ⚠️ {fieldErrors.state}
-              </span>
-            )}
+            <span style={{ fontSize: '10px', color: '#00D9FF', marginTop: '2px', display: 'block' }}>
+              🔒 Permanently assigned to Gujarat State
+            </span>
           </div>
 
-          <div className="form-group">
-            <label style={{ color: fieldErrors.city ? '#fca5a5' : '#64748b' }}>City *</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Ahmedabad"
-              value={city}
-              onChange={e => {
-                setCity(e.target.value);
-                setFieldErrors(prev => ({ ...prev, city: null }));
-              }}
-              required
-              style={{
-                borderColor: fieldErrors.city ? '#ef4444' : '#223248',
-                boxShadow: fieldErrors.city ? '0 0 0 1px #ef4444' : 'none'
-              }}
-            />
-            {fieldErrors.city && (
-              <span style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '700', display: 'block' }}>
+          {/* Searchable City Dropdown */}
+          <div className="form-group" style={{ position: 'relative' }}>
+            <label style={{ color: fieldErrors.city ? '#fca5a5' : '#64748b' }}>City / District *</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="🔍 Select / Search City (e.g. Ahmedabad)..."
+                value={citySearch}
+                onChange={e => {
+                  const val = e.target.value;
+                  setCitySearch(val);
+                  setShowCityDropdown(true);
+                  if (city && val.toLowerCase() !== city.toLowerCase()) {
+                    setCity('');
+                    setPoliceStation('');
+                    setStationSearch('');
+                  }
+                  setFieldErrors(prev => ({ ...prev, city: null }));
+                }}
+                onFocus={() => setShowCityDropdown(true)}
+                style={{
+                  fontWeight: '600',
+                  color: city ? '#00D9FF' : '#fff',
+                  borderColor: fieldErrors.city ? '#ef4444' : (city ? '#00D9FF' : '#223248'),
+                  boxShadow: fieldErrors.city ? '0 0 0 1px #ef4444' : 'none'
+                }}
+              />
+              {citySearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCity('');
+                    setCitySearch('');
+                    setPoliceStation('');
+                    setStationSearch('');
+                    setShowCityDropdown(true);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {fieldErrors.city ? (
+              <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 'bold' }}>
                 ⚠️ {fieldErrors.city}
-              </span>
+              </div>
+            ) : city ? (
+              <div style={{ fontSize: '11px', color: '#00D9FF', marginTop: '4px', fontWeight: 'bold' }}>
+                ✓ Selected City: {city} (Gujarat)
+              </div>
+            ) : (
+              <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px' }}>
+                ⚠️ Select a Gujarat city to filter Police Stations.
+              </div>
+            )}
+
+            {/* City Dropdown List */}
+            {showCityDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  backgroundColor: '#0B1220',
+                  border: '1px solid #00D9FF',
+                  borderRadius: '10px',
+                  marginTop: '6px',
+                  maxHeight: '220px',
+                  overflowY: 'auto',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85)'
+                }}
+              >
+                <div style={{
+                  padding: '8px 12px',
+                  fontSize: '11px',
+                  color: '#00D9FF',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid #223248',
+                  background: '#070D18',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>GUJARAT CITIES ({getFilteredCities().length})</span>
+                  <span
+                    onClick={() => setShowCityDropdown(false)}
+                    style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '11px' }}
+                  >
+                    ✕ Close List
+                  </span>
+                </div>
+
+                {getFilteredCities().length === 0 ? (
+                  <div style={{ padding: '14px', color: '#94a3b8', fontSize: '12px', textAlign: 'center' }}>
+                    No Gujarat city matching "{citySearch}".
+                  </div>
+                ) : (
+                  getFilteredCities().map((cityName, idx) => {
+                    const isSel = city.toLowerCase() === cityName.toLowerCase();
+                    return (
+                      <div
+                        key={cityName}
+                        onClick={() => handleSelectCity(cityName)}
+                        style={{
+                          padding: '9px 14px',
+                          cursor: 'pointer',
+                          borderBottom: idx === getFilteredCities().length - 1 ? 'none' : '1px solid #162438',
+                          backgroundColor: isSel ? 'rgba(0, 217, 255, 0.15)' : 'transparent',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseEnter={e => {
+                          if (!isSel) e.currentTarget.style.backgroundColor = 'rgba(77, 163, 255, 0.12)';
+                        }}
+                        onMouseLeave={e => {
+                          if (!isSel) e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <span style={{ color: isSel ? '#00D9FF' : '#fff', fontWeight: isSel ? 'bold' : 'normal', fontSize: '13px' }}>
+                          🏙️ {cityName}
+                        </span>
+                        {isSel && (
+                          <span style={{ color: '#00D9FF', fontSize: '11px', fontWeight: 'bold' }}>✓ Selected</span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             )}
           </div>
 
+          {/* Pincode Field */}
           <div className="form-group">
             <label style={{ color: fieldErrors.pincode ? '#fca5a5' : '#64748b' }}>Pincode * (6 Digits)</label>
             <input
@@ -465,16 +619,18 @@ const RegisterFIR = () => {
           </div>
         </div>
 
+        {/* Police Station Selector */}
         <div className="form-group" style={{ position: 'relative' }}>
           <label style={{ color: fieldErrors.policeStation ? '#fca5a5' : '#64748b' }}>
-            Selected Police Station * (Search & Select)
+            Selected Police Station * {city ? `(Filtered for ${city})` : '(Select City First)'}
           </label>
           <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
             <input
               type="text"
               className="form-control"
-              placeholder="🔍 Type to search police station by name, city, or state..."
+              placeholder={city ? `🔍 Search ${city} police stations...` : "⚠️ Please select a City above first to filter Police Stations..."}
               value={stationSearch}
+              disabled={!city}
               onChange={(e) => {
                 const val = e.target.value;
                 setStationSearch(val);
@@ -484,12 +640,14 @@ const RegisterFIR = () => {
                 }
                 setFieldErrors(prev => ({ ...prev, policeStation: null }));
               }}
-              onFocus={() => setShowDropdown(true)}
+              onFocus={() => { if (city) setShowDropdown(true); }}
               style={{
                 fontWeight: '600',
                 color: policeStation ? '#10b981' : '#fff',
                 borderColor: fieldErrors.policeStation ? '#ef4444' : (policeStation ? '#10b981' : '#223248'),
-                boxShadow: fieldErrors.policeStation ? '0 0 0 1px #ef4444' : 'none'
+                boxShadow: fieldErrors.policeStation ? '0 0 0 1px #ef4444' : 'none',
+                opacity: city ? 1 : 0.6,
+                cursor: city ? 'text' : 'not-allowed'
               }}
             />
             {stationSearch && (
@@ -525,16 +683,20 @@ const RegisterFIR = () => {
             </div>
           ) : policeStation ? (
             <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px', fontWeight: 'bold' }}>
-              ✓ Registered Station Selected: {policeStation} ({city}, {state})
+              ✓ Registered Station Selected: {policeStation} ({city}, Gujarat)
+            </div>
+          ) : !city ? (
+            <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', fontWeight: 'bold' }}>
+              ⚠️ Please select a City above first to load its registered Police Stations.
             </div>
           ) : (
-            <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px' }}>
-              ⚠️ Type above to search, then click a matching station from the list below to select.
+            <div style={{ fontSize: '11px', color: '#4DA3FF', marginTop: '4px' }}>
+              ℹ️ Type above to filter {city} police stations, then click a matching station from the list below.
             </div>
           )}
 
           {/* Search Dropdown Popup */}
-          {showDropdown && (
+          {showDropdown && city && (
             <div
               style={{
                 position: 'absolute',
@@ -562,7 +724,7 @@ const RegisterFIR = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span>REGISTERED POLICE STATIONS MATCHES ({getMatchingStations().length})</span>
+                <span>STATIONS IN {city.toUpperCase()} ({getMatchingStations().length})</span>
                 <span
                   onClick={() => setShowDropdown(false)}
                   style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '11px' }}
@@ -573,9 +735,7 @@ const RegisterFIR = () => {
 
               {getMatchingStations().length === 0 ? (
                 <div style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
-                  No registered police station found matching "{stationSearch}".
-                  <br />
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>Please search by city (e.g., Ahmedabad, Mumbai, Delhi) or state.</span>
+                  No police station found in {city} matching "{stationSearch}".
                 </div>
               ) : (
                 getMatchingStations().map((station, idx) => {
@@ -607,7 +767,7 @@ const RegisterFIR = () => {
                           🏫 {name}
                         </span>
                         <span style={{ color: '#94a3b8', fontSize: '11px' }}>
-                          📍 {station.city}, {station.state} {station.district ? `(${station.district})` : ''}
+                          📍 {station.city}, Gujarat {station.district ? `(${station.district})` : ''}
                         </span>
                       </div>
                       <span style={{

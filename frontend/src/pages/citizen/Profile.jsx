@@ -2,16 +2,60 @@ import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axiosInstance from '../../api/axiosInstance';
 import { maskIdentityNumber } from '../../utils/maskUtils';
+import { getProfilePictureUrl } from '../../utils/profileImage';
+import { FiCamera } from 'react-icons/fi';
+
+const DEFAULT_CITIZEN_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80';
 
 const CitizenProfile = () => {
-  const { user, details } = useContext(AuthContext);
+  const { user, setUser, details, setDetails } = useContext(AuthContext);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const avatarUrl = getProfilePictureUrl(user, details, DEFAULT_CITIZEN_AVATAR);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    setUploading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await axiosInstance.post('/auth/profile-picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data && res.data.success) {
+        if (res.data.user) {
+          setUser(res.data.user);
+          localStorage.setItem('crimepilot_user', JSON.stringify(res.data.user));
+        }
+        if (res.data.details) {
+          setDetails(res.data.details);
+          localStorage.setItem('crimepilot_details', JSON.stringify(res.data.details));
+        }
+        setSuccess('Profile picture updated successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to upload profile picture.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -47,13 +91,60 @@ const CitizenProfile = () => {
     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px', color: '#f8fafc' }}>
       
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '28px', fontFamily: 'Outfit, sans-serif', color: '#fff', fontWeight: '800' }}>
-          Citizen Dossier & Profile
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>
-          Manage personal verification details, credentials, and account protection.
-        </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontFamily: 'Outfit, sans-serif', color: '#fff', fontWeight: '800' }}>
+            Citizen Dossier & Profile
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>
+            Manage personal verification details, credentials, and account protection.
+          </p>
+        </div>
+
+        {/* Citizen Avatar Upload */}
+        <div style={{ position: 'relative' }}>
+          <img
+            src={avatarUrl}
+            alt={user?.name || 'Citizen'}
+            style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #4DA3FF',
+              boxShadow: '0 0 15px rgba(77, 163, 255, 0.4)',
+              backgroundColor: '#0F172A'
+            }}
+          />
+          <label
+            htmlFor="citizen-avatar-upload"
+            style={{
+              position: 'absolute',
+              bottom: '0px',
+              right: '0px',
+              backgroundColor: '#4DA3FF',
+              color: '#0B1220',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+            }}
+            title="Upload Photo"
+          >
+            <FiCamera size={13} />
+          </label>
+          <input
+            id="citizen-avatar-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            style={{ display: 'none' }}
+          />
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px' }}>

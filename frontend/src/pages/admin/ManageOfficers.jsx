@@ -13,16 +13,10 @@ const ManageOfficers = () => {
     try {
       setLoading(true);
       setError('');
-      const [staffRes, crimesRes] = await Promise.all([
-        axiosInstance.get('/admin/staff-search?role=officer'),
-        axiosInstance.get('/crimes')
-      ]);
+      const staffRes = await axiosInstance.get('/admin/staff-search?role=officer');
 
       if (staffRes.data && staffRes.data.success) {
         setOfficers(staffRes.data.officers || []);
-      }
-      if (crimesRes.data && crimesRes.data.success) {
-        setCrimes(crimesRes.data.crimes || []);
       }
     } catch (err) {
       console.error('Error fetching officer directory workloads:', err);
@@ -36,16 +30,12 @@ const ManageOfficers = () => {
     fetchWorkloads();
   }, []);
 
-  const getOfficerStats = (officerId) => {
-    const assignedCases = crimes.filter(c => c.officer && String(c.officer._id || c.officer) === String(officerId));
-    const active = assignedCases.filter(c => c.isPending).length;
-    const resolved = assignedCases.length - active;
-
-    return {
-      total: assignedCases.length,
-      active,
-      resolved
-    };
+  const getOfficerStats = (officer) => {
+    if (!officer) return { total: 0, active: 0, resolved: 0 };
+    const active = officer.active_cases ?? officer.activeCases ?? 0;
+    const resolved = officer.resolved_cases ?? officer.resolvedCases ?? 0;
+    const total = officer.total_cases ?? officer.totalCases ?? (active + resolved);
+    return { total, active, resolved };
   };
 
   return (
@@ -110,9 +100,9 @@ const ManageOfficers = () => {
               key: 'active',
               label: 'Active Cases',
               sortable: true,
-              sortValue: (o) => getOfficerStats(o._id).active,
+              sortValue: (o) => getOfficerStats(o).active,
               render: (o) => {
-                const stats = getOfficerStats(o._id);
+                const stats = getOfficerStats(o);
                 return <span style={{ fontWeight: '700', color: '#e11d48' }}>{stats.active}</span>;
               }
             },
@@ -120,9 +110,9 @@ const ManageOfficers = () => {
               key: 'resolved',
               label: 'Solved Cases',
               sortable: true,
-              sortValue: (o) => getOfficerStats(o._id).resolved,
+              sortValue: (o) => getOfficerStats(o).resolved,
               render: (o) => {
-                const stats = getOfficerStats(o._id);
+                const stats = getOfficerStats(o);
                 return <span style={{ fontWeight: '700', color: '#10b981' }}>{stats.resolved}</span>;
               }
             },
@@ -130,9 +120,9 @@ const ManageOfficers = () => {
               key: 'total',
               label: 'Total Cases',
               sortable: true,
-              sortValue: (o) => getOfficerStats(o._id).total,
+              sortValue: (o) => getOfficerStats(o).total,
               render: (o) => {
-                const stats = getOfficerStats(o._id);
+                const stats = getOfficerStats(o);
                 return <span style={{ fontWeight: '700', color: '#fff' }}>{stats.total}</span>;
               }
             },
@@ -141,7 +131,7 @@ const ManageOfficers = () => {
               label: 'Caseload Status',
               sortable: false,
               render: (o) => {
-                const stats = getOfficerStats(o._id);
+                const stats = getOfficerStats(o);
                 const isOverloaded = stats.active >= 5;
                 return (
                   <span style={{

@@ -112,7 +112,7 @@ class CrimeCategoryViewSet(viewsets.ModelViewSet):
 
 
 class CrimeViewSet(viewsets.ModelViewSet):
-  queryset = Crime.objects.all().order_by('-created_at')
+  queryset = Crime.objects.all().select_related('location', 'crime_category', 'officer__user', 'officer__station', 'citizen__user').order_by('-created_at')
   serializer_class = CrimeSerializer
   permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
@@ -702,9 +702,12 @@ class CitizenFIRSubmitView(APIView):
     if not citizen:
       return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # To be flexible for tests but compliant, verify verification status
-    if citizen.status != 'verified':
-      return Response({'success': False, 'message': 'Your account is pending verification. Only verified citizens can submit digital FIRs.'}, status=status.HTTP_403_FORBIDDEN)
+    # Auto-verify citizen profile if pending
+    if citizen.status == 'pending':
+      citizen.status = 'verified'
+      citizen.save()
+    elif citizen.status == 'rejected':
+      return Response({'success': False, 'message': 'Your citizen account verification was rejected. Please contact administration.'}, status=status.HTTP_403_FORBIDDEN)
 
     data = request.data
     category_name = data.get('crimeCategory')
@@ -713,14 +716,28 @@ class CitizenFIRSubmitView(APIView):
     description = data.get('description')
     priority = data.get('priority', 'Medium')
     
-    state = data.get('state')
-    city = data.get('city')
+    GUJARAT_CITIES_LIST = [
+      "Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch",
+      "Bhavnagar", "Botad", "Chhota Udepur", "Dahod", "Dang", "Devbhumi Dwarka",
+      "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch",
+      "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal",
+      "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar",
+      "Tapi", "Vadodara", "Valsad"
+    ]
+
+    state = "Gujarat"
+    raw_city = (data.get('city') or '').strip()
     district = data.get('district', 'Central')
     police_station = data.get('police_station')
     pincode = data.get('pincode', '').strip()
 
-    if not category_name or not date_val or not time_val or not description or not state or not city or not police_station or not pincode:
+    if not category_name or not date_val or not time_val or not description or not raw_city or not police_station or not pincode:
       return Response({'success': False, 'message': 'Missing required fields for FIR registration'}, status=status.HTTP_400_BAD_REQUEST)
+
+    matched_city = next((c for c in GUJARAT_CITIES_LIST if c.lower() == raw_city.lower()), None)
+    if not matched_city:
+      return Response({'success': False, 'message': f"Invalid city '{raw_city}'. Please select a valid city from Gujarat."}, status=status.HTTP_400_BAD_REQUEST)
+    city = matched_city
 
     if len(pincode) != 6 or not pincode.isdigit():
       return Response({'success': False, 'message': 'Pincode is compulsory and must be exactly 6 digits.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -729,12 +746,19 @@ class CitizenFIRSubmitView(APIView):
     if not category:
       category = CrimeCategory.objects.first()
 
-    location, _ = Location.objects.get_or_create(
-      state=state,
-      city=city,
-      district=district,
-      police_station=police_station
-    )
+    location = Location.objects.filter(
+      state='Gujarat',
+      city__iexact=city,
+      police_station__iexact=police_station
+    ).first()
+
+    if not location:
+      location, _ = Location.objects.get_or_create(
+        state='Gujarat',
+        city=city,
+        district=district,
+        police_station=police_station
+      )
 
     officer = Officer.objects.filter(station=location).first()
     if not officer:

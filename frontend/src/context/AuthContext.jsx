@@ -15,24 +15,35 @@ export const AuthProvider = ({ children }) => {
       const storedUser = localStorage.getItem('crimepilot_user');
       const storedDetails = localStorage.getItem('crimepilot_details');
 
-      if (storedToken && storedUser) {
+      if (storedToken) {
+        setToken(storedToken);
         try {
-          // Verify token validity by calling a lightweight protected endpoint
-          await axiosInstance.get('/notifications');
-          
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-          if (storedDetails) {
-            setDetails(JSON.parse(storedDetails));
+          // Fetch fresh user profile and details from backend
+          const res = await axiosInstance.get('/auth/profile');
+          if (res.data && res.data.user) {
+            setUser(res.data.user);
+            localStorage.setItem('crimepilot_user', JSON.stringify(res.data.user));
+            if (res.data.details) {
+              setDetails(res.data.details);
+              localStorage.setItem('crimepilot_details', JSON.stringify(res.data.details));
+            }
+          } else if (storedUser) {
+            setUser(JSON.parse(storedUser));
+            if (storedDetails) setDetails(JSON.parse(storedDetails));
           }
         } catch (error) {
           console.error('Session validation failed on init:', error);
-          localStorage.removeItem('crimepilot_token');
-          localStorage.removeItem('crimepilot_user');
-          localStorage.removeItem('crimepilot_details');
-          setToken(null);
-          setUser(null);
-          setDetails(null);
+          if (error.response && error.response.status === 401) {
+            localStorage.removeItem('crimepilot_token');
+            localStorage.removeItem('crimepilot_user');
+            localStorage.removeItem('crimepilot_details');
+            setToken(null);
+            setUser(null);
+            setDetails(null);
+          } else if (storedUser) {
+            setUser(JSON.parse(storedUser));
+            if (storedDetails) setDetails(JSON.parse(storedDetails));
+          }
         }
       }
       setLoading(false);
