@@ -2,14 +2,16 @@ from django.urls import re_path
 from .views import (
   LoginView, SignupView, ForgotPasswordView, ResetPasswordView, 
   ProfilePictureView, ProfileView, CitizenSignupView, CitizenPhoneLoginView, 
-  SendEmailOTPView, VerifyEmailOTPView,
+  SendEmailOTPView, VerifyEmailOTPView, ChangePasswordView,
   CitizenForgotPasswordSendOTPView, CitizenForgotPasswordVerifyOTPView, CitizenForgotPasswordResetView
 )
 
 urlpatterns = [
   re_path(r'^login/?$', LoginView.as_view(), name='login'),
   re_path(r'^signup/?$', SignupView.as_view(), name='signup'),
+  re_path(r'^change-password/?$', ChangePasswordView.as_view(), name='change_password'),
   re_path(r'^profile/?$', ProfileView.as_view(), name='profile'),
+
   re_path(r'^me/?$', ProfileView.as_view(), name='me'),
   re_path(r'^citizen/signup/?$', CitizenSignupView.as_view(), name='citizen_signup'),
   re_path(r'^citizen/phone-login/?$', CitizenPhoneLoginView.as_view(), name='citizen_phone_login'),

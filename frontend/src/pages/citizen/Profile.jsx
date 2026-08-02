@@ -3,7 +3,7 @@ import { AuthContext } from '../../context/AuthContext';
 import axiosInstance from '../../api/axiosInstance';
 import { maskIdentityNumber } from '../../utils/maskUtils';
 import { getProfilePictureUrl } from '../../utils/profileImage';
-import { FiCamera } from 'react-icons/fi';
+import { FiCamera, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const DEFAULT_CITIZEN_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80';
 
@@ -12,6 +12,10 @@ const CitizenProfile = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -238,56 +242,128 @@ const CitizenProfile = () => {
             <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '11px', color: '#64748b' }}>Old Password</label>
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={e => setOldPassword(e.target.value)}
-                  required
-                  style={{
-                    backgroundColor: '#0B1220',
-                    border: '1px solid #223248',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: '#fff',
-                    fontSize: '12px'
-                  }}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showOldPassword ? 'text' : 'password'}
+                    value={oldPassword}
+                    onChange={e => setOldPassword(e.target.value)}
+                    required
+                    style={{
+                      backgroundColor: '#0B1220',
+                      border: '1px solid #223248',
+                      borderRadius: '8px',
+                      padding: '8px 36px 8px 12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0'
+                    }}
+                    title={showOldPassword ? "Hide password" : "Show password"}
+                  >
+                    {showOldPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '11px', color: '#64748b' }}>New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  required
-                  style={{
-                    backgroundColor: '#0B1220',
-                    border: '1px solid #223248',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: '#fff',
-                    fontSize: '12px'
-                  }}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                    style={{
+                      backgroundColor: '#0B1220',
+                      border: '1px solid #223248',
+                      borderRadius: '8px',
+                      padding: '8px 36px 8px 12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0'
+                    }}
+                    title={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '11px', color: '#64748b' }}>Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  required
-                  style={{
-                    backgroundColor: '#0B1220',
-                    border: '1px solid #223248',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: '#fff',
-                    fontSize: '12px'
-                  }}
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    required
+                    style={{
+                      backgroundColor: '#0B1220',
+                      border: '1px solid #223248',
+                      borderRadius: '8px',
+                      padding: '8px 36px 8px 12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0'
+                    }}
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                  </button>
+                </div>
               </div>
 
               <button
