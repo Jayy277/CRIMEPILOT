@@ -1,0 +1,693 @@
+{
+  "info": {
+    "name": "CrimePilot AI API Collection",
+    "description": "Complete REST API JSON specification for CrimePilot Police Management, Analyst Portal, Citizen FIR Portal, and Admin Control Panel.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "YOUR_JWT_ACCESS_TOKEN",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Staff Login (Officer / Analyst / Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"rahulpandya@crimepilot.com\",\n  \"password\": \"password123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"token\": \"jwt.access.token.string\",\n  \"user\": {\n    \"_id\": \"568\",\n    \"id\": 568,\n    \"name\": \"Rahul Pandya\",\n    \"email\": \"rahulpandya@crimepilot.com\",\n    \"role\": \"officer\",\n    \"isActive\": true\n  },\n  \"details\": {\n    \"badge_no\": \"BADGE-1025\",\n    \"contact\": \"+91 982591744\",\n    \"station\": {\n      \"id\": 1346,\n      \"policeStation\": \"Sola Police Station\",\n      \"city\": \"Ahmedabad\",\n      \"state\": \"Gujarat\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Staff Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/signup", "host": ["{{baseUrl}}"], "path": ["auth", "signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Inspector Varma\",\n  \"email\": \"varma@crimepilot.com\",\n  \"password\": \"securepassword\",\n  \"role\": \"officer\",\n  \"badge_no\": \"BADGE-1099\",\n  \"contact\": \"+91 9876543210\",\n  \"station_id\": 1346\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"token\": \"jwt.access.token.string\",\n  \"user\": {\n    \"_id\": \"569\",\n    \"name\": \"Inspector Varma\",\n    \"email\": \"varma@crimepilot.com\",\n    \"role\": \"officer\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Citizen Registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/citizen/signup", "host": ["{{baseUrl}}"], "path": ["auth", "citizen", "signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kavita Desai\",\n  \"email\": \"kavita.desai@gmail.com\",\n  \"password\": \"CitizenPass@123\",\n  \"mobile\": \"9876501234\",\n  \"dob\": \"1995-08-15\",\n  \"gender\": \"Female\",\n  \"address\": \"Flat 402, Green Acres\",\n  \"city\": \"Ahmedabad\",\n  \"state\": \"Gujarat\",\n  \"pincode\": \"380060\",\n  \"identity_type\": \"Aadhaar Card\",\n  \"identity_number\": \"1234-5678-9012\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"token\": \"jwt.access.token.string\",\n  \"user\": {\n    \"id\": 570,\n    \"name\": \"Kavita Desai\",\n    \"email\": \"kavita.desai@gmail.com\",\n    \"role\": \"citizen\"\n  },\n  \"details\": {\n    \"mobile\": \"9876501234\",\n    \"status\": \"verified\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Citizen Mobile OTP Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/citizen/phone-login", "host": ["{{baseUrl}}"], "path": ["auth", "citizen", "phone-login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"9876501234\",\n  \"otp\": \"123456\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"token\": \"jwt.access.token.string\",\n  \"user\": {\n    \"id\": 570,\n    \"name\": \"Kavita Desai\",\n    \"email\": \"kavita.desai@gmail.com\",\n    \"role\": \"citizen\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Send Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/send-email-otp", "host": ["{{baseUrl}}"], "path": ["auth", "send-email-otp"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Verification OTP dispatched to user@example.com\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/verify-email-otp", "host": ["{{baseUrl}}"], "path": ["auth", "verify-email-otp"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otp\": \"654321\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Email verified successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Authenticated User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/profile", "host": ["{{baseUrl}}"], "path": ["auth", "profile"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"user\": {\n    \"_id\": \"568\",\n    \"id\": 568,\n    \"name\": \"Rahul Pandya\",\n    \"email\": \"rahulpandya@crimepilot.com\",\n    \"role\": \"officer\"\n  },\n  \"details\": {\n    \"badge_no\": \"BADGE-1025\",\n    \"contact\": \"+91 982591744\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/change-password", "host": ["{{baseUrl}}"], "path": ["auth", "change-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"oldpass123\",\n  \"newPassword\": \"newsecurepass123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Password updated successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Dashboards & Reports",
+      "item": [
+        {
+          "name": "Get Officer Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/officer", "host": ["{{baseUrl}}"], "path": ["dashboard", "officer"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"stats\": {\n    \"totalAssigned\": 6,\n    \"pendingCount\": 1,\n    \"solvedCount\": 5\n  },\n  \"recentCases\": [\n    {\n      \"_id\": \"3670\",\n      \"crime_id\": \"CP-2026-00152\",\n      \"priority\": \"Critical\",\n      \"status\": \"Solved\",\n      \"description\": \"ATM Fraud incident reported at Sola Police Station...\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Analyst Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/analyst", "host": ["{{baseUrl}}"], "path": ["dashboard", "analyst"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"summary\": {\n    \"totalCrimes\": 120,\n    \"solvedCount\": 85,\n    \"pendingCount\": 35,\n    \"solvedRate\": \"70.83%\"\n  },\n  \"categoryStats\": [\n    { \"id\": 71, \"name\": \"ATM Fraud\", \"count\": 25 }\n  ],\n  \"hotspotStats\": [\n    { \"id\": 1346, \"policeStation\": \"Sola Police Station\", \"count\": 40 }\n  ],\n  \"monthlyTrends\": [\n    { \"_id\": { \"year\": 2026, \"month\": 7 }, \"count\": 15 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/dashboard/admin", "host": ["{{baseUrl}}"], "path": ["dashboard", "admin"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"stats\": {\n    \"totalUsers\": 50,\n    \"activeUsers\": 48,\n    \"activeOfficers\": 15,\n    \"activeCases\": 35,\n    \"solvedCases\": 85\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Crime Compilation PDF/JSON Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/report?startDate=2026-01-01&endDate=2026-08-01&fileFormat=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "report"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01" },
+                { "key": "endDate", "value": "2026-08-01" },
+                { "key": "fileFormat", "value": "json" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"period\": \"2026-01-01 to 2026-08-01\",\n  \"count\": 12,\n  \"crimes\": [...] \n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Crime Cases Management",
+      "item": [
+        {
+          "name": "List All Crime Cases",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crimes?assignedOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["crimes"],
+              "query": [
+                { "key": "assignedOnly", "value": "true" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 6,\n  \"crimes\": [\n    {\n      \"id\": 3519,\n      \"_id\": \"3519\",\n      \"crime_id\": \"CR-2026-00569\",\n      \"priority\": \"High\",\n      \"status\": \"Reported\",\n      \"description\": \"Mera phone chori Ho gya at night 8:30 PM\",\n      \"isPending\": true,\n      \"date\": \"2026-07-26\",\n      \"time\": \"20:30\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Crime Case Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/crimes/3519", "host": ["{{baseUrl}}"], "path": ["crimes", "3519"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"crime\": {\n    \"id\": 3519,\n    \"crime_id\": \"CR-2026-00569\",\n    \"priority\": \"High\",\n    \"status\": \"Reported\",\n    \"description\": \"Mera phone chori Ho gya at night 8:30 PM\",\n    \"officer\": {\n      \"id\": 2234,\n      \"name\": \"Rahul Pandya\",\n      \"badge_no\": \"BADGE-1025\"\n    },\n    \"notes\": [\n      {\n        \"note\": \"First Responder Officer assigned.\",\n        \"addedBy_name\": \"Rahul Pandya\",\n        \"created_at\": \"2026-07-26T20:35:00Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create / Register New Crime FIR",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/crimes", "host": ["{{baseUrl}}"], "path": ["crimes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"crime_category_id\": 71,\n  \"date\": \"2026-08-03\",\n  \"time\": \"10:15\",\n  \"location_id\": 1346,\n  \"description\": \"Unauthorized ATM transaction detected at main market outlet.\",\n  \"priority\": \"High\",\n  \"officer_id\": 2234\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"crime\": {\n    \"id\": 3675,\n    \"crime_id\": \"CR-2026-00156\",\n    \"status\": \"Reported\",\n    \"priority\": \"High\",\n    \"description\": \"Unauthorized ATM transaction detected at main market outlet.\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Progress Case Status Strictly",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/crimes/3519/status", "host": ["{{baseUrl}}"], "path": ["crimes", "3519", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Assigned\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"status\": \"Assigned\",\n  \"isPending\": true,\n  \"crime\": {\n    \"id\": 3519,\n    \"status\": \"Assigned\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Case Investigation Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/crimes/3519/notes", "host": ["{{baseUrl}}"], "path": ["crimes", "3519", "notes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Inspected CCTV footage from surrounding shops. Identified suspect.\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"notes\": [\n    {\n      \"note\": \"Inspected CCTV footage from surrounding shops. Identified suspect.\",\n      \"addedBy_id\": 568,\n      \"addedBy_name\": \"Rahul Pandya\",\n      \"created_at\": \"2026-08-03T10:20:00Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Find Similar / Related Cases by MO",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/crimes/3519/similar", "host": ["{{baseUrl}}"], "path": ["crimes", "3519", "similar"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 2,\n  \"results\": [\n    {\n      \"similarityScore\": 85.5,\n      \"similarityReasons\": [\"Same Crime Category: Phone Theft\", \"Matches Modus Operandi (CCTV Pattern)\"],\n      \"crime\": {\n        \"id\": 3500,\n        \"crime_id\": \"CR-2026-00510\",\n        \"description\": \"Mobile phone stolen near bus stop.\"\n      }\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Suspects, Victims & Evidence",
+      "item": [
+        {
+          "name": "List / Filter Suspects by Crime",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/suspects?linkedCrime=3519",
+              "host": ["{{baseUrl}}"],
+              "path": ["suspects"],
+              "query": [
+                { "key": "linkedCrime", "value": "3519" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 1,\n  \"suspects\": [\n    {\n      \"id\": 101,\n      \"name\": \"Om Chavda\",\n      \"age\": 28,\n      \"gender\": \"Male\",\n      \"status\": \"Suspect\",\n      \"linked_crime_id\": 3519\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Suspect Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/suspects", "host": ["{{baseUrl}}"], "path": ["suspects"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Om Chavda\",\n  \"age\": 28,\n  \"gender\": \"Male\",\n  \"address\": \"Sector 4, Gandhinagar\",\n  \"status\": \"Suspect\",\n  \"linked_crime\": 3519\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"suspect\": {\n    \"id\": 101,\n    \"name\": \"Om Chavda\",\n    \"status\": \"Suspect\",\n    \"linked_crime\": 3519\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List / Filter Victims by Crime",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/victims?linkedCrime=3519",
+              "host": ["{{baseUrl}}"],
+              "path": ["victims"],
+              "query": [
+                { "key": "linkedCrime", "value": "3519" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 1,\n  \"victims\": [\n    {\n      \"id\": 85,\n      \"name\": \"Ramesh Patel\",\n      \"contact\": \"+91 9898989898\",\n      \"statement\": \"My phone was snatched while I was talking.\",\n      \"linked_crime_id\": 3519\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "List / Filter Evidence Items by Crime",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/evidence?linkedCrime=3519",
+              "host": ["{{baseUrl}}"],
+              "path": ["evidence"],
+              "query": [
+                { "key": "linkedCrime", "value": "3519" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 1,\n  \"evidence\": [\n    {\n      \"id\": 42,\n      \"type\": \"CCTV Footage\",\n      \"description\": \"High Definition CCTV MP4 video snippet from shop camera.\",\n      \"file_path\": \"/uploads/evidence-3519-cctv.mp4\",\n      \"linked_crime_id\": 3519\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Notifications",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/notifications", "host": ["{{baseUrl}}"], "path": ["notifications"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"notifications\": [\n    {\n      \"_id\": \"901\",\n      \"type\": \"New Case Assigned\",\n      \"message\": \"You have been assigned to Case: CR-2026-00569\",\n      \"read\": false,\n      \"createdAt\": \"2026-08-03T10:00:00Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/notifications/901/read", "host": ["{{baseUrl}}"], "path": ["notifications", "901", "read"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Notification marked as read\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/notifications/read-all", "host": ["{{baseUrl}}"], "path": ["notifications", "read-all"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"All notifications marked as read\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. AI Assistant & Predictions",
+      "item": [
+        {
+          "name": "Ask CrimePilot AI Chatbot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ai/chat", "host": ["{{baseUrl}}"], "path": ["ai", "chat"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What legal sections apply to ATM fraud under BNS 2023?\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"response\": \"Under Bharatiya Nyaya Sanhita (BNS) 2023, ATM Fraud falls under Section 318(4) (Financial Fraud & Cheating). Procedural compliance is governed by BNSS Section 180, and digital evidence admissibility is covered under BSA Section 62.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "AI Legal Section Prediction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/ai/predict", "host": ["{{baseUrl}}"], "path": ["ai", "predict"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Complainant reported mobile phone snatched by two individuals on a motorbike.\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"suggestedCategory\": \"Mobile Theft\",\n  \"confidence\": 0.94,\n  \"recommendedSections\": [\n    {\n      \"act\": \"BNS 2023\",\n      \"section\": \"BNS Section 303(2) (Theft)\",\n      \"description\": \"Penal provision for snatching and theft\"\n    },\n    {\n      \"act\": \"BNSS 2023\",\n      \"section\": \"BNSS Section 173\",\n      \"description\": \"Procedural recording of FIR\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Admin Control & System Management",
+      "item": [
+        {
+          "name": "List All System Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 50,\n  \"users\": [\n    {\n      \"id\": 568,\n      \"name\": \"Rahul Pandya\",\n      \"email\": \"rahulpandya@crimepilot.com\",\n      \"role\": \"officer\",\n      \"is_active\": true\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Toggle User Active Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/users/568/toggle-active", "host": ["{{baseUrl}}"], "path": ["admin", "users", "568", "toggle-active"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"User account status updated\",\n  \"user\": {\n    \"id\": 568,\n    \"is_active\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Audit System Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/logs", "host": ["{{baseUrl}}"], "path": ["admin", "logs"] }
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"count\": 100,\n  \"logs\": [\n    {\n      \"id\": 1204,\n      \"user\": \"rahulpandya@crimepilot.com\",\n      \"method\": \"POST\",\n      \"path\": \"/api/crimes/3519/notes\",\n      \"status_code\": 200,\n      \"timestamp\": \"2026-08-03T10:20:00Z\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
