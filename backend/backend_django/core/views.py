@@ -16,8 +16,11 @@ from .serializers import (
   SuspectSerializer, VictimSerializer, EvidenceSerializer, NotificationSerializer
 )
 from authentication.permissions import IsStaffUser, IsAdminUser, IsOfficerOrAdminUser, IsOfficerUser
-from .utils import generate_report_pdf
-from .emails import send_case_progression_email
+from .emails import (
+  send_welcome_email, send_fir_submission_email, 
+  send_fir_status_email, send_evidence_request_email, 
+  send_case_closed_email, send_case_progression_email
+)
 
 
 STATUS_ORDER = ['Reported', 'Assigned', 'Under Investigation', 'Evidence Collected', 'Solved', 'Closed']
@@ -243,39 +246,22 @@ class CrimeViewSet(viewsets.ModelViewSet):
 
     # Citizen Notifications
     if crime.citizen:
-      send_case_progression_email(crime, "FIR Submitted")
-      send_case_progression_email(crime, "Police Station Assigned")
-      send_case_progression_email(crime, "Officer Assigned")
+      send_fir_submission_email(crime)
 
   def perform_update(self, serializer):
     # Retrieve old values from DB
     old_instance = self.get_object()
-    old_officer_id = old_instance.officer_id
-    old_location_id = old_instance.location_id
     old_status = old_instance.status
 
     crime = serializer.save()
 
-    # Citizen Notifications
-    if crime.citizen:
-      # If officer changed
-      if crime.officer_id != old_officer_id:
-        send_case_progression_email(crime, "Officer Assigned")
-      # If location changed
-      if crime.location_id != old_location_id:
-        send_case_progression_email(crime, "Police Station Assigned")
-      # If status changed
-      if crime.status != old_status:
-        send_case_progression_email(crime, "Status Changed")
-        if crime.status == 'Assigned':
-          send_case_progression_email(crime, "Officer Assigned")
-          send_case_progression_email(crime, "Police Station Assigned")
-        elif crime.status == 'Under Investigation':
-          send_case_progression_email(crime, "Investigation Started")
-        elif crime.status == 'Solved':
-          send_case_progression_email(crime, "Case Solved")
-        elif crime.status == 'Closed':
-          send_case_progression_email(crime, "Case Closed")
+    # Citizen Notifications: send status update email whenever status changes
+    if crime.citizen and crime.status != old_status:
+      if crime.status == 'Closed':
+        send_case_closed_email(crime)
+      else:
+        send_fir_status_email(crime)
+
 
 
 
@@ -326,16 +312,10 @@ class CrimeViewSet(viewsets.ModelViewSet):
 
     # Citizen Notifications
     if crime.citizen:
-      send_case_progression_email(crime, "Status Changed")
-      if target_status == 'Assigned':
-        send_case_progression_email(crime, "Officer Assigned")
-        send_case_progression_email(crime, "Police Station Assigned")
-      elif target_status == 'Under Investigation':
-        send_case_progression_email(crime, "Investigation Started")
-      elif target_status == 'Solved':
-        send_case_progression_email(crime, "Case Solved")
-      elif target_status == 'Closed':
-        send_case_progression_email(crime, "Case Closed")
+      if target_status == 'Closed':
+        send_case_closed_email(crime)
+      else:
+        send_fir_status_email(crime)
 
 
     return Response({
@@ -364,11 +344,11 @@ class CrimeViewSet(viewsets.ModelViewSet):
 
     # Citizen Notifications
     if crime.citizen:
-      send_case_progression_email(crime, "Status Changed")
-      if target_status == 'Solved':
-        send_case_progression_email(crime, "Case Solved")
-      elif target_status == 'Closed':
-        send_case_progression_email(crime, "Case Closed")
+      if target_status == 'Closed':
+        send_case_closed_email(crime)
+      else:
+        send_fir_status_email(crime)
+
 
 
     return Response({
@@ -403,7 +383,8 @@ class CrimeViewSet(viewsets.ModelViewSet):
     note_lower = note_text.lower()
     if 'evidence' in note_lower and ('request' in note_lower or 'need' in note_lower or 'upload' in note_lower or 'require' in note_lower):
       if crime.citizen:
-        send_case_progression_email(crime, "Evidence Requested", extra_details=note_text)
+        send_evidence_request_email(crime, extra_details=note_text)
+
 
     return Response({'success': True, 'notes': crime.notes})
 
@@ -487,9 +468,18 @@ class CrimeViewSet(viewsets.ModelViewSet):
 
 
 class SuspectViewSet(viewsets.ModelViewSet):
-  queryset = Suspect.objects.all().order_by('-created_at')
   serializer_class = SuspectSerializer
   permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+  def get_queryset(self):
+    queryset = Suspect.objects.all().order_by('-created_at')
+    linked_crime = self.request.query_params.get('linkedCrime') or self.request.query_params.get('linked_crime') or self.request.query_params.get('crime')
+    if linked_crime:
+      if str(linked_crime).isdigit():
+        queryset = queryset.filter(Q(linked_crime_id=linked_crime) | Q(linked_crime__crime_id=linked_crime))
+      else:
+        queryset = queryset.filter(linked_crime__crime_id=linked_crime)
+    return queryset
 
   def list(self, request, *args, **kwargs):
     queryset = self.filter_queryset(self.get_queryset())
@@ -546,9 +536,18 @@ class SuspectViewSet(viewsets.ModelViewSet):
 
 
 class VictimViewSet(viewsets.ModelViewSet):
-  queryset = Victim.objects.all().order_by('-created_at')
   serializer_class = VictimSerializer
   permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+  def get_queryset(self):
+    queryset = Victim.objects.all().order_by('-created_at')
+    linked_crime = self.request.query_params.get('linkedCrime') or self.request.query_params.get('linked_crime') or self.request.query_params.get('crime')
+    if linked_crime:
+      if str(linked_crime).isdigit():
+        queryset = queryset.filter(Q(linked_crime_id=linked_crime) | Q(linked_crime__crime_id=linked_crime))
+      else:
+        queryset = queryset.filter(linked_crime__crime_id=linked_crime)
+    return queryset
 
   def list(self, request, *args, **kwargs):
     queryset = self.filter_queryset(self.get_queryset())
@@ -581,9 +580,18 @@ class VictimViewSet(viewsets.ModelViewSet):
 
 
 class EvidenceViewSet(viewsets.ModelViewSet):
-  queryset = Evidence.objects.all().order_by('-created_at')
   serializer_class = EvidenceSerializer
   permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+  def get_queryset(self):
+    queryset = Evidence.objects.all().order_by('-created_at')
+    linked_crime = self.request.query_params.get('linkedCrime') or self.request.query_params.get('linked_crime') or self.request.query_params.get('crime')
+    if linked_crime:
+      if str(linked_crime).isdigit():
+        queryset = queryset.filter(Q(linked_crime_id=linked_crime) | Q(linked_crime__crime_id=linked_crime))
+      else:
+        queryset = queryset.filter(linked_crime__crime_id=linked_crime)
+    return queryset
 
   def list(self, request, *args, **kwargs):
     queryset = self.filter_queryset(self.get_queryset())
@@ -812,9 +820,8 @@ class CitizenFIRSubmitView(APIView):
     notify(request.user, 'High Priority Alert', f'Your FIR {crime.crime_id} has been submitted successfully.')
 
     # SMTP Mail Notifications
-    send_case_progression_email(crime, "FIR Submitted")
-    send_case_progression_email(crime, "Police Station Assigned")
-    send_case_progression_email(crime, "Officer Assigned")
+    from .emails import send_fir_submission_email
+    send_fir_submission_email(crime)
 
 
     return Response({

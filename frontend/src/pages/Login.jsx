@@ -568,10 +568,12 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="form-group">
-                <label style={{ fontSize: '11px', color: '#94a3b8' }}>Username or Email Address</label>
+                <label style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  {currentRole === 'citizen' ? 'Mobile Number or Email Address' : 'Username or Email Address'}
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. admin@crimepilot.com"
+                  placeholder={currentRole === 'citizen' ? "e.g. 9876543210 or email@domain.com" : "e.g. admin@crimepilot.com"}
                   autoComplete="off"
                   className="form-control"
                   style={{

@@ -587,6 +587,13 @@ class CitizenSignupView(APIView):
     # Clean up OTP after successful registration
     EmailOTP.objects.filter(email=email).delete()
 
+    # Requirement 1: Trigger Welcome Email after Citizen Registration
+    try:
+      from core.emails import send_welcome_email
+      send_welcome_email(user, citizen)
+    except Exception as e:
+      print(f"[Warning] Could not trigger welcome email: {e}")
+
     return Response({
       'success': True,
       'message': 'Citizen Registered Successfully',

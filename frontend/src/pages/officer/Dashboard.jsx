@@ -12,23 +12,36 @@ const Dashboard = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
     const fetchOfficerStats = async () => {
       try {
         setLoading(true);
+        setError('');
         const response = await axiosInstance.get('/dashboard/officer');
-        if (response.data && response.data.success) {
-          setStats(response.data.stats);
-          setRecentCases(response.data.recentCases || []);
+        if (isMounted) {
+          if (response.data && (response.data.success || response.data.stats)) {
+            setStats(response.data.stats || { totalAssigned: 0, pendingCount: 0, solvedCount: 0 });
+            setRecentCases(response.data.recentCases || []);
+          } else {
+            setError('Failed to fetch dashboard metrics.');
+          }
         }
       } catch (err) {
         console.error('Error fetching officer dashboard:', err);
-        setError('Failed to fetch dashboard data. Please try again.');
+        if (isMounted) {
+          setError('Failed to fetch dashboard data. Please check your backend connection.');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchOfficerStats();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
