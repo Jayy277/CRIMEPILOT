@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import BackToHomeButton from '../../components/BackToHomeButton';
 
 const ID_CONFIGS = {
   'Aadhaar Card': {
@@ -107,7 +108,38 @@ const CitizenRegister = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
 
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+  const triggerToast = (msg, type = 'error') => {
+    setToast({ show: true, message: msg, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'error' });
+    }, 7000);
+  };
+
   const otpInputsRef = useRef([]);
+
+  // Reset form fields on mount
+  useEffect(() => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setMobile('');
+    setDob(null);
+    setGender('Male');
+    setAddress('');
+    setState('Gujarat');
+    setCity('');
+    setPincode('');
+    setIdentityType('Aadhaar Card');
+    setIdentityNumber('');
+    setOtpDigits(['', '', '', '', '', '']);
+    setAlreadyRegisteredError(false);
+    setOtpSent(false);
+    setOtpVerified(false);
+    setShowOTPSection(false);
+  }, []);
 
   // Auto focus first box when OTP section opens
   useEffect(() => {
@@ -146,7 +178,12 @@ const CitizenRegister = () => {
     console.log('[Frontend OTP] Sending POST /api/auth/send-email-otp request for email:', cleanEmail);
 
     try {
-      const res = await axiosInstance.post('/auth/send-email-otp', { email: cleanEmail });
+      const payload = {
+        email: cleanEmail,
+        identityType,
+        identityNumber: identityNumber.replace(/[\s-]/g, '')
+      };
+      const res = await axiosInstance.post('/auth/send-email-otp', payload);
       console.log('[Frontend OTP] Received response from send-email-otp:', res.data);
       
       // Automatically render OTP verification component on success (Requirement 1, 7, 15)
@@ -163,12 +200,23 @@ const CitizenRegister = () => {
     } catch (err) {
       console.error('[Frontend OTP] Error sending Email OTP:', err);
       setOtpSuccess('');
-      const isDup = err.response?.data?.already_registered || err.response?.status === 409 || err.response?.data?.message?.includes('already exists');
-      if (isDup) {
+      const errData = err.response?.data;
+      const isAadhaarDup = errData?.code === 'AADHAAR_ALREADY_EXISTS' || (err.response?.status === 409 && (errData?.message?.includes('Aadhaar') || errData?.message?.includes('already registered')));
+      const isDup = errData?.already_registered || (err.response?.status === 409 && !isAadhaarDup) || errData?.message?.includes('Mobile Number');
+
+      if (isAadhaarDup) {
+        const aadhaarMsg = errData?.message || "This Aadhaar Card is already registered with CrimePilot.\nPlease log in using your existing account or contact support if you believe this is an error.";
+        setIdentityTypeError(aadhaarMsg);
+        triggerToast(aadhaarMsg, 'error');
+        if (idInputRef.current) {
+          idInputRef.current.focus();
+          idInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else if (isDup) {
         setAlreadyRegisteredError(true);
         setError('An account with this Email Address or Mobile Number already exists. Please login to continue.');
       } else {
-        const errorMsg = err.response?.data?.message || err.message || 'Failed to send OTP email.';
+        const errorMsg = errData?.message || err.message || 'Failed to send OTP email.';
         setOtpError(errorMsg);
       }
     } finally {
@@ -438,11 +486,24 @@ const CitizenRegister = () => {
         setError(res.data.message || 'Registration failed.');
       }
     } catch (err) {
-      const serverMsg = err.response?.data?.message;
-      if (err.response?.data?.field === 'identityNumber' && serverMsg) {
-        setIdentityTypeError(serverMsg);
+      const errData = err.response?.data;
+      const isAadhaarDup = errData?.code === 'AADHAAR_ALREADY_EXISTS' || (err.response?.status === 409 && (errData?.message?.includes('Aadhaar') || errData?.field === 'identityNumber'));
+      const serverMsg = errData?.message;
+
+      if (isAadhaarDup) {
+        const aadhaarMsg = serverMsg || "This Aadhaar Card is already registered with CrimePilot.\nPlease log in using your existing account or contact support if you believe this is an error.";
+        setIdentityTypeError(aadhaarMsg);
+        triggerToast(aadhaarMsg, 'error');
         if (idInputRef.current) {
           idInputRef.current.focus();
+          idInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else if (errData?.field === 'identityNumber' && serverMsg) {
+        setIdentityTypeError(serverMsg);
+        triggerToast(serverMsg, 'error');
+        if (idInputRef.current) {
+          idInputRef.current.focus();
+          idInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       } else {
         setError(serverMsg || 'Server error during registration. Please try again.');
@@ -476,6 +537,39 @@ const CitizenRegister = () => {
       overflow: 'hidden',
       boxSizing: 'border-box'
     }}>
+      {/* Toast / Snackbar Alert Notification */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 99999,
+          backgroundColor: toast.type === 'error' ? 'rgba(127, 29, 29, 0.95)' : 'rgba(6, 95, 70, 0.95)',
+          color: '#FFFFFF',
+          border: `1.5px solid ${toast.type === 'error' ? '#EF4444' : '#10B981'}`,
+          borderRadius: '12px',
+          padding: '14px 20px',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(239, 68, 68, 0.3)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          maxWidth: '460px',
+          backdropFilter: 'blur(12px)',
+          animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <span style={{ fontSize: '20px', lineHeight: '1.2' }}>⚠️</span>
+          <div style={{ fontSize: '13px', fontWeight: '600', lineHeight: '1.4', whiteSpace: 'pre-line', flex: 1 }}>
+            {toast.message}
+          </div>
+          <button
+            onClick={() => setToast({ show: false, message: '', type: 'error' })}
+            style={{ background: 'none', border: 'none', color: '#9AA4B2', cursor: 'pointer', fontSize: '16px', padding: '0 4px', lineHeight: 1 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Background Overlay */}
       <div style={{
         position: 'absolute',
@@ -512,6 +606,10 @@ const CitizenRegister = () => {
           width: '100%',
           boxSizing: 'border-box'
         }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '20px' }}>
+            <BackToHomeButton style={{ marginBottom: 0 }} />
+          </div>
+
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <span style={{ fontSize: '11px', color: '#9AA4B2', display: 'block', marginBottom: '4px' }}>Join CrimePilot AI Citizen Network</span>
             <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#FFFFFF', letterSpacing: '-0.02em', fontFamily: 'Space Grotesk, Outfit, sans-serif' }}>
@@ -999,12 +1097,13 @@ const CitizenRegister = () => {
                 placeholder={currentConfig.placeholder}
                 style={{
                   borderColor: identityTypeError ? '#EF4444' : (isValidFormat ? '#22C55E' : undefined),
-                  boxShadow: identityTypeError ? '0 0 10px rgba(239, 68, 68, 0.3)' : undefined
+                  borderWidth: identityTypeError ? '2px' : '1px',
+                  boxShadow: identityTypeError ? '0 0 12px rgba(239, 68, 68, 0.4)' : undefined
                 }}
               />
               
               {identityTypeError ? (
-                <span style={{ fontSize: '11px', color: '#f87171', display: 'block', marginTop: '4px', fontWeight: 'bold' }}>
+                <span style={{ fontSize: '11px', color: '#f87171', display: 'block', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'pre-line', lineHeight: '1.4' }}>
                   ⚠️ {identityTypeError}
                 </span>
               ) : (

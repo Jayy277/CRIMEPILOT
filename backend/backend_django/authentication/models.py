@@ -92,6 +92,14 @@ class Citizen(models.Model):
   status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='verified')
   created_at = models.DateTimeField(auto_now_add=True)
 
+  class Meta:
+    constraints = [
+      models.UniqueConstraint(
+        fields=['identity_type', 'identity_number'],
+        name='unique_citizen_identity'
+      )
+    ]
+
   def __str__(self):
     return f"Citizen {self.user.name} - Status: {self.status}"
 

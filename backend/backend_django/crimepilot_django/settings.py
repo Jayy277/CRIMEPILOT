@@ -1,9 +1,18 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+  from dotenv import load_dotenv
+  load_dotenv()
+except ImportError:
+  pass
+
+try:
+  import pymysql
+  pymysql.install_as_MySQLdb()
+except ImportError:
+  pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,6 +57,16 @@ MIDDLEWARE = [
   'logs.middleware.AuditLoggerMiddleware',
 ]
 
+try:
+  import whitenoise
+  MIDDLEWARE.insert(2, 'whitenoise.middleware.WhiteNoiseMiddleware')
+  STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+except ImportError:
+  pass
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 ROOT_URLCONF = 'crimepilot_django.urls'
 
 TEMPLATES = [
@@ -68,22 +87,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'crimepilot_django.wsgi.application'
 
-# Database configuration — MySQL / MariaDB (XAMPP)
-# Django 4.2 natively supports MariaDB 10.4+ — no custom backend needed.
-DATABASES = {
-  'default': {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': os.environ.get('DB_NAME', 'crimepilot'),
-    'USER': os.environ.get('DB_USER', 'root'),
-    'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-    'HOST': os.environ.get('DB_HOST', 'localhost'),
-    'PORT': os.environ.get('DB_PORT', '3306'),
-    'OPTIONS': {
-      'charset': 'utf8mb4',
-      'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-    },
+# Database configuration — MySQL / MariaDB (Local XAMPP) or SQLite (Render / Fallback)
+if os.environ.get('RENDER') and not os.environ.get('DB_HOST'):
+  DATABASES = {
+    'default': {
+      'ENGINE': 'django.db.backends.sqlite3',
+      'NAME': BASE_DIR / 'db.sqlite3',
+    }
   }
-}
+else:
+  DATABASES = {
+    'default': {
+      'ENGINE': 'django.db.backends.mysql',
+      'NAME': os.environ.get('DB_NAME', 'crimepilot'),
+      'USER': os.environ.get('DB_USER', 'root'),
+      'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+      'HOST': os.environ.get('DB_HOST', 'localhost'),
+      'PORT': os.environ.get('DB_PORT', '3306'),
+      'OPTIONS': {
+        'charset': 'utf8mb4',
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+      },
+    }
+  }
 
 # Custom User Configuration
 AUTH_USER_MODEL = 'authentication.CustomUser'

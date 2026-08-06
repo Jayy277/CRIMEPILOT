@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -7,8 +7,21 @@ import PageTransition from './PageTransition';
 
 const Layout = () => {
   const { user } = useContext(AuthContext);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const location = useLocation();
+
+  // Auto-close sidebar on window resize to mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getPortalClass = () => {
     if (!user) return '';
@@ -44,10 +57,16 @@ const Layout = () => {
           flex: 1,
           height: isPortalView ? 'calc(100vh - 72px)' : 'auto',
           minHeight: 0,
-          overflow: isPortalView ? 'hidden' : 'visible'
+          overflow: isPortalView ? 'hidden' : 'visible',
+          position: 'relative'
         }}
       >
-        {isPortalView && <Sidebar isOpen={sidebarOpen} />}
+        {isPortalView && (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        )}
         <main
           className="portal-main-container"
           style={{

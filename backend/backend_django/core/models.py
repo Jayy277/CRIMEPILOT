@@ -5,9 +5,17 @@ class Location(models.Model):
   district = models.CharField(max_length=100)
   city = models.CharField(max_length=100)
   police_station = models.CharField(max_length=200)
+  is_active = models.BooleanField(default=True)
 
   class Meta:
     unique_together = ('state', 'district', 'city', 'police_station')
+    indexes = [
+      models.Index(fields=['police_station']),
+      models.Index(fields=['city']),
+      models.Index(fields=['district']),
+      models.Index(fields=['state']),
+      models.Index(fields=['is_active']),
+    ]
 
   def __str__(self):
     return f"{self.police_station} ({self.city}, {self.state})"

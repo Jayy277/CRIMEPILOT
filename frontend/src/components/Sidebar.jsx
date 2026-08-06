@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
 
   if (!user) return null;
@@ -101,22 +101,31 @@ const Sidebar = ({ isOpen }) => {
             label: 'Crime Trends',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
               </svg>
             ),
           },
           {
             path: '/analyst/heatmap',
-            label: 'Hotspot Map',
+            label: 'GIS Heatmap',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+            ),
+          },
+          {
+            path: '/analyst/prediction',
+            label: 'AI Forecasting',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><line x1="2" y1="12" x2="22" y2="12" />
               </svg>
             ),
           },
           {
             path: '/analyst/reports',
-            label: 'Compile Reports',
+            label: 'Export Reports',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -150,8 +159,7 @@ const Sidebar = ({ isOpen }) => {
             label: 'Manage Users',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             ),
           },
@@ -160,9 +168,7 @@ const Sidebar = ({ isOpen }) => {
             label: 'Officers Directory',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" />
               </svg>
             ),
           },
@@ -180,7 +186,7 @@ const Sidebar = ({ isOpen }) => {
             label: 'Locations / Stations',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
             ),
           },
@@ -189,8 +195,7 @@ const Sidebar = ({ isOpen }) => {
             label: 'Audit System Logs',
             icon: (
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
               </svg>
             ),
           },
@@ -290,66 +295,126 @@ const Sidebar = ({ isOpen }) => {
 
   const accentColor = getSidebarAccent();
 
-  return (
-    <aside
-      style={{
-        width: isOpen ? '240px' : '0px',
-        opacity: isOpen ? 1 : 0,
-        backgroundColor: 'rgba(15, 22, 42, 0.4)',
-        borderRight: isOpen ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid transparent',
-        backdropFilter: 'blur(8px)',
-        padding: isOpen ? '24px 16px' : '24px 0px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        height: 'calc(100vh - 72px)',
-        position: 'sticky',
-        top: '72px',
-        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, border-color 0.3s ease',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px 12px 8px' }}>
-        Navigation
-      </div>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {links.map((link) => (
-          <NavLink
-            key={link.path}
-            to={link.path}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px',
-              borderRadius: '8px',
-              color: isActive ? '#fff' : '#94a3b8',
-              backgroundColor: isActive ? `${accentColor}15` : 'transparent',
-              border: isActive ? `1px solid ${accentColor}33` : '1px solid transparent',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: isActive ? '600' : '500',
-              fontFamily: 'Outfit, sans-serif',
-              transition: 'all 0.2s ease',
-            })}
-            className="sidebar-link-hover"
-          >
-            <span style={{ display: 'flex', alignItems: 'center' }}>{link.icon}</span>
-            <span>{link.label}</span>
-          </NavLink>
-        ))}
-      </div>
+  const handleLinkClick = () => {
+    if (onClose && window.innerWidth < 768) {
+      onClose();
+    }
+  };
 
-      {/* Style overrides for sidebar link hover states */}
+  return (
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="sidebar-mobile-backdrop"
+        />
+      )}
+
+      <aside
+        className={`portal-sidebar ${isOpen ? 'open' : 'closed'}`}
+        style={{
+          backgroundColor: '#0F162A',
+          borderRight: isOpen ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid transparent',
+          backdropFilter: 'blur(8px)',
+          padding: isOpen ? '24px 16px' : '24px 0px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          height: 'calc(100vh - 72px)',
+          position: 'sticky',
+          top: '72px',
+          transition: 'transform 0.3s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease',
+          overflowY: 'auto',
+          whiteSpace: 'nowrap',
+          zIndex: 1000,
+        }}
+      >
+        <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px 12px 8px' }}>
+          Navigation
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {links.map((link) => (
+            <NavLink
+              key={link.path}
+              to={link.path}
+              onClick={handleLinkClick}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px',
+                borderRadius: '8px',
+                color: isActive ? '#fff' : '#94a3b8',
+                backgroundColor: isActive ? `${accentColor}15` : 'transparent',
+                border: isActive ? `1px solid ${accentColor}33` : '1px solid transparent',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: isActive ? '600' : '500',
+                fontFamily: 'Outfit, sans-serif',
+                transition: 'all 0.2s ease',
+              })}
+              className="sidebar-link-hover"
+            >
+              <span style={{ display: 'flex', alignItems: 'center' }}>{link.icon}</span>
+              <span>{link.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </aside>
+
       <style>{`
         .sidebar-link-hover:hover {
           color: #fff !important;
           background-color: rgba(255, 255, 255, 0.03) !important;
         }
+
+        .portal-sidebar {
+          width: 240px;
+          opacity: 1;
+        }
+
+        .portal-sidebar.closed {
+          width: 0px;
+          opacity: 0;
+        }
+
+        .sidebar-mobile-backdrop {
+          display: none;
+        }
+
+        @media (max-width: 767px) {
+          .sidebar-mobile-backdrop {
+            display: block;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+          }
+
+          .portal-sidebar {
+            position: fixed !important;
+            top: 72px !important;
+            left: 0 !important;
+            width: 260px !important;
+            height: calc(100vh - 72px) !important;
+            transform: translateX(0);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8);
+          }
+
+          .portal-sidebar.closed {
+            width: 260px !important;
+            transform: translateX(-100%) !important;
+            opacity: 0 !important;
+          }
+        }
       `}</style>
-    </aside>
+    </>
   );
 };
 

@@ -62,6 +62,19 @@ export default function CitizenForgotPassword() {
     special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
   };
 
+  // Reset form state on mount
+  useEffect(() => {
+    setStep(1);
+    setEmail('');
+    setOtp('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError('');
+    setSuccess('');
+    setNotRegisteredError(false);
+    setEmailServiceError('');
+  }, []);
+
   useEffect(() => {
     let timer;
     if (resendTimer > 0) {
@@ -342,7 +355,7 @@ export default function CitizenForgotPassword() {
 
         {/* STEP 1: Enter Email */}
         {step === 1 && (
-          <form onSubmit={handleSendOTP} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <form onSubmit={handleSendOTP} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }} autoComplete="off">
             <div>
               <label style={labelStyle}>REGISTERED EMAIL ADDRESS</label>
               <input
@@ -350,6 +363,7 @@ export default function CitizenForgotPassword() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
+                autoComplete="off"
                 required
                 style={inputStyle}
               />
@@ -393,7 +407,7 @@ export default function CitizenForgotPassword() {
 
         {/* STEP 2: Enter OTP */}
         {step === 2 && (
-          <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }} autoComplete="off">
             <div>
               <label style={labelStyle}>ENTER 6-DIGIT OTP</label>
               <input
@@ -402,6 +416,7 @@ export default function CitizenForgotPassword() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                 placeholder="123456"
+                autoComplete="one-time-code"
                 required
                 style={{ ...inputStyle, textAlign: 'center', letterSpacing: '0.4em', fontSize: '20px', fontWeight: '800' }}
               />
@@ -460,7 +475,7 @@ export default function CitizenForgotPassword() {
 
         {/* STEP 3: Reset Password */}
         {step === 3 && (
-          <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} autoComplete="off">
             <div>
               <label style={labelStyle}>NEW PASSWORD</label>
               <div style={{ position: 'relative' }}>
@@ -469,6 +484,7 @@ export default function CitizenForgotPassword() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
+                  autoComplete="new-password"
                   required
                   style={{ ...inputStyle, paddingRight: '40px' }}
                 />
@@ -493,6 +509,7 @@ export default function CitizenForgotPassword() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
+                  autoComplete="new-password"
                   required
                   style={{ ...inputStyle, paddingRight: '40px' }}
                 />

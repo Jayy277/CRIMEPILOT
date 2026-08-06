@@ -19,17 +19,36 @@ const RegisterFIR = () => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('Medium');
+  const [priority, setPriority] = useState('');
   
   const state = 'Gujarat'; // Permanently Gujarat, disabled & read-only
   const [city, setCity] = useState('');
   const [citySearch, setCitySearch] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [district, setDistrict] = useState('Central');
+  const [district, setDistrict] = useState('');
   const [policeStation, setPoliceStation] = useState('');
+  const [stationId, setStationId] = useState(null);
   const [stationSearch, setStationSearch] = useState('');
+  const [searchedStations, setSearchedStations] = useState([]);
+  const [searchingStations, setSearchingStations] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showDropdown, setShowDropdown] = useState(false);
   const [pincode, setPincode] = useState('');
+
+  const highlightMatch = (text, query) => {
+    if (!text) return '';
+    if (!query || !query.trim()) return text;
+    const cleanQ = query.trim();
+    const regex = new RegExp(`(${cleanQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      part.toLowerCase() === cleanQ.toLowerCase() ? (
+        <mark key={i} style={{ backgroundColor: 'rgba(0, 217, 255, 0.25)', color: '#00D9FF', fontWeight: 'bold', padding: '0 2px', borderRadius: '2px' }}>
+          {part}
+        </mark>
+      ) : part
+    );
+  };
 
   const [witnessInfo, setWitnessInfo] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
@@ -58,9 +77,7 @@ const RegisterFIR = () => {
         }
         
         setCategories(catData);
-        if (catData.length > 0) {
-          setCategoryName(catData[0].name);
-        }
+        // Do not pre-select first category - user must choose from placeholder
         
         let locData = [];
         try {
@@ -104,22 +121,100 @@ const RegisterFIR = () => {
     });
   };
 
+  // Live search-as-you-type effect for Police Stations
+  useEffect(() => {
+    if (!city) {
+      setSearchedStations([]);
+      setSearchingStations(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchSearchResults = async () => {
+      setSearchingStations(true);
+      try {
+        const query = stationSearch.trim();
+        const res = await axiosInstance.get(`/police-stations/search`, {
+          params: { q: query, city }
+        });
+        if (isMounted) {
+          const results = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+          setSearchedStations(results);
+        }
+      } catch (err) {
+        console.error('Error searching police stations:', err);
+        if (isMounted) {
+          const localMatches = getMatchingStations();
+          setSearchedStations(localMatches.map(loc => ({
+            id: loc.id || loc._id,
+            name: loc.police_station || loc.policeStation,
+            city: loc.city,
+            district: loc.district || 'Central',
+            state: loc.state || 'Gujarat'
+          })));
+        }
+      } finally {
+        if (isMounted) setSearchingStations(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchSearchResults();
+    }, 150);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [stationSearch, city]);
+
   const handleSelectCity = (cityName) => {
     setCity(cityName);
     setCitySearch(cityName);
     setShowCityDropdown(false);
     setPoliceStation('');
+    setStationId(null);
     setStationSearch('');
+    setSearchedStations([]);
+    setSelectedIndex(-1);
     setFieldErrors(prev => ({ ...prev, city: null, policeStation: null }));
   };
 
   const handleSelectStation = (station) => {
-    const name = station.police_station || station.policeStation;
+    const name = station.name || station.police_station || station.policeStation;
+    const id = station.id || station._id;
     setPoliceStation(name);
+    setStationId(id);
     setStationSearch(name);
     if (station.district) setDistrict(station.district);
     setShowDropdown(false);
+    setSelectedIndex(-1);
     setFieldErrors(prev => ({ ...prev, policeStation: null }));
+  };
+
+  const handleStationKeyDown = (e) => {
+    if (!showDropdown || searchedStations.length === 0) {
+      if (e.key === 'ArrowDown' && city) {
+        setShowDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < searchedStations.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : searchedStations.length - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < searchedStations.length) {
+        handleSelectStation(searchedStations[selectedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+    }
   };
 
   const parseTimeToMinutes = (timeStr) => {
@@ -196,9 +291,9 @@ const RegisterFIR = () => {
       newErrors.pincode = 'Pincode must be compulsory 6 digits (e.g. 380015).';
     }
 
-    const matchingStations = getMatchingStations();
-    const isValidStation = matchingStations.some(
-      loc => (loc.police_station || loc.policeStation) === policeStation
+    const isValidStation = policeStation.trim() !== '' && (
+      searchedStations.some(st => (st.name || st.police_station || st.policeStation) === policeStation) ||
+      locationsList.some(loc => (loc.police_station || loc.policeStation) === policeStation)
     );
     if (!policeStation || !isValidStation) {
       newErrors.policeStation = city ? `Please search and select a registered Police Station in ${city}.` : 'Please select a City above first to choose a Police Station.';
@@ -236,6 +331,10 @@ const RegisterFIR = () => {
     formData.append('city', city);
     formData.append('district', district);
     formData.append('police_station', policeStation);
+    if (stationId) {
+      formData.append('location_id', stationId);
+      formData.append('station_id', stationId);
+    }
     formData.append('pincode', pincodeClean);
 
     if (photoFile) formData.append('photo', photoFile);
@@ -631,12 +730,15 @@ const RegisterFIR = () => {
               placeholder={city ? `🔍 Search ${city} police stations...` : "⚠️ Please select a City above first to filter Police Stations..."}
               value={stationSearch}
               disabled={!city}
+              onKeyDown={handleStationKeyDown}
               onChange={(e) => {
                 const val = e.target.value;
                 setStationSearch(val);
                 setShowDropdown(true);
+                setSelectedIndex(-1);
                 if (policeStation && val !== policeStation) {
                   setPoliceStation('');
+                  setStationId(null);
                 }
                 setFieldErrors(prev => ({ ...prev, policeStation: null }));
               }}
@@ -655,8 +757,10 @@ const RegisterFIR = () => {
                 type="button"
                 onClick={() => {
                   setPoliceStation('');
+                  setStationId(null);
                   setStationSearch('');
                   setShowDropdown(true);
+                  setSelectedIndex(-1);
                   setFieldErrors(prev => ({ ...prev, policeStation: null }));
                 }}
                 style={{
@@ -691,7 +795,7 @@ const RegisterFIR = () => {
             </div>
           ) : (
             <div style={{ fontSize: '11px', color: '#4DA3FF', marginTop: '4px' }}>
-              ℹ️ Type above to filter {city} police stations, then click a matching station from the list below.
+              ℹ️ Type above to search {city} police stations, use ↑ ↓ Enter keys or click to select.
             </div>
           )}
 
@@ -708,7 +812,7 @@ const RegisterFIR = () => {
                 border: '1px solid #4DA3FF',
                 borderRadius: '10px',
                 marginTop: '6px',
-                maxHeight: '240px',
+                maxHeight: '260px',
                 overflowY: 'auto',
                 boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85)'
               }}
@@ -724,7 +828,7 @@ const RegisterFIR = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span>STATIONS IN {city.toUpperCase()} ({getMatchingStations().length})</span>
+                <span>MATCHING STATIONS ({searchingStations ? '...' : searchedStations.length})</span>
                 <span
                   onClick={() => setShowDropdown(false)}
                   style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '11px' }}
@@ -733,42 +837,57 @@ const RegisterFIR = () => {
                 </span>
               </div>
 
-              {getMatchingStations().length === 0 ? (
-                <div style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
-                  No police station found in {city} matching "{stationSearch}".
+              {searchingStations ? (
+                <div style={{ padding: '16px', color: '#00D9FF', fontSize: '13px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <span style={{
+                    width: '14px',
+                    height: '14px',
+                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    borderTop: '2px solid #00D9FF',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block'
+                  }} />
+                  Searching police stations...
+                </div>
+              ) : searchedStations.length === 0 ? (
+                <div style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center', fontWeight: '500' }}>
+                  No police station found.
                 </div>
               ) : (
-                getMatchingStations().map((station, idx) => {
-                  const name = station.police_station || station.policeStation;
+                searchedStations.map((station, idx) => {
+                  const name = station.name || station.police_station || station.policeStation;
                   const isSelected = policeStation === name;
+                  const isHighlighted = selectedIndex === idx;
+                  const stCity = station.city || city;
+                  const stDistrict = station.district || city;
+                  const stState = station.state || 'Gujarat';
+
                   return (
                     <div
-                      key={station._id || station.id || idx}
+                      key={station.id || station._id || idx}
                       onClick={() => handleSelectStation(station)}
                       style={{
                         padding: '10px 14px',
                         cursor: 'pointer',
-                        borderBottom: idx === getMatchingStations().length - 1 ? 'none' : '1px solid #162438',
-                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                        borderBottom: idx === searchedStations.length - 1 ? 'none' : '1px solid #162438',
+                        backgroundColor: isSelected
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : (isHighlighted ? 'rgba(77, 163, 255, 0.2)' : 'transparent'),
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         transition: 'background 0.15s ease'
                       }}
-                      onMouseEnter={e => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(77, 163, 255, 0.12)';
-                      }}
-                      onMouseLeave={e => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
+                      onMouseEnter={() => setSelectedIndex(idx)}
                     >
                       <div>
-                        <span style={{ color: isSelected ? '#10b981' : '#fff', fontWeight: '600', fontSize: '13px', display: 'block' }}>
-                          🏫 {name}
-                        </span>
-                        <span style={{ color: '#94a3b8', fontSize: '11px' }}>
-                          📍 {station.city}, Gujarat {station.district ? `(${station.district})` : ''}
-                        </span>
+                        <div style={{ color: isSelected ? '#10b981' : '#fff', fontWeight: '700', fontSize: '13.5px' }}>
+                          {highlightMatch(name, stationSearch)}
+                        </div>
+                        <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px', fontWeight: '500' }}>
+                          {highlightMatch(stCity, stationSearch)} • {highlightMatch(stDistrict, stationSearch)} • {highlightMatch(stState, stationSearch)}
+                        </div>
                       </div>
                       <span style={{
                         color: isSelected ? '#10b981' : '#4DA3FF',
@@ -778,7 +897,7 @@ const RegisterFIR = () => {
                         borderRadius: '4px',
                         background: isSelected ? 'rgba(16,185,129,0.2)' : 'rgba(77,163,255,0.1)'
                       }}>
-                        {isSelected ? '✓ Selected' : 'Select Station →'}
+                        {isSelected ? '✓ Selected' : 'Select →'}
                       </span>
                     </div>
                   );

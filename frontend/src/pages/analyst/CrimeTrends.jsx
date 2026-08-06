@@ -55,20 +55,26 @@ const CrimeTrends = () => {
   // Format hour stats
   const hourData = [...hourStats]
     .sort((a, b) => Number(a._id) - Number(b._id))
-    .map(h => ({
-      name: `${h._id}:00`,
-      Count: h.count
-    }));
+    .map(h => {
+      const hr = Number(h._id);
+      const ampm = hr >= 12 ? 'PM' : 'AM';
+      const hr12 = hr % 12 === 0 ? 12 : hr % 12;
+      const formattedHr = `${hr12.toString().padStart(2, '0')}:00 ${ampm}`;
+      return {
+        name: formattedHr,
+        Count: h.count
+      };
+    });
 
   // Format hotspots
-  const hotspotData = hotspotStats.map(h => ({
-    Station: h.policeStation,
+  const hotspotData = hotspotStats.slice(0, 6).map(h => ({
+    Station: h.policeStation.length > 15 ? `${h.policeStation.substring(0, 13)}..` : h.policeStation,
     Incidents: h.count
   }));
 
-  // Format categories
-  const categoryData = categoryStats.map(c => ({
-    Category: c.name,
+  // Format categories (top 6 max)
+  const categoryData = categoryStats.slice(0, 6).map(c => ({
+    Category: c.name.length > 14 ? `${c.name.substring(0, 12)}..` : c.name,
     Count: c.count
   }));
 

@@ -4,6 +4,7 @@ from django.db.models import Count, Q, F
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.http import HttpResponse
 from rest_framework import viewsets, status, permissions
+from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -68,6 +69,50 @@ class LocationViewSet(viewsets.ModelViewSet):
     instance = self.get_object()
     self.perform_destroy(instance)
     return Response({'success': True, 'message': 'Location deleted successfully'})
+
+
+class PoliceStationSearchView(APIView):
+  permission_classes = [AllowAny]
+
+  def get(self, request):
+    q = (request.query_params.get('q') or request.query_params.get('query') or request.query_params.get('search') or '').strip()
+    city_filter = (request.query_params.get('city') or '').strip()
+
+    qs = Location.objects.filter(is_active=True)
+
+    if city_filter:
+      qs = qs.filter(city__iexact=city_filter)
+
+    if q:
+      clean_q = ' '.join(q.split())
+      terms = clean_q.split()
+      q_filter = Q()
+      for term in terms:
+        term_q = (
+          Q(police_station__icontains=term) |
+          Q(city__icontains=term) |
+          Q(district__icontains=term) |
+          Q(state__icontains=term)
+        )
+        q_filter &= term_q
+      qs = qs.filter(q_filter)
+
+    results = qs.order_by('police_station', 'city')[:15]
+
+    data = []
+    for loc in results:
+      data.append({
+        'id': loc.id,
+        '_id': str(loc.id),
+        'name': loc.police_station,
+        'police_station': loc.police_station,
+        'policeStation': loc.police_station,
+        'city': loc.city,
+        'district': loc.district,
+        'state': loc.state,
+      })
+
+    return Response(data, status=status.HTTP_200_OK)
 
 
 class CrimeCategoryViewSet(viewsets.ModelViewSet):
@@ -754,18 +799,29 @@ class CitizenFIRSubmitView(APIView):
     if not category:
       category = CrimeCategory.objects.first()
 
-    location = Location.objects.filter(
-      state='Gujarat',
-      city__iexact=city,
-      police_station__iexact=police_station
-    ).first()
+    location_id = data.get('location_id') or data.get('locationId') or data.get('station_id') or data.get('stationId')
+    location = None
+    if location_id:
+      try:
+        location = Location.objects.filter(id=location_id, is_active=True).first()
+      except Exception:
+        location = None
 
-    if not location:
+    if not location and police_station:
+      location = Location.objects.filter(
+        state='Gujarat',
+        city__iexact=city,
+        police_station__iexact=police_station,
+        is_active=True
+      ).first()
+
+    if not location and police_station:
       location, _ = Location.objects.get_or_create(
         state='Gujarat',
         city=city,
         district=district,
-        police_station=police_station
+        police_station=police_station,
+        defaults={'is_active': True}
       )
 
     officer = Officer.objects.filter(station=location).first()

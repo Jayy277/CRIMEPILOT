@@ -19,13 +19,11 @@ const RegisterCrime = () => {
   
   // Form fields
   const [crimeCategory, setCrimeCategory] = useState('');
-  const [date, setDate] = useState(todayStr);
-  const [time, setTime] = useState(
-    new Date().toLocaleTimeString('en-US', { hour12: false }).substring(0, 5)
-  );
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('Medium');
+  const [priority, setPriority] = useState('');
   const [selectedSections, setSelectedSections] = useState([]);
 
   useEffect(() => {

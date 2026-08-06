@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import AnimatedCounter from '../../components/AnimatedCounter';
 
 const Dashboard = () => {
@@ -53,17 +53,25 @@ const Dashboard = () => {
 
   const { summary, categoryStats, monthlyTrends, hotspotStats } = data;
 
+  const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
   const trendChartData = [...monthlyTrends]
     .reverse()
-    .map(t => ({
-      name: `${t._id.month}/${t._id.year}`,
-      Crimes: t.count
-    }));
+    .map(t => {
+      const mIdx = Math.max(0, (t._id.month || 1) - 1) % 12;
+      return {
+        name: `${MONTH_NAMES[mIdx]} ${t._id.year}`,
+        Crimes: t.count
+      };
+    });
 
-  const categoryChartData = categoryStats.map(c => ({
-    name: c.name,
-    Count: c.count
-  }));
+  const categoryChartData = categoryStats
+    .slice(0, 6)
+    .map(c => ({
+      name: c.name.length > 14 ? `${c.name.substring(0, 12)}..` : c.name,
+      fullName: c.name,
+      Count: c.count
+    }));
 
   const COLORS = ['#3B82F6', '#ec4899', '#F5A623', '#22C55E', '#8b5cf6', '#a855f7', '#E0384D'];
 
@@ -154,12 +162,18 @@ const Dashboard = () => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>No trend data recorded.</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendChartData} margin={{ left: -20, right: 10, bottom: 5 }}>
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} />
+                <AreaChart data={trendChartData} margin={{ left: -20, right: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="amberGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F5A623" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#F5A623" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} tickLine={false} />
                   <Tooltip contentStyle={{ backgroundColor: '#1A2233', border: '1px solid var(--border-glass)', borderRadius: '8px', color: '#fff' }} />
-                  <Line type="monotone" dataKey="Crimes" stroke="#F5A623" strokeWidth={3} animationDuration={600} activeDot={{ r: 8 }} />
-                </LineChart>
+                  <Area type="monotone" dataKey="Crimes" stroke="#F5A623" strokeWidth={3} fillOpacity={1} fill="url(#amberGradient)" animationDuration={600} activeDot={{ r: 6, fill: '#FFC107' }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>

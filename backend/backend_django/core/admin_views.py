@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 
 from authentication.models import Officer, Analyst
 from authentication.serializers import UserSerializer, OfficerSerializer, AnalystSerializer
@@ -18,35 +19,82 @@ class AdminUsersListView(APIView):
   def get(self, request):
     role = request.query_params.get('role')
     active = request.query_params.get('active')
-    search = request.query_params.get('search')
+    search = request.query_params.get('search') or request.query_params.get('q')
 
-    queryset = User.objects.all().order_by('-created_at')
+    # Pagination parameters
+    try:
+      page = int(request.query_params.get('page', 1))
+    except (ValueError, TypeError):
+      page = 1
+
+    page_size_param = request.query_params.get('pageSize') or request.query_params.get('page_size') or request.query_params.get('limit')
+    try:
+      limit = int(page_size_param) if page_size_param else None
+    except (ValueError, TypeError):
+      limit = None
+
+    # Single-query JOIN using select_related to eliminate N+1 queries
+    queryset = User.objects.all().select_related(
+      'officer_profile',
+      'officer_profile__station',
+      'analyst_profile'
+    ).order_by('-created_at')
 
     if role:
       queryset = queryset.filter(role=role)
-    if active:
-      queryset = queryset.filter(is_active=(active == 'true'))
+    if active is not None and active != '':
+      queryset = queryset.filter(is_active=(active.lower() == 'true'))
     if search:
-      queryset = queryset.filter(Q(name__icontains=search) | Q(email__icontains=search))
+      queryset = queryset.filter(
+        Q(name__icontains=search) | 
+        Q(email__icontains=search) | 
+        Q(role__icontains=search) |
+        Q(officer_profile__badge_no__icontains=search) |
+        Q(analyst_profile__department__icontains=search)
+      )
+
+    total_count = queryset.count()
+
+    if limit and limit > 0:
+      start = (page - 1) * limit
+      end = start + limit
+      page_queryset = queryset[start:end]
+    else:
+      page_queryset = queryset
 
     results = []
-    for user in queryset:
+    for user in page_queryset:
       details = None
       if user.role == 'officer':
-        officer = Officer.objects.filter(user=user).first()
-        if officer:
+        try:
+          officer = user.officer_profile
           details = OfficerSerializer(officer).data
+        except ObjectDoesNotExist:
+          details = None
       elif user.role == 'analyst':
-        analyst = Analyst.objects.filter(user=user).first()
-        if analyst:
+        try:
+          analyst = user.analyst_profile
           details = AnalystSerializer(analyst).data
+        except ObjectDoesNotExist:
+          details = None
       
       results.append({
         'user': UserSerializer(user).data,
         'details': details
       })
 
-    return Response({'success': True, 'users': results}, status=status.HTTP_200_OK)
+    import math
+    effective_limit = limit if (limit and limit > 0) else total_count
+    total_pages = math.ceil(total_count / effective_limit) if effective_limit > 0 else 1
+
+    return Response({
+      'success': True,
+      'users': results,
+      'total': total_count,
+      'page': page,
+      'pageSize': effective_limit,
+      'totalPages': total_pages
+    }, status=status.HTTP_200_OK)
 
 class AdminUserDetailView(APIView):
   permission_classes = [permissions.IsAuthenticated, IsAdminUser]

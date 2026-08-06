@@ -2,7 +2,7 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-  LocationViewSet, CrimeCategoryViewSet, CrimeViewSet, 
+  LocationViewSet, PoliceStationSearchView, CrimeCategoryViewSet, CrimeViewSet, 
   SuspectViewSet, VictimViewSet, EvidenceViewSet, NotificationViewSet,
   CitizenFIRSubmitView, CitizenFIRListView, CitizenFIRDetailView, CitizenEvidenceUploadView,
   CitizenDownloadFIRView, AdminCitizenListView, AdminVerifyCitizenView
@@ -33,6 +33,9 @@ router.register('admin/locations', LocationViewSet, basename='admin-locations')
 
 urlpatterns = [
   path('', include(router.urls)),
+
+  # Search Police Stations Endpoint
+  re_path(r'^police-stations/search/?$', PoliceStationSearchView.as_view(), name='police_stations_search'),
 
   # AI Assistant Conversational Endpoint
   re_path(r'^ai/chat/?$', AIChatView.as_view(), name='ai_chat'),

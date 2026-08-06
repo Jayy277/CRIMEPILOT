@@ -100,6 +100,12 @@ export default function CitizenLogin() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setError('');
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     const routes = { citizen:'/citizen/dashboard', admin:'/admin/dashboard', analyst:'/analyst/dashboard' };
     navigate(routes[user.role] || '/officer/dashboard');

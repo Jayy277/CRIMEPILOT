@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
-import { ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Tooltip, XAxis, YAxis } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Tooltip, XAxis, YAxis } from 'recharts';
 import { FaShieldAlt, FaUserShield, FaCheckCircle, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
 import { getTodayDateString, validateDateRange } from '../../utils/dateValidation';
 
@@ -16,6 +16,7 @@ const Analytics = () => {
   const [endDate, setEndDate] = useState('');
   const [crimeCategory, setCrimeCategory] = useState('');
   const [location, setLocation] = useState('');
+  const [granularity, setGranularity] = useState('day'); // 'day' | 'week' | 'month'
 
   const todayStr = getTodayDateString();
 
@@ -146,18 +147,56 @@ const Analytics = () => {
 
         setCategoryBreakdown(categoryChart);
 
-        // 4. Time Series Data (Line Chart)
-        const dateCounts = list.reduce((acc, c) => {
-          const formattedDate = new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          acc[formattedDate] = (acc[formattedDate] || 0) + 1;
-          return acc;
-        }, {});
+        // 4. Time Series Data (Aggregated smoothly by Day / Week / Month)
+        let timeSeries = [];
+        if (granularity === 'month') {
+          const monthCounts = list.reduce((acc, c) => {
+            const dt = new Date(c.date);
+            const label = dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            if (!acc[label]) acc[label] = { count: 0, dateObj: new Date(dt.getFullYear(), dt.getMonth(), 1) };
+            acc[label].count += 1;
+            return acc;
+          }, {});
+          timeSeries = Object.keys(monthCounts).map(k => ({
+            date: k,
+            Cases: monthCounts[k].count,
+            rawDate: monthCounts[k].dateObj
+          })).sort((a, b) => a.rawDate - b.rawDate);
+        } else if (granularity === 'week') {
+          const weekCounts = list.reduce((acc, c) => {
+            const dt = new Date(c.date);
+            const startOfWeek = new Date(dt);
+            startOfWeek.setDate(dt.getDate() - dt.getDay());
+            const label = `W${Math.ceil((startOfWeek.getDate() + 1) / 7)} ${startOfWeek.toLocaleDateString('en-US', { month: 'short' })}`;
+            if (!acc[label]) acc[label] = { count: 0, dateObj: startOfWeek };
+            acc[label].count += 1;
+            return acc;
+          }, {});
+          timeSeries = Object.keys(weekCounts).map(k => ({
+            date: k,
+            Cases: weekCounts[k].count,
+            rawDate: weekCounts[k].dateObj
+          })).sort((a, b) => a.rawDate - b.rawDate);
+        } else {
+          // Daily aggregation
+          const dateCounts = list.reduce((acc, c) => {
+            const dt = new Date(c.date);
+            const formattedDate = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (!acc[formattedDate]) acc[formattedDate] = { count: 0, dateObj: dt };
+            acc[formattedDate].count += 1;
+            return acc;
+          }, {});
+          timeSeries = Object.keys(dateCounts).map(dateKey => ({
+            date: dateKey,
+            Cases: dateCounts[dateKey].count,
+            rawDate: dateCounts[dateKey].dateObj
+          })).sort((a, b) => a.rawDate - b.rawDate);
+        }
 
-        const timeSeries = Object.keys(dateCounts).map(dateKey => ({
-          date: dateKey,
-          Cases: dateCounts[dateKey],
-          rawDate: new Date(dateKey)
-        })).sort((a, b) => a.rawDate - b.rawDate);
+        // Limit plotted data points to max 12 for smooth, non-cluttered chart presentation
+        if (timeSeries.length > 12) {
+          timeSeries = timeSeries.slice(-12);
+        }
 
         setTimeSeriesData(timeSeries);
       }
@@ -173,7 +212,7 @@ const Analytics = () => {
     if (!fetchingOptions) {
       handleApplyFilters();
     }
-  }, [fetchingOptions, crimeCategory, location, startDate, endDate]);
+  }, [fetchingOptions, crimeCategory, location, startDate, endDate, granularity]);
 
   if (fetchingOptions) {
     return (
@@ -331,23 +370,58 @@ const Analytics = () => {
       {/* Main Diagrams Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         
-        {/* Visitors Over Time -> Cases Volume Over Time */}
+        {/* Incident Progression Over Time */}
         <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: '360px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>Incident Progression Over Time</h3>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Filing timeline trend analysis</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>Incident Progression Over Time</h3>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>Filing timeline trend analysis</span>
+            </div>
+
+            {/* Granularity Selector Pills */}
+            <div style={{ display: 'inline-flex', background: 'rgba(15, 23, 42, 0.6)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {['day', 'week', 'month'].map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setGranularity(mode)}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: granularity === mode ? 'linear-gradient(90deg, #3B82F6, #00D9FF)' : 'transparent',
+                    color: granularity === mode ? '#060D1A' : '#94A3B8',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
+          
           <div style={{ flex: 1, minHeight: 0 }}>
             {timeSeriesData.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>No timeline logs matching filter.</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeSeriesData} margin={{ left: -20, right: 10, bottom: 5 }}>
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1A2233', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff' }} />
-                  <Line type="monotone" dataKey="Cases" stroke="#3B82F6" strokeWidth={3} activeDot={{ r: 6 }} />
-                </LineChart>
+                <AreaChart data={timeSeriesData} margin={{ left: -20, right: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1A2233', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff' }} />
+                  <Area type="monotone" dataKey="Cases" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#areaGradient)" activeDot={{ r: 6, fill: '#00D9FF' }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>

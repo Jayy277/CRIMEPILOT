@@ -20,6 +20,7 @@ const Navbar = ({ toggleSidebar }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [navMousePos, setNavMousePos] = useState({ x: -500, y: -500 });
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown on click outside
@@ -245,13 +246,43 @@ const Navbar = ({ toggleSidebar }) => {
             </svg>
           </button>
         )}
+
+        {isPublicPath && (
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="public-mobile-hamburger"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: '12px'
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {mobileMenuOpen ? (
+                <path d="M18 6L6 18M6 6l12 12" />
+              ) : (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </>
+              )}
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Right side controls & navigation */}
       {isPublicPath ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div className="public-nav-controls" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {/* Navigation Links with Shared Sliding Active Glass Pill */}
-          <nav style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600' }}>
+          <nav className="desktop-public-nav" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600' }}>
             {/* Continuous Shared Sliding Glowing Glass Pill (Spring Physics Animation) */}
             <div
               style={{
@@ -613,6 +644,91 @@ const Navbar = ({ toggleSidebar }) => {
         )
       )}
 
+      {/* Public Mobile Slide-in Navigation Drawer */}
+      {isPublicPath && mobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '72px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(11, 15, 25, 0.96)',
+            backdropFilter: 'blur(20px)',
+            zIndex: 999,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '24px',
+            gap: '16px',
+            overflowY: 'auto',
+            borderTop: '1px solid rgba(0, 217, 255, 0.2)'
+          }}
+        >
+          {navItems.map((item) => (
+            <a
+              key={item.key}
+              href={`#${item.target}`}
+              onClick={(e) => {
+                setMobileMenuOpen(false);
+                handleNavClick(e, item.target, item.key);
+              }}
+              style={{
+                color: activeSection === item.key ? '#00D9FF' : '#94a3b8',
+                fontSize: '16px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                backgroundColor: activeSection === item.key ? 'rgba(0, 217, 255, 0.1)' : 'transparent',
+                border: activeSection === item.key ? '1px solid rgba(0, 217, 255, 0.3)' : '1px solid transparent'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            {user ? (
+              <Link
+                to={getDashboardUrl()}
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  color: '#fff',
+                  backgroundColor: theme.color || '#3B82F6',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #00D9FF, #0088ff)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '700'
+                }}
+              >
+                Sign In to Portal
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Breathing Active Pill & Dropdown Animation Styles */}
       <style>{`
         @keyframes pillBreathing {
@@ -638,6 +754,20 @@ const Navbar = ({ toggleSidebar }) => {
           opacity: 1 !important;
           color: #00D9FF !important;
           transform: translateX(4px);
+        }
+        .public-mobile-hamburger {
+          display: none !important;
+        }
+        @media (max-width: 767px) {
+          .public-mobile-hamburger {
+            display: flex !important;
+          }
+          .desktop-public-nav {
+            display: none !important;
+          }
+          .public-nav-controls > *:not(.public-mobile-hamburger) {
+            display: none !important;
+          }
         }
       `}</style>
     </header>

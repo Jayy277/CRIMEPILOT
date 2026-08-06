@@ -65,10 +65,13 @@ const Login = () => {
   const currentRole = (roleParam ? String(roleParam).toLowerCase() : 'citizen');
   const roleConfig = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.citizen;
 
-  // Dynamic Browser Document Title
+  // Dynamic Browser Document Title and Form Reset
   useEffect(() => {
     document.title = roleConfig.documentTitle;
-  }, [roleConfig]);
+    setUsernameOrEmail('');
+    setPassword('');
+    setError('');
+  }, [roleConfig, currentRole]);
 
   // If already logged in, redirect based on role
   useEffect(() => {

@@ -38,26 +38,45 @@ const ManageUsers = () => {
   const [editDepartment, setEditDepartment] = useState('');
 
   const fetchUsersAndLocations = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const [usersRes, locationsRes] = await Promise.all([
-        axiosInstance.get('/admin/users'),
-        axiosInstance.get('/admin/locations'),
-      ]);
+    setLoading(true);
+    setError('');
 
-      if (usersRes.data && usersRes.data.success) {
-        setUsers(usersRes.data.users || []);
+    let uList = [];
+    let lList = [];
+
+    // Fetch users
+    try {
+      let usersRes;
+      try {
+        usersRes = await axiosInstance.get('/admin/users');
+      } catch (e1) {
+        usersRes = await axiosInstance.get('/api/admin/users');
       }
-      if (locationsRes.data && locationsRes.data.locations) {
-        setLocations(locationsRes.data.locations || []);
+      if (usersRes?.data) {
+        uList = usersRes.data.users || usersRes.data.results || (Array.isArray(usersRes.data) ? usersRes.data : []);
       }
-    } catch (err) {
-      console.error('Error fetching admin user management:', err);
-      setError('Failed to fetch user directory or police station locations.');
-    } finally {
-      setLoading(false);
+    } catch (errU) {
+      console.error('Error fetching admin users:', errU);
     }
+
+    // Fetch locations
+    try {
+      let locRes;
+      try {
+        locRes = await axiosInstance.get('/admin/locations');
+      } catch (e2) {
+        locRes = await axiosInstance.get('/api/admin/locations');
+      }
+      if (locRes?.data) {
+        lList = locRes.data.locations || locRes.data.results || (Array.isArray(locRes.data) ? locRes.data : []);
+      }
+    } catch (errL) {
+      console.error('Error fetching locations:', errL);
+    }
+
+    setUsers(uList);
+    setLocations(lList);
+    setLoading(false);
   };
 
   const fetchCitizens = async () => {
