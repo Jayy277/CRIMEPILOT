@@ -251,7 +251,10 @@ class AIChatView(APIView):
 
 import io
 import re
-import pypdf
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 def _validate_incident_text(text):
