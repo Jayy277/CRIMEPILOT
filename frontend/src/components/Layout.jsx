@@ -10,6 +10,9 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const location = useLocation();
 
+  const isPublicPath = ['/', '/about', '/contact', '/overview'].includes(location.pathname);
+  const isPortalView = user && !isPublicPath;
+
   // Auto-close sidebar on window resize to mobile
   useEffect(() => {
     const handleResize = () => {
@@ -23,6 +26,18 @@ const Layout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Lock body scroll on mobile when sidebar is open
+  useEffect(() => {
+    if (window.innerWidth < 768 && sidebarOpen && isPortalView) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen, isPortalView]);
+
   const getPortalClass = () => {
     if (!user) return '';
     if (user.role === 'admin') return 'theme-admin';
@@ -30,11 +45,6 @@ const Layout = () => {
     if (user.role === 'citizen') return 'theme-citizen';
     return 'theme-officer';
   };
-
-  const isPublicPath = ['/', '/about', '/contact', '/overview'].includes(location.pathname);
-
-  // If public route, allow normal page scroll; for portals, enforce strict 100vh viewport containment
-  const isPortalView = user && !isPublicPath;
 
   return (
     <div

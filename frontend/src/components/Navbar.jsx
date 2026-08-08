@@ -33,7 +33,18 @@ const Navbar = ({ toggleSidebar }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
+  // Lock body scrolling when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
   // Shared Sliding Pill position state & item refs
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const itemRefs = useRef({});

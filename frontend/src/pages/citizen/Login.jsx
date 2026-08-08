@@ -148,14 +148,14 @@ export default function CitizenLogin() {
       <div style={{position:'absolute',inset:0,background:'rgba(6,13,26,0.38)',zIndex:0,pointerEvents:'none'}}/>
 
       {/* ═══════════════ MAIN BODY ═══════════════ */}
-      <div style={{
+      <div className="citizen-login-body" style={{
         flex:1, display:'flex', alignItems:'center', justifyContent:'space-between',
         padding:'18px 28px 0 28px', gap:'20px', zIndex:1, position:'relative',
         minHeight:0,
       }}>
 
         {/* ══════ LEFT PANEL ══════ */}
-        <div style={{width:'220px', flexShrink:0, display:'flex', flexDirection:'column', gap:'12px', alignSelf:'stretch', justifyContent:'center'}}>
+        <div className="citizen-left-panel" style={{width:'220px', flexShrink:0, display:'flex', flexDirection:'column', gap:'12px', alignSelf:'stretch', justifyContent:'center'}}>
 
           {/* Logo */}
           <div>
