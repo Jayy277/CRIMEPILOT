@@ -58,6 +58,23 @@ class LoginView(APIView):
         if citizen:
           user = citizen.user
 
+    # Auto-seed standard demo staff accounts on demand if not present in DB
+    if not user:
+      email_key = query_val.lower()
+      demo_analysts = {
+        'analyst1@crimepilot.com': ("Senior Analyst Priya Shah", "analyst111", "Cyber Crime Analytics"),
+        'analyst2@crimepilot.com': ("Senior Analyst Rajesh Mehta", "analyst222", "Crime Trends"),
+        'analyst3@crimepilot.com': ("Senior Analyst Hardik Joshi", "analyst333", "Predictive Intelligence"),
+        'analyst4@crimepilot.com': ("Senior Analyst Neha Trivedi", "analyst444", "Digital Evidence"),
+        'analyst5@crimepilot.com': ("Senior Analyst Vikram Desai", "analyst555", "Command Intelligence"),
+      }
+      if email_key in demo_analysts:
+        fullname, passw, dept = demo_analysts[email_key]
+        user = User.objects.create_user(email=email_key, name=fullname, password=passw, role='analyst')
+        Analyst.objects.get_or_create(user=user, defaults={'department': dept})
+      elif email_key == 'admin@crimepilot.com':
+        user = User.objects.create_user(email='admin@crimepilot.com', name='System Administrator', password='admin@1234', role='admin', is_staff=True, is_superuser=True)
+
     if not user:
       return Response({'success': False, 'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
