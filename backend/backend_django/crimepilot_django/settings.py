@@ -163,15 +163,18 @@ SIMPLE_JWT = {
   'USER_ID_CLAIM': 'id',
 }
 
-# SMTP Email Configuration
+# SMTP Email Configuration — Gmail SSL Port 465
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_TIMEOUT = 4 # Socket timeout in seconds to prevent HTTP request timeouts on cloud hosts
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'crimepilot111@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'crimepilot1234')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True').lower() in ('true', '1')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1')
+EMAIL_TIMEOUT = 10 # Socket timeout in seconds for Gmail SMTP
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', os.environ.get('EMAIL_USER', 'crimepilot111@gmail.com'))
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', os.environ.get('EMAIL_PASS', 'zllgcwtkxsbrpsir'))
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
 
 # Bypass Django's MariaDB version check for compatibility with older XAMPP versions
 from django.db.backends.mysql.base import DatabaseWrapper
