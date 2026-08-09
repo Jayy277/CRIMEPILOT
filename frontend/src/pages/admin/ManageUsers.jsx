@@ -609,6 +609,13 @@ const ManageUsers = () => {
                     >
                       Delete
                     </button>
+                    <button
+                      onClick={() => handleDeleteUser(item.user._id, item.user.name)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 )
               }
@@ -652,7 +659,7 @@ const ManageUsers = () => {
                 render: (c) => (
                   c.identityDocument ? (
                     <a
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${c.identityDocument}`}
+                      href={c.identityDocument.startsWith('http') ? c.identityDocument : `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${c.identityDocument.startsWith('/') ? c.identityDocument : `/${c.identityDocument}`}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: '#4DA3FF', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px dashed #4DA3FF' }}

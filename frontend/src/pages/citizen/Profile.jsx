@@ -209,7 +209,7 @@ const CitizenProfile = () => {
               {details?.identityDocument && (
                 <div style={{ marginTop: '8px' }}>
                   <a
-                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${details.identityDocument}`}
+                    href={details.identityDocument.startsWith('http') ? details.identityDocument : `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${details.identityDocument.startsWith('/') ? details.identityDocument : `/${details.identityDocument}`}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -229,6 +229,7 @@ const CitizenProfile = () => {
                   </a>
                 </div>
               )}
+
             </div>
           </div>
 

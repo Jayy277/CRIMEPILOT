@@ -2,7 +2,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR_BACKEND_SERVER_URL/api/$1"
+      "destination": "https://crimepilot-1.onrender.com/api/$1"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "https://crimepilot-1.onrender.com/uploads/$1"
     },
     {
       "source": "/(.*)",
@@ -10,3 +14,4 @@
     }
   ]
 }
+

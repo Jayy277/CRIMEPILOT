@@ -22,12 +22,16 @@ urlpatterns = [
     path('api/', include('core.urls')),
 ]
 
-# Serves local media upload files in development
-if settings.DEBUG:
-    uploads_path = getattr(settings, 'MEDIA_ROOT', os.path.join(settings.BASE_DIR, 'uploads'))
-    if not os.path.exists(uploads_path):
-        os.makedirs(uploads_path)
-    
-    urlpatterns += static('/uploads/', document_root=uploads_path)
-    urlpatterns += static('/media/', document_root=uploads_path)
+from django.views.static import serve
+from django.urls import re_path
+
+uploads_path = getattr(settings, 'MEDIA_ROOT', os.path.join(settings.BASE_DIR, 'uploads'))
+if not os.path.exists(uploads_path):
+    os.makedirs(uploads_path)
+
+urlpatterns += [
+    re_path(r'^uploads/(?P<path>.*)$', serve, {'document_root': uploads_path}),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': uploads_path}),
+]
+
 
