@@ -609,13 +609,6 @@ const ManageUsers = () => {
                     >
                       Delete
                     </button>
-                    <button
-                      onClick={() => handleDeleteUser(item.user._id, item.user.name)}
-                      className="btn btn-secondary"
-                      style={{ fontSize: '11px', padding: '4px 8px', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.1)' }}
-                    >
-                      Delete
-                    </button>
                   </div>
                 )
               }

@@ -63,9 +63,9 @@ urlpatterns = [
   re_path(r'^citizen/register/?$', CitizenSignupView.as_view(), name='citizen_register_core'),
   re_path(r'^citizen/fir/?$', CitizenFIRSubmitView.as_view(), name='citizen_fir_submit'),
   re_path(r'^citizen/my-cases/?$', CitizenFIRListView.as_view(), name='citizen_fir_list'),
-  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/?$', CitizenFIRDetailView.as_view(), name='citizen_fir_detail'),
-  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/evidence/?$', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
-  re_path(r'^citizen/cases/(?P<crime_pk>\d+)/download/?$', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
+  re_path(r'^citizen/cases/(?P<crime_pk>[^/]+)/?$', CitizenFIRDetailView.as_view(), name='citizen_fir_detail'),
+  re_path(r'^citizen/cases/(?P<crime_pk>[^/]+)/evidence/?$', CitizenEvidenceUploadView.as_view(), name='citizen_evidence_upload'),
+  re_path(r'^citizen/cases/(?P<crime_pk>[^/]+)/download/?$', CitizenDownloadFIRView.as_view(), name='citizen_fir_download'),
   
   # Admin citizen lists & verify
   re_path(r'^admin/citizens/?$', AdminCitizenListView.as_view(), name='admin_citizen_list'),

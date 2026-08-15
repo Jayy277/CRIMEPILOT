@@ -52,79 +52,70 @@ const FIRDetailsModal = ({ crime, user, onClose, onRefresh, onDownloadPDF }) => 
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(5, 10, 20, 0.85)',
-      backdropFilter: 'blur(8px)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', color: '#f8fafc' }}>
+      
+      {/* Header */}
       <div style={{
-        backgroundColor: '#0B1220',
+        background: '#111827',
         border: '1px solid #223248',
-        boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)',
-        borderRadius: '20px',
-        width: '100%',
-        maxWidth: '900px',
-        maxHeight: '90vh',
+        borderRadius: '16px',
+        padding: '20px 24px',
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        color: '#f8fafc'
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px'
       }}>
-        
-        {/* Header */}
-        <div style={{
-          padding: '20px 28px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: '#111827'
-        }}>
-          <div>
-            <span style={{ fontSize: '11px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold' }}>
-              OFFICIAL COMPLAINT COMPILATION FILE
-            </span>
-            <h2 style={{ fontSize: '20px', color: '#fff', fontWeight: '800', marginTop: '2px' }}>
-              FIR Details: {crime.crime_id}
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button
-              onClick={() => onDownloadPDF(crime)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#00D9FF',
-                color: '#0B1220',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              📥 Download PDF
-            </button>
-            <button
-              onClick={onClose}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '24px', cursor: 'pointer' }}
-            >
-              ✕
-            </button>
-          </div>
+        <div>
+          <span style={{ fontSize: '11px', color: '#00D9FF', fontFamily: 'monospace', fontWeight: 'bold' }}>
+            OFFICIAL COMPLAINT COMPILATION FILE
+          </span>
+          <h1 style={{ fontSize: '24px', color: '#fff', fontWeight: '800', marginTop: '4px', fontFamily: 'Outfit, sans-serif' }}>
+            FIR Details: {crime.crime_id}
+          </h1>
         </div>
 
-        {/* Content */}
-        <div style={{ padding: '28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onDownloadPDF(crime)}
+            style={{
+              padding: '10px 18px',
+              backgroundColor: '#00D9FF',
+              color: '#0B1220',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: 'bold',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            📥 Download Signed PDF
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 18px',
+                backgroundColor: '#0B1220',
+                border: '1px solid #223248',
+                color: '#94a3b8',
+                borderRadius: '10px',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ← Back to List
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content Sections (Full Width) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
           
           {/* Notifications */}
           {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', padding: '12px', color: '#fca5a5', borderRadius: '8px', fontSize: '12px' }}>{error}</div>}
@@ -265,11 +256,8 @@ const FIRDetailsModal = ({ crime, user, onClose, onRefresh, onDownloadPDF }) => 
             </div>
 
           </div>
-
         </div>
-
       </div>
-    </div>
   );
 };
 

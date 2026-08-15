@@ -920,7 +920,11 @@ class CitizenFIRDetailView(APIView):
       return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     # STRICT SECURITY: Only allow access if crime belongs to this citizen
-    crime = Crime.objects.filter(id=crime_pk, citizen=citizen).first()
+    crime = None
+    if str(crime_pk).isdigit():
+      crime = Crime.objects.filter(id=int(crime_pk), citizen=citizen).first()
+    if not crime:
+      crime = Crime.objects.filter(crime_id=str(crime_pk), citizen=citizen).first()
     if not crime:
       return Response({'success': False, 'message': 'FIR case not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -939,7 +943,11 @@ class CitizenEvidenceUploadView(APIView):
     if not citizen:
       return Response({'success': False, 'message': 'Citizen profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    crime = Crime.objects.filter(id=crime_pk, citizen=citizen).first()
+    crime = None
+    if str(crime_pk).isdigit():
+      crime = Crime.objects.filter(id=int(crime_pk), citizen=citizen).first()
+    if not crime:
+      crime = Crime.objects.filter(crime_id=str(crime_pk), citizen=citizen).first()
     if not crime:
       return Response({'success': False, 'message': 'Case not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -986,7 +994,11 @@ class CitizenDownloadFIRView(APIView):
     from authentication.models import Citizen
     citizen = Citizen.objects.filter(user=request.user).first()
     
-    crime = Crime.objects.filter(id=crime_pk).first()
+    crime = None
+    if str(crime_pk).isdigit():
+      crime = Crime.objects.filter(id=int(crime_pk)).first()
+    if not crime:
+      crime = Crime.objects.filter(crime_id=str(crime_pk)).first()
     if not crime:
       return Response({'success': False, 'message': 'Case not found'}, status=status.HTTP_404_NOT_FOUND)
 

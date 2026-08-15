@@ -253,100 +253,90 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
   const timelineEntries = generateTimeline();
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(5, 10, 20, 0.85)',
-      backdropFilter: 'blur(8px)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justify: 'center',
-      padding: '20px'
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', color: '#f8fafc' }}>
+      
+      {/* Tracker Header */}
       <div style={{
-        backgroundColor: '#0B1220',
-        border: '1px solid #00D9FF',
-        boxShadow: '0 0 30px rgba(0, 217, 255, 0.2)',
-        borderRadius: '20px',
-        width: '100%',
-        maxWidth: '950px',
-        maxHeight: '90vh',
+        background: '#111827',
+        border: '1px solid #223248',
+        borderRadius: '16px',
+        padding: '20px 24px',
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        color: '#f8fafc'
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px'
       }}>
-        
-        {/* Modal Header */}
-        <div style={{
-          padding: '24px 32px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          display: 'flex',
-          justifySpace: 'between',
-          alignItems: 'center',
-          background: 'linear-gradient(90deg, #0B1220 0%, #111827 100%)'
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                color: '#00D9FF',
-                background: 'rgba(0, 217, 255, 0.1)',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontWeight: 'bold'
-              }}>
-                LIVE CASE TRACKER
-              </span>
-              <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                FIR No: <strong style={{ color: '#00D9FF', fontFamily: 'monospace' }}>{firNo}</strong>
-              </span>
-            </div>
-            <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginTop: '6px', fontFamily: 'Outfit, sans-serif' }}>
-              {crime.crime_category?.name || crime.crimeCategory?.name || 'Crime Report'} Investigation Progress
-            </h2>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              color: '#00D9FF',
+              background: 'rgba(0, 217, 255, 0.1)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontWeight: 'bold'
+            }}>
+              LIVE CASE TRACKER
+            </span>
+            <span style={{ color: '#64748b', fontSize: '12px' }}>•</span>
+            <span style={{ fontSize: '13px', color: '#94a3b8' }}>
+              FIR No: <strong style={{ color: '#00D9FF', fontFamily: 'monospace' }}>{firNo}</strong>
+            </span>
           </div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginTop: '6px', fontFamily: 'Outfit, sans-serif' }}>
+            {crime.crime_category?.name || crime.crimeCategory?.name || 'Crime Report'} Investigation Progress
+          </h1>
+        </div>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button
-              onClick={() => onDownloadPDF(crime)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'rgba(0, 217, 255, 0.15)',
-                color: '#00D9FF',
-                border: '1px solid #00D9FF',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              📄 Download PDF
-            </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onDownloadPDF(crime)}
+            style={{
+              padding: '10px 18px',
+              backgroundColor: 'rgba(0, 217, 255, 0.15)',
+              color: '#00D9FF',
+              border: '1px solid #00D9FF',
+              borderRadius: '10px',
+              fontWeight: 'bold',
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 0 12px rgba(0, 217, 255, 0.15)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📄 Download PDF Compilation
+          </button>
+
+          {onClose && (
             <button
               onClick={onClose}
               style={{
-                background: 'none',
-                border: 'none',
+                padding: '10px 18px',
+                backgroundColor: '#0B1220',
+                border: '1px solid #223248',
                 color: '#94a3b8',
-                fontSize: '24px',
+                borderRadius: '10px',
+                fontWeight: 'bold',
+                fontSize: '12px',
                 cursor: 'pointer',
-                padding: '4px 8px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
-              ✕
+              ← Back to List
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* Modal Body (Scrollable) */}
-        <div style={{ padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      {/* Main Content Sections (Full Width) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
           
           {/* Progress Bar & Current Stage */}
           <div style={{
@@ -599,11 +589,8 @@ const CaseTrackerModal = ({ crime, onClose, onDownloadPDF }) => {
               ))}
             </div>
           </div>
-
         </div>
-
       </div>
-    </div>
   );
 };
 

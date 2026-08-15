@@ -39,6 +39,23 @@
   --theme-accent-rgb: 224, 56, 77;
 }
 
+.theme-citizen {
+  --theme-accent: #4DA3FF;
+  --theme-accent-glow: rgba(77, 163, 255, 0.15);
+  --theme-accent-rgb: 77, 163, 255;
+}
+
+/* Citizen Portal Layout Spacing Optimization */
+.theme-citizen .portal-main-container {
+  padding: 20px 24px 24px 24px !important;
+}
+
+@media (max-width: 900px) {
+  .citizen-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

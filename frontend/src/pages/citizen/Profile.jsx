@@ -92,7 +92,7 @@ const CitizenProfile = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px', color: '#f8fafc' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', color: '#f8fafc', width: '100%' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

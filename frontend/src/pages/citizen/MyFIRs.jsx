@@ -166,8 +166,34 @@ const MyFIRs = () => {
     return true;
   });
 
+  if (trackingCrime) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <CaseTrackerModal
+          crime={trackingCrime}
+          onClose={() => setTrackingCrime(null)}
+          onDownloadPDF={handleDownloadPDF}
+        />
+      </div>
+    );
+  }
+
+  if (detailCrime) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <FIRDetailsModal
+          crime={detailCrime}
+          user={user}
+          onClose={() => setDetailCrime(null)}
+          onRefresh={fetchMyFIRs}
+          onDownloadPDF={handleDownloadPDF}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', color: '#f8fafc' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', color: '#f8fafc', width: '100%' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -526,7 +552,7 @@ const MyFIRs = () => {
                 {/* Action Buttons Footer */}
                 <div style={{
                   display: 'flex',
-                  justify: 'space-between',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: '12px',
@@ -598,25 +624,9 @@ const MyFIRs = () => {
         </div>
       )}
 
-      {/* Case Tracker Modal */}
-      {trackingCrime && (
-        <CaseTrackerModal
-          crime={trackingCrime}
-          onClose={() => setTrackingCrime(null)}
-          onDownloadPDF={handleDownloadPDF}
-        />
-      )}
 
-      {/* FIR Details Modal */}
-      {detailCrime && (
-        <FIRDetailsModal
-          crime={detailCrime}
-          user={user}
-          onClose={() => setDetailCrime(null)}
-          onRefresh={fetchMyFIRs}
-          onDownloadPDF={handleDownloadPDF}
-        />
-      )}
+
+
 
     </div>
   );

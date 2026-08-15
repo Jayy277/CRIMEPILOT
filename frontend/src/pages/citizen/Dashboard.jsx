@@ -41,7 +41,7 @@ const CitizenDashboard = () => {
   const reportedPending = cases.filter(c => c.status === 'Reported').length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', color: '#f8fafc' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', color: '#f8fafc', width: '100%' }}>
       
       {/* Header & Verification Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -96,7 +96,7 @@ const CitizenDashboard = () => {
       )}
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
         <div className="cyber-container" style={{ padding: '20px' }}>
           <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '600' }}>Total FIR Submitted</span>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#4DA3FF', marginTop: '8px' }}>
@@ -127,7 +127,7 @@ const CitizenDashboard = () => {
       </div>
 
       {/* Quick Actions & Recent Updates */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '28px', alignItems: 'start' }}>
+      <div className="citizen-dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* Quick Actions */}
         <div className="cyber-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
